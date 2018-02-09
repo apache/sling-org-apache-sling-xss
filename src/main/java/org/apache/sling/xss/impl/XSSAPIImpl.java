@@ -102,7 +102,8 @@ public class XSSAPIImpl implements XSSAPI {
             try {
                 return validator.getValidInteger("XSS", integer, -2000000000, 2000000000, false);
             } catch (Exception e) {
-                // ignore
+                LOGGER.warn("Unable to get a valid integer from the input.", e);
+                LOGGER.debug("Integer input: {}", integer);
             }
         }
 
@@ -121,7 +122,8 @@ public class XSSAPIImpl implements XSSAPI {
                 ivr.setAllowNull(false);
                 return ivr.getValid("XSS", source);
             } catch (Exception e) {
-                // ignore
+                LOGGER.warn("Unable to get a valid long from the input.", e);
+                LOGGER.debug("Long input: {}", source);
             }
         }
 
@@ -138,7 +140,8 @@ public class XSSAPIImpl implements XSSAPI {
             try {
                 return validator.getValidDouble("XSS", source, 0d, Double.MAX_VALUE, false);
             } catch (Exception e) {
-                // ignore
+                LOGGER.warn("Unable to get a valid double from the input.", e);
+                LOGGER.debug("Double input: {}", source);
             }
         }
 
@@ -159,7 +162,8 @@ public class XSSAPIImpl implements XSSAPI {
             try {
                 return validator.getValidInteger("XSS", dimension, -10000, 10000, false).toString();
             } catch (Exception e) {
-                // ignore
+                LOGGER.warn("Unable to get a valid dimension from the input.", e);
+                LOGGER.debug("Dimension input: {}", dimension);
             }
         }
 
@@ -363,7 +367,8 @@ public class XSSAPIImpl implements XSSAPI {
                 Json.createGenerator(output).write(jsonReaderFactory.createReader(new StringReader(json)).readObject()).close();
                 return output.getBuffer().toString();
             } catch (Exception e) {
-                LOGGER.debug("JSON validation failed: " + e.getMessage(), e);
+                LOGGER.warn("Unable to get valid JSON from the input.", e);
+                LOGGER.debug("JSON input:\n{}", json);
             }
         } else {
             try {
@@ -371,7 +376,8 @@ public class XSSAPIImpl implements XSSAPI {
                 Json.createGenerator(output).write(jsonReaderFactory.createReader(new StringReader(json)).readArray()).close();
                 return output.getBuffer().toString();
             } catch (Exception e) {
-                LOGGER.debug("JSON validation failed: " + e.getMessage(), e);
+                LOGGER.warn("Unable to get valid JSON from the input.", e);
+                LOGGER.debug("JSON input:\n{}", json);
             }
         }
         return getValidJSON(defaultJson, "");
@@ -396,7 +402,8 @@ public class XSSAPIImpl implements XSSAPI {
             reader.parse(new InputSource(new StringReader(xml)));
             return xml;
         } catch (Exception e) {
-            LOGGER.debug("XML validation failed: " + e.getMessage(), e);
+            LOGGER.warn("Unable to get valid XML from the input.", e);
+            LOGGER.debug("XML input:\n{}", xml);
         }
         return getValidXML(defaultXml, "");
     }

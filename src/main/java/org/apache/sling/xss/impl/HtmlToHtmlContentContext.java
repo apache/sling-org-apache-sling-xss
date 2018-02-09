@@ -46,10 +46,13 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         try {
             return policyHandler.getAntiSamy().scan(str).getNumberOfErrors() == 0;
         } catch (final ScanException se) {
-            throw new RuntimeException("Unable to scan input");
+            log.warn("Unable to scan input.", se);
+            log.debug("Provided input: {}", str);
         } catch (final PolicyException pe) {
-            return false;
+            log.warn("Unable to check input.", pe);
+            log.debug("Provided input: {}", str);
         }
+        return false;
     }
 
     /**
@@ -70,10 +73,13 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
 
             return cleaned;
         } catch (final ScanException se) {
-            throw new RuntimeException("Unable to scan input");
+            log.warn("Unable to scan input.", se);
+            log.debug("Provided input: {}", str);
         } catch (final PolicyException pe) {
-            throw new RuntimeException("Unable to scan input");
+            log.warn("Unable to check input.", pe);
+            log.debug("Provided input: {}", str);
         }
+        return "";
     }
 
     /**

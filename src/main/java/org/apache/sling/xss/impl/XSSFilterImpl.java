@@ -140,7 +140,8 @@ public class XSSFilterImpl implements XSSFilter, ResourceChangeListener, Externa
             }
             return runHrefValidation(xmlDecodedURL);
         } catch (UnsupportedEncodingException e) {
-            logger.error("Unable to decode url: {}.", url);
+            logger.warn("Unable to decode url.", e);
+            logger.debug("URL input: {}", url);
         }
         return false;
     }
