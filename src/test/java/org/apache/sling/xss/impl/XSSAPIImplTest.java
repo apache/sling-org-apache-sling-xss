@@ -19,10 +19,14 @@ package org.apache.sling.xss.impl;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.xss.XSSAPI;
+import org.apache.sling.xss.XSSFilter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +39,7 @@ import org.powermock.reflect.Whitebox;
 
 import junit.framework.TestCase;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -286,14 +291,33 @@ public class XSSAPIImplTest {
                 { // ? in query string
                         "/test/search.html?0_tag:id=test?ing&1_tag:id=abc",
                         "/test/search.html?0_tag%3Aid=test?ing&1_tag%3Aid=abc",
+                },
+                {
+                        "/test/search.html?0_tag:id=test?ing&1_tag:id=abc#fragment:test",
+                        "/test/search.html?0_tag%3Aid=test?ing&1_tag%3Aid=abc#fragment:test",
+                },
+                {
+                        "https://sling.apache.org/?a=1#fragment:test",
+                        "https://sling.apache.org/?a=1#fragment:test"
+                },
+                {
+                    "https://sling.apache.org/#fragment:test",
+                    "https://sling.apache.org/#fragment:test"
                 }
         };
 
+        StringBuilder errors = new StringBuilder();
         for (String[] aTestData : testData) {
             String href = aTestData[0];
             String expected = aTestData[1];
-
-            TestCase.assertEquals("Requested '" + href + "'", expected, xssAPI.getValidHref(href));
+            String result = xssAPI.getValidHref(href);
+            if (!expected.equals(result)) {
+                errors.append("Requested '").append(href).append("'\nGot       '").append(result).append("'\nExpected  '").append(expected).append("'\n\n");
+            }
+        }
+        if (errors.length() > 0) {
+            errors.insert(0, "\n");
+            TestCase.fail(errors.toString());
         }
     }
 

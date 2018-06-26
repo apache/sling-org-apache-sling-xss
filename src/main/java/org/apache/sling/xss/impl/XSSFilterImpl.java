@@ -72,8 +72,8 @@ public class XSSFilterImpl implements XSSFilter, ResourceChangeListener, Externa
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
             "href",
             Arrays.asList(
-                    Pattern.compile("([\\p{L}\\p{M}*+\\p{N}\\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!\\*\\(\\)]*|\\#(\\w)+)"),
-                    Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)[\\p{L}\\p{M}*+\\p{N}]+[\\p{L}\\p{M}*+\\p{N}\\p{Zs}\\.\\#@\\$%\\+&;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*")
+                    Pattern.compile("([\\p{L}\\p{M}\\p{N}#@$%+&;\\-_~,?=/!*().\\\\]*(#(\\w|:)+)?)"),
+                    Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)[\\p{L}\\p{M}\\p{N}]+[\\p{L}\\p{M}\\p{N}\\p{Zs}.#@$%+&;:\\-_~,?=/!*()]*(\\s)*")
             ),
             Collections.<String>emptyList(),
             "removeAttribute", ""
@@ -150,7 +150,7 @@ public class XSSFilterImpl implements XSSFilter, ResourceChangeListener, Externa
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
         boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
         if (!isValid) {
-            isValid = hrefAttribute.matchesAllowedExpression(url);
+            isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
         }
         return isValid;
     }
