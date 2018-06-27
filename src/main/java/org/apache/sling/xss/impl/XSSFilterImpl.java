@@ -68,12 +68,61 @@ public class XSSFilterImpl implements XSSFilter, ResourceChangeListener, Externa
 
     private final Logger logger = LoggerFactory.getLogger(XSSFilterImpl.class);
 
+    public static final String GRAPHEME = "(?>\\P{M}\\p{M}*)";
+    public static final String ALPHA = "(?:\\p{L}\\p{M}*)";
+    public static final String HEX_DIGIT = "\\p{XDigit}";
+    public static final String PCT_ENCODED = "%" + HEX_DIGIT + HEX_DIGIT;
+    public static final String UNRESERVED_CHARACTERS = ALPHA + "|[\\p{N}-._~]";
+    public static final String SUB_DELIMS = "[!$&'()*+,;=]";
+    public static final String REG_NAME = "(?:(?:" + UNRESERVED_CHARACTERS + ")*|(?:" + PCT_ENCODED + ")*|" + "(?:" + SUB_DELIMS + ")*)";
+    public static final String PCHAR = UNRESERVED_CHARACTERS + "|" + PCT_ENCODED + "|" + SUB_DELIMS + "|:|@";
+    public static final String DEC_OCTET = "(?:\\p{N}|[\\x31-\\x39]\\p{N}|1\\p{N}{2}|2[\\x30-\\x34]\\p{N}|25[\\x30-\\x35])";
+    public static final String H16 = HEX_DIGIT + "{1,4}";
+    public static final String IPv4_ADDRESS = DEC_OCTET + "\\." + DEC_OCTET + "\\." + DEC_OCTET + "\\." + DEC_OCTET;
+    public static final String LS32 = "(?:" + H16 + ":" + H16 + ")|" + IPv4_ADDRESS;
+    public static final String IPv6_ADDRESS = "(?:(?:(?:" + H16 + ":){6}(?:" + LS32 + "))|" +
+            "(?:::(?:" + H16 + ":){5}(?:" + LS32 + "))|" +
+            "(?:(?:" + H16 + "){0,1}::(?:" + H16 + ":){4}(?:" + LS32 + "))|" +
+            "(?:(?:(?:" + H16 + ":){0,1}" + H16 + ")?::(?:" + H16 + ":){3}(?:" + LS32 + "))|" +
+            "(?:(?:(?:" + H16 + ":){0,2}" + H16 + ")?::(?:" + H16 + ":){2}(?:" + LS32 + "))|" +
+            "(?:(?:(?:" + H16 + ":){0,3}" + H16 + ")?::(?:" + H16 + ":){1}(?:" + LS32 + "))|" +
+            "(?:(?:(?:" + H16 + ":){0,4}" + H16 + ")?::(?:" + LS32 + "))|" +
+            "(?:(?:(?:" + H16 + ":){0,5}" + H16 + ")?::(?:" + H16 + "))|" +
+            "(?:(?:(?:" + H16 + ":){0,6}" + H16 + ")?::))";
+    public static final String IP_LITERAL = "\\[" + IPv6_ADDRESS + "]";
+    public static final String PORT = "\\p{Digit}+";
+    public static final String HOST = "(?:" + IP_LITERAL + "|" + IPv4_ADDRESS + "|" + REG_NAME + ")";
+    public static final String USER_INFO = "(?:(?:" + UNRESERVED_CHARACTERS + ")|(?:" + PCT_ENCODED + ")|(?:" + SUB_DELIMS + "))*";
+    public static final String AUTHORITY = "(?:" + USER_INFO + "@)?" + HOST + "(?::" + PORT + ")?";
+    public static final String SCHEME_PATTERN = "(?!\\s*javascript)\\p{L}[\\p{L}\\p{N}+.\\-]*";
+    public static final String FRAGMENT = "(?:" + PCHAR + "|/|\\?)*";
+    public static final String QUERY = "(?:" + PCHAR + "|/|\\?)*";
+    public static final String SEGMENT_NZ = "(?:" + PCHAR + ")+";
+    public static final String SEGMENT_NZ_NC = "(?:" + UNRESERVED_CHARACTERS + "|" + PCT_ENCODED + "|" + SUB_DELIMS + "|@)+";
+    public static final String PATH_ABEMPTY = "(?:/|(/" + SEGMENT_NZ + ")*)";
+    public static final String PATH_ABSOLUTE = "/(?:" + SEGMENT_NZ + PATH_ABEMPTY + ")?";
+    public static final String PATH_NOSCHEME = SEGMENT_NZ_NC + "(?:/|(/" + SEGMENT_NZ + ")*)";
+    public static final String PATH_ROOTLESS = SEGMENT_NZ + "(?:/|(/" + SEGMENT_NZ + ")*)";
+    public static final String PATH_EMPTY = "(?:^$)";
+    public static final String RELATIVE_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY +  ")|" +
+            "(?:" + PATH_ABSOLUTE + ")|" +
+            "(?:" + PATH_ROOTLESS + ")|" +
+            PATH_EMPTY + ")";
+    public static final String HIER_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY + ")|" +
+            "(?:" + PATH_ABSOLUTE + ")|" +
+            "(?:" + PATH_NOSCHEME + ")|" +
+            PATH_EMPTY + ")";
+
+    public static final String RELATIVE_REF = "(?!\\s*javascript:)" + RELATIVE_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
+    public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
+
+
     // Default href configuration copied from the config.xml supplied with AntiSamy
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
             "href",
             Arrays.asList(
-                    Pattern.compile("([\\p{L}\\p{M}*+\\p{N}\\\\\\.\\#@\\$%\\+&;\\-_~,\\?=/!\\*\\(\\)]*|\\#(\\w)+)"),
-                    Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)[\\p{L}\\p{M}*+\\p{N}]+[\\p{L}\\p{M}*+\\p{N}\\p{Zs}\\.\\#@\\$%\\+&;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*")
+                    Pattern.compile(RELATIVE_REF),
+                    Pattern.compile(URI)
             ),
             Collections.<String>emptyList(),
             "removeAttribute", ""
@@ -150,7 +199,7 @@ public class XSSFilterImpl implements XSSFilter, ResourceChangeListener, Externa
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
         boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
         if (!isValid) {
-            isValid = hrefAttribute.matchesAllowedExpression(url);
+            isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
         }
         return isValid;
     }
