@@ -207,6 +207,10 @@ public class XSSAPIImplTest {
                 {"<a href=\"\">empty href</a>", "<a href=\"\">empty href</a>"},
                 {"<a href=\" javascript:alert(23)\">space</a>","<a>space</a>"},
                 {"<table background=\"http://www.google.com\"></table>", "<table></table>"},
+                // CVE-2017-14735
+                {"<a href=\"javascript&colon;alert(23)\">X</a>", "<a>X</a>"},
+                // CVE-2016-10006
+                {"<style onload=\"alert(23)\">h1 {color:red;}</style>", "<style>h1 {\n\tcolor: red;\n}\n</style>"}
         };
 
         for (String[] aTestData : testData) {

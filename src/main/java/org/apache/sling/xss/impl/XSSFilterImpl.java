@@ -113,7 +113,7 @@ public class XSSFilterImpl implements XSSFilter, ResourceChangeListener, Externa
             "(?:" + PATH_NOSCHEME + ")|" +
             PATH_EMPTY + ")";
 
-    public static final String RELATIVE_REF = "(?!\\s*javascript:)" + RELATIVE_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
+    public static final String RELATIVE_REF = "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
     public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
 
 
