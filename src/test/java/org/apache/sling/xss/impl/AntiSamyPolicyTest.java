@@ -189,6 +189,17 @@ public class AntiSamyPolicyTest {
         testOutputContains("<div style=\"color: #0000\">Test</div>", "style=\"\"", true, true);
     }
 
+    @Test
+    public void testDataAttributes() throws Exception {
+        TestInput[] testInputs = new TestInput[]{
+                new TestInput("<p data-tag=\"abc123\">Hello World!</p>", "data-tag", true),
+                new TestInput("<p dat-tag=\"abc123\">Hello World!</p>", "dat-tag", false),
+        };
+        for (TestInput testInput : testInputs) {
+            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput, false, Mode.SAX);
+        }
+    }
+
     private void testOutputContains(String input, String containedString, boolean contains) throws Exception {
         testOutputContains(input, containedString, contains, false);
     }
