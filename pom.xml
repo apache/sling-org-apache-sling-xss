@@ -90,6 +90,7 @@
                             !org.apache.tools.ant.taskdefs,
                             !org.apache.xml.resolver,
                             !org.apache.xml.resolver.readers,
+                            !org.apache.xmlgraphics.java2d.color,
                             !org.apache.log,
                             !javax.mail.internet,
                             !javax.servlet.jsp,
@@ -129,7 +130,7 @@
         <dependency>
             <groupId>org.owasp.antisamy</groupId>
             <artifactId>antisamy</artifactId>
-            <version>1.5.2</version>
+            <version>1.5.7</version>
             <scope>provided</scope>
             <exclusions>
                 <exclusion>
@@ -167,33 +168,15 @@
         <!-- reconstruct the full list here.                    -->
         <!-- TODO: Remove this workaround when we dump Java 5.  -->
         <dependency>
-            <groupId>batik</groupId>
+            <groupId>org.apache.xmlgraphics</groupId>
             <artifactId>batik-css</artifactId>
-            <version>1.6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>batik</groupId>
-            <artifactId>batik-ext</artifactId>
-            <version>1.6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>batik</groupId>
-            <artifactId>batik-util</artifactId>
-            <version>1.6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>batik</groupId>
-            <artifactId>batik-gui-util</artifactId>
-            <version>1.6</version>
+            <version>1.9.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>xml-apis</groupId>
-            <artifactId>xml-apis-ext</artifactId>
-            <version>1.3.04</version>
+            <artifactId>xml-apis</artifactId>
+            <version>1.4.01</version>
             <scope>provided</scope>
         </dependency>
         <!-- </#40108 - XSS protection does not work on Java 5> -->

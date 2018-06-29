@@ -18,6 +18,8 @@ package org.apache.sling.xss.impl;
 
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -181,43 +183,49 @@ public class XSSAPIImpl implements XSSAPI {
 
     private static final String MANGLE_NAMESPACE_IN_PREFIX = "/_";
 
-    private static final String SCHEME_PATTERN = "://";
-
     private String mangleNamespaces(String absPath) {
-        if (absPath != null) {
-            // check for absolute urls
-            final int schemeIndex = absPath.indexOf(SCHEME_PATTERN);
-            final String manglePath;
-            final String prefix;
-            if (schemeIndex != -1) {
-                final int pathIndex = absPath.indexOf("/", schemeIndex + 3);
-                if (pathIndex != -1) {
-                    prefix = absPath.substring(0, pathIndex);
-                    manglePath = absPath.substring(pathIndex);
-                } else {
-                    prefix = absPath;
-                    manglePath = "";
+        String mangledPath = null;
+        try {
+            URI uri = new URI(absPath);
+            if (uri.getPath() != null) {
+                if (uri.getRawPath().contains(MANGLE_NAMESPACE_OUT_SUFFIX)) {
+                    final Matcher m = MANGLE_NAMESPACE_PATTERN.matcher(uri.getRawPath());
+
+                    final StringBuffer buf = new StringBuffer();
+                    while (m.find()) {
+                        final String replacement = MANGLE_NAMESPACE_IN_PREFIX + m.group(1) + MANGLE_NAMESPACE_IN_SUFFIX;
+                        m.appendReplacement(buf, replacement);
+                    }
+
+                    m.appendTail(buf);
+                    mangledPath = buf.toString();
                 }
-            } else {
-                prefix = "";
-                manglePath = absPath;
             }
-            if (manglePath.contains(MANGLE_NAMESPACE_OUT_SUFFIX)) {
-                final Matcher m = MANGLE_NAMESPACE_PATTERN.matcher(manglePath);
-
-                final StringBuffer buf = new StringBuffer();
-                while (m.find()) {
-                    final String replacement = MANGLE_NAMESPACE_IN_PREFIX + m.group(1) + MANGLE_NAMESPACE_IN_SUFFIX;
-                    m.appendReplacement(buf, replacement);
+            if (mangledPath != null) {
+                try {
+                    URI mangledURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), mangledPath,
+                            uri.getRawQuery(), uri.getRawFragment());
+                    StringBuilder uriBuilder = new StringBuilder();
+                    if (StringUtils.isNotEmpty(mangledURI.getScheme()) && StringUtils.isNotEmpty(mangledURI.getAuthority())) {
+                        uriBuilder.append(mangledURI.getScheme()).append("://").append(mangledURI.getRawAuthority());
+                    }
+                    if (StringUtils.isNotEmpty(mangledURI.getPath())) {
+                        uriBuilder.append(mangledURI.getRawPath());
+                    }
+                    if (StringUtils.isNotEmpty(mangledURI.getQuery())) {
+                        uriBuilder.append("?").append(mangledURI.getRawQuery());
+                    }
+                    if (StringUtils.isNotEmpty(mangledURI.getFragment())) {
+                        uriBuilder.append("#").append(mangledURI.getRawFragment());
+                    }
+                    return uriBuilder.toString();
+                } catch (URISyntaxException e) {
+                    LOGGER.warn("Invalid URI.", e);
                 }
-
-                m.appendTail(buf);
-
-                absPath = prefix + buf.toString();
-
             }
+        } catch (URISyntaxException e) {
+            LOGGER.warn("Invalid URI.", e);
         }
-
         return absPath;
     }
 
@@ -237,10 +245,6 @@ public class XSSAPIImpl implements XSSAPI {
                     .replaceAll("<", "%3C")
                     .replaceAll("`", "%60")
                     .replaceAll(" ", "%20");
-            int qMarkIx = encodedUrl.indexOf('?');
-            if (qMarkIx > 0) {
-                encodedUrl = encodedUrl.substring(0, qMarkIx) + encodedUrl.substring(qMarkIx).replaceAll(":", "%3A");
-            }
             encodedUrl = mangleNamespaces(encodedUrl);
             if (xssFilter.isValidHref(encodedUrl)) {
                 return encodedUrl;

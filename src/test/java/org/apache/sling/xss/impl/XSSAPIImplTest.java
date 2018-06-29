@@ -19,10 +19,14 @@ package org.apache.sling.xss.impl;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.xss.XSSAPI;
+import org.apache.sling.xss.XSSFilter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +39,7 @@ import org.powermock.reflect.Whitebox;
 
 import junit.framework.TestCase;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -202,6 +207,10 @@ public class XSSAPIImplTest {
                 {"<a href=\"\">empty href</a>", "<a href=\"\">empty href</a>"},
                 {"<a href=\" javascript:alert(23)\">space</a>","<a>space</a>"},
                 {"<table background=\"http://www.google.com\"></table>", "<table></table>"},
+                // CVE-2017-14735
+                {"<a href=\"javascript&colon;alert(23)\">X</a>", "<a>X</a>"},
+                // CVE-2016-10006
+                {"<style onload=\"alert(23)\">h1 {color:red;}</style>", "<style>h1 {\n\tcolor: red;\n}\n</style>"}
         };
 
         for (String[] aTestData : testData) {
@@ -223,7 +232,7 @@ public class XSSAPIImplTest {
                 },
                 {
                     "/base?backHref=%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
-                    ""
+                    "/base?backHref=%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29"
                 },
                 {
                     "%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
@@ -278,22 +287,41 @@ public class XSSAPIImplTest {
                 {"/test/ab`cd", "/test/ab%60cd"},
                 {"http://localhost:4502/test/ab`cd", "http://localhost:4502/test/ab%60cd"},
                 // colons in query string
-                {"/test/search.html?0_tag:id=test", "/test/search.html?0_tag%3Aid=test"},
+                {"/test/search.html?0_tag:id=test", "/test/search.html?0_tag:id=test"},
                 { // JCR namespaces and colons in query string
                         "/test/jcr:content/search.html?0_tag:id=test",
-                        "/test/_jcr_content/search.html?0_tag%3Aid=test"
+                        "/test/_jcr_content/search.html?0_tag:id=test"
                 },
                 { // ? in query string
                         "/test/search.html?0_tag:id=test?ing&1_tag:id=abc",
-                        "/test/search.html?0_tag%3Aid=test?ing&1_tag%3Aid=abc",
+                        "/test/search.html?0_tag:id=test?ing&1_tag:id=abc",
+                },
+                {
+                        "/test/search.html?0_tag:id=test?ing&1_tag:id=abc#fragment:test",
+                        "/test/search.html?0_tag:id=test?ing&1_tag:id=abc#fragment:test",
+                },
+                {
+                        "https://sling.apache.org/?a=1#fragment:test",
+                        "https://sling.apache.org/?a=1#fragment:test"
+                },
+                {
+                        "https://sling.apache.org/#fragment:test",
+                        "https://sling.apache.org/#fragment:test"
                 }
         };
 
+        StringBuilder errors = new StringBuilder();
         for (String[] aTestData : testData) {
             String href = aTestData[0];
             String expected = aTestData[1];
-
-            TestCase.assertEquals("Requested '" + href + "'", expected, xssAPI.getValidHref(href));
+            String result = xssAPI.getValidHref(href);
+            if (!expected.equals(result)) {
+                errors.append("Requested '").append(href).append("'\nGot       '").append(result).append("'\nExpected  '").append(expected).append("'\n\n");
+            }
+        }
+        if (errors.length() > 0) {
+            errors.insert(0, "\n");
+            TestCase.fail(errors.toString());
         }
     }
 
@@ -705,4 +733,12 @@ public class XSSAPIImplTest {
             }
         }
     }
+
+    @Test
+    public void testRegex() {
+        Pattern ipPattern = Pattern.compile(XSSFilterImpl.IPv4_ADDRESS);
+        assertTrue(ipPattern.matcher("1.1.1.1").matches());
+        assertTrue(ipPattern.matcher("255.1.1.1").matches());
+    }
+
 }
