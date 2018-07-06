@@ -16,82 +16,60 @@
  ******************************************************************************/
 package org.apache.sling.xss.impl;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.sling.api.SlingHttpServletRequest;
-import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.api.resource.observation.ResourceChangeListener;
+import org.apache.sling.serviceusermapping.ServiceUserMapped;
+import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.apache.sling.xss.XSSAPI;
-import org.apache.sling.xss.XSSFilter;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.owasp.validator.html.AntiSamy;
-import org.owasp.validator.html.Policy;
+import org.osgi.framework.ServiceReference;
 import org.owasp.validator.html.model.Attribute;
 import org.powermock.reflect.Whitebox;
 
 import junit.framework.TestCase;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class XSSAPIImplTest {
 
-    public static final String RUBBISH = "rubbish";
-    public static final String RUBBISH_JSON = "[\"rubbish\"]";
-    public static final String RUBBISH_XML = "<rubbish/>";
+    private static final String RUBBISH = "rubbish";
+    private static final String RUBBISH_JSON = "[\"rubbish\"]";
+    private static final String RUBBISH_XML = "<rubbish/>";
+
+    @Rule
+    public SlingContext context = new SlingContext();
 
     private XSSAPI xssAPI;
 
-    @Before
-    public void setup() {
-        try {
-            XSSFilterImpl xssFilter = new XSSFilterImpl();
-            setDefaultHandler(xssFilter, "./src/main/resources/SLING-INF/content/config.xml");
-
-            xssAPI = new XSSAPIImpl();
-            Whitebox.invokeMethod(xssAPI, "activate");
-            Field filterField = XSSAPIImpl.class.getDeclaredField("xssFilter");
-            filterField.setAccessible(true);
-            filterField.set(xssAPI, xssFilter);
-
-            ResourceResolver mockResolver = mock(ResourceResolver.class);
-            when(mockResolver.map(anyString())).thenAnswer(new Answer() {
-                public Object answer(InvocationOnMock invocation) {
-                    Object[] args = invocation.getArguments();
-                    String url = (String) args[0];
-                    return url.replaceAll("jcr:", "_jcr_");
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    /**
+     * Due to how OSGi mocks are currently designed, it's impossible to unregister services. Therefore this method has to be explicitly
+     * called by each method that needs the default setup.
+     *
+     * The only exception currently is {@link #testGetValidHrefWithoutHrefConfig()}.
+     */
+    private void setUp() {
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.registerInjectActivateService(new XSSFilterImpl());
+        context.registerInjectActivateService(new XSSAPIImpl());
+        xssAPI = context.getService(XSSAPI.class);
     }
 
-    private static void setDefaultHandler(XSSFilterImpl xssFilter, String filename) throws Exception {
-        InputStream policyStream = new FileInputStream(filename);
-        Policy policy = Policy.getInstance(policyStream);
-        AntiSamy antiSamy = new AntiSamy(policy);
-
-        PolicyHandler mockPolicyHandler = mock(PolicyHandler.class);
-        when(mockPolicyHandler.getPolicy()).thenReturn(policy);
-        when(mockPolicyHandler.getAntiSamy()).thenReturn(antiSamy);
-
-        Whitebox.invokeMethod(xssFilter, "setDefaultHandler", mockPolicyHandler);
+    @After
+    public void tearDown() {
+        xssAPI = null;
     }
 
     @Test
     public void testEncodeForHTML() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 //
@@ -115,6 +93,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testEncodeForHTMLAttr() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 //
@@ -137,6 +116,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testEncodeForXML() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 //
@@ -159,6 +139,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testEncodeForXMLAttr() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 //
@@ -182,6 +163,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testFilterHTML() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 {null, ""},
@@ -221,8 +203,7 @@ public class XSSAPIImplTest {
         }
     }
 
-    @Test
-    public void testGetValidHref() {
+    private void testHref() {
         String[][] testData = {
                 //         Href                                        Expected Result
                 //
@@ -231,16 +212,16 @@ public class XSSAPIImplTest {
                         "test?discount=25%25"
                 },
                 {
-                    "/base?backHref=%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
-                    "/base?backHref=%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29"
+                        "/base?backHref=%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
+                        "/base?backHref=%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29"
                 },
                 {
-                    "%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
-                    ""
+                        "%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
+                        ""
                 },
                 {
-                    "&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)",
-                    ""
+                        "&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)",
+                        ""
                 },
                 {"%2Fscripts%2Ftest.js", "%2Fscripts%2Ftest.js"},
                 {"/etc/commerce/collections/中文", "/etc/commerce/collections/中文"},
@@ -326,20 +307,35 @@ public class XSSAPIImplTest {
     }
 
     @Test
+    public void testGetValidHref() {
+        setUp();
+        testHref();
+    }
+
+    @Test
     public void testGetValidHrefWithoutHrefConfig() throws Exception {
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.load().binaryFile("/configWithoutHref.xml", "/apps/sling/xss/configWithoutHref.xml");
+        context.registerInjectActivateService(new XSSFilterImpl(), new HashMap<String, Object>(){{
+            put("policyPath", "/apps/sling/xss/configWithoutHref.xml");
+        }});
+        context.registerInjectActivateService(new XSSAPIImpl());
+        xssAPI = context.getService(XSSAPI.class);
+        ServiceReference<ResourceChangeListener> xssFilterRCL = context.bundleContext().getServiceReference(ResourceChangeListener.class);
+        assertEquals("/apps/sling/xss/configWithoutHref.xml", xssFilterRCL.getProperty(ResourceChangeListener.PATHS));
         // Load AntiSamy configuration without href filter
         XSSFilterImpl xssFilter = Whitebox.getInternalState(xssAPI, "xssFilter");
-        setDefaultHandler(xssFilter, "./src/test/resources/configWithoutHref.xml");
 
         Attribute hrefAttribute = Whitebox.getInternalState(xssFilter, "hrefAttribute");
-        Assert.assertEquals(hrefAttribute, XSSFilterImpl.DEFAULT_HREF_ATTRIBUTE);
+        assertEquals(hrefAttribute, XSSFilterImpl.DEFAULT_HREF_ATTRIBUTE);
 
         // Run same tests again to check default configuration
-        testGetValidHref();
+        testHref();
     }
 
     @Test
     public void testGetValidInteger() {
+        setUp();
         String[][] testData = {
                 //         Source                                        Expected Result
                 //
@@ -355,7 +351,7 @@ public class XSSAPIImplTest {
 
         for (String[] aTestData : testData) {
             String source = aTestData[0];
-            Integer expected = (aTestData[1] != null) ? new Integer(aTestData[1]) : null;
+            Integer expected = (aTestData[1] != null) ? Integer.parseInt(aTestData[1]) : null;
 
             TestCase.assertEquals("Validating integer '" + source + "'", expected, xssAPI.getValidInteger(source, 123));
         }
@@ -363,6 +359,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidLong() {
+        setUp();
         String[][] testData = {
                 //         Source                                        Expected Result
                 //
@@ -378,7 +375,7 @@ public class XSSAPIImplTest {
 
         for (String[] aTestData : testData) {
             String source = aTestData[0];
-            Long expected = (aTestData[1] != null) ? new Long(aTestData[1]) : null;
+            Long expected = (aTestData[1] != null) ? Long.parseLong(aTestData[1]) : null;
 
             TestCase.assertEquals("Validating long '" + source + "'", expected, xssAPI.getValidLong(source, 123));
         }
@@ -386,6 +383,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidDouble() {
+        setUp();
         String[][] testData = {
                 //         Source                                        Expected Result
                 //
@@ -400,7 +398,7 @@ public class XSSAPIImplTest {
 
         for (String[] aTestData : testData) {
             String source = aTestData[0];
-            Double expected = (aTestData[1] != null) ? new Double(aTestData[1]) : null;
+            Double expected = (aTestData[1] != null) ? Double.parseDouble(aTestData[1]) : null;
 
             TestCase.assertEquals("Validating double '" + source + "'", expected, xssAPI.getValidDouble(source, 123));
         }
@@ -408,6 +406,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidDimension() {
+        setUp();
         String[][] testData = {
                 //         Source                                        Expected Result
                 //
@@ -438,6 +437,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testEncodeForJSString() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 //
@@ -463,6 +463,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidJSToken() {
+        setUp();
         String[][] testData = {
                 //         Source                            Expected Result
                 //
@@ -495,6 +496,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testEncodeForCSSString() {
+        setUp();
         String[][] testData = {
                 // Source   Expected result
                 {null, null},
@@ -515,6 +517,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidStyleToken() {
+        setUp();
         String[][] testData = {
                 // Source                           Expected result
                 {null                               , RUBBISH},
@@ -579,7 +582,7 @@ public class XSSAPIImplTest {
             String expected = aTestData[1];
 
             String result = xssAPI.getValidStyleToken(source, RUBBISH);
-            if (!result.equals(expected)) {
+            if (result == null || !result.equals(expected)) {
                 fail("Validating style token '" + source + "', expecting '" + expected + "', but got '" + result + "'");
             }
         }
@@ -587,6 +590,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidCSSColor() {
+        setUp();
         String[][] testData = {
                 //      Source                          Expected Result
                 //
@@ -615,7 +619,7 @@ public class XSSAPIImplTest {
             String expected = aTestData[1];
 
             String result = xssAPI.getValidCSSColor(source, RUBBISH);
-            if (!result.equals(expected)) {
+            if (result == null || !result.equals(expected)) {
                 fail("Validating CSS Color '" + source + "', expecting '" + expected + "', but got '" + result + "'");
             }
         }
@@ -623,6 +627,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidMultiLineComment() {
+        setUp();
         String[][] testData = {
                 //Source            Expected Result
 
@@ -644,6 +649,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidJSON() {
+        setUp();
         String[][] testData = {
                 {null,      RUBBISH_JSON},
                 {"",        ""},
@@ -683,6 +689,7 @@ public class XSSAPIImplTest {
 
     @Test
     public void testGetValidXML() {
+        setUp();
         String[][] testData = {
                 {null,      RUBBISH_XML},
                 {"",        ""},
