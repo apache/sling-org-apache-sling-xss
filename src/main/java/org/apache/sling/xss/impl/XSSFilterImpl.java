@@ -17,7 +17,6 @@
 package org.apache.sling.xss.impl;
 
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -193,7 +192,7 @@ public class XSSFilterImpl implements XSSFilter {
                 return runHrefValidation(url);
             }
             return runHrefValidation(xmlDecodedURL);
-        } catch (UnsupportedEncodingException e) {
+        } catch (Exception e) {
             logger.warn("Unable to decode url.", e);
             logger.debug("URL input: {}", url);
         }

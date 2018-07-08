@@ -54,6 +54,9 @@ public class XSSFilterImplTest {
         checkIsValid("", true);
         checkIsValid("%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29", false);
         checkIsValid("&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)", false);
+        checkIsValid("%-12", false);
+        checkIsValid("/promotion/25%/", false);
+
     }
 
     private void checkIsValid(String input, boolean valid) {
