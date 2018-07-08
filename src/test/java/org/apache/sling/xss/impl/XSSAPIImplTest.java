@@ -24,7 +24,6 @@ import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.apache.sling.xss.XSSAPI;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.osgi.framework.ServiceReference;
@@ -288,6 +287,14 @@ public class XSSAPIImplTest {
                 {
                         "https://sling.apache.org/#fragment:test",
                         "https://sling.apache.org/#fragment:test"
+                },
+                {
+                        "https://sling.apache.org/test/",
+                        "https://sling.apache.org/test/"
+                },
+                {
+                        "/content/test/",
+                        "/content/test/"
                 }
         };
 

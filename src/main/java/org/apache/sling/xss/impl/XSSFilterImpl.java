@@ -113,7 +113,7 @@ public class XSSFilterImpl implements XSSFilter {
     public static final String QUERY = "(?:" + PCHAR + "|/|\\?)*";
     public static final String SEGMENT_NZ = "(?:" + PCHAR + ")+";
     public static final String SEGMENT_NZ_NC = "(?:" + UNRESERVED_CHARACTERS + "|" + PCT_ENCODED + "|" + SUB_DELIMS + "|@)+";
-    public static final String PATH_ABEMPTY = "(?:/|(/" + SEGMENT_NZ + ")*)";
+    public static final String PATH_ABEMPTY = "(?:/|(/" + SEGMENT_NZ + "/?)*)";
     public static final String PATH_ABSOLUTE = "/(?:" + SEGMENT_NZ + PATH_ABEMPTY + ")?";
     public static final String PATH_NOSCHEME = SEGMENT_NZ_NC + "(?:/|(/" + SEGMENT_NZ + ")*)";
     public static final String PATH_ROOTLESS = SEGMENT_NZ + "(?:/|(/" + SEGMENT_NZ + ")*)";
