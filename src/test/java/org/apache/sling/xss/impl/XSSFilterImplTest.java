@@ -56,7 +56,10 @@ public class XSSFilterImplTest {
         checkIsValid("&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)", false);
         checkIsValid("%-12", false);
         checkIsValid("/promotion/25%/", false);
-
+        checkIsValid("#", true);
+        checkIsValid("?foo=bar", true);
+        checkIsValid("#javascript:alert(23)", true);
+        checkIsValid("#\">", false);
     }
 
     private void checkIsValid(String input, boolean valid) {

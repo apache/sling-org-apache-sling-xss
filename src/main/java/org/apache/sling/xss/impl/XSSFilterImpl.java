@@ -119,14 +119,13 @@ public class XSSFilterImpl implements XSSFilter {
     public static final String PATH_EMPTY = "(?:^$)";
     public static final String RELATIVE_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY +  ")|" +
             "(?:" + PATH_ABSOLUTE + ")|" +
-            "(?:" + PATH_ROOTLESS + ")|" +
-            PATH_EMPTY + ")";
+            "(?:" + PATH_ROOTLESS + "))";
     public static final String HIER_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY + ")|" +
             "(?:" + PATH_ABSOLUTE + ")|" +
             "(?:" + PATH_NOSCHEME + ")|" +
             PATH_EMPTY + ")";
 
-    public static final String RELATIVE_REF = "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
+    public static final String RELATIVE_REF = "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "?(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
     public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
 
 
