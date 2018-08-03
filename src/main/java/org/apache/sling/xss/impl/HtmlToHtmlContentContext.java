@@ -18,6 +18,7 @@ package org.apache.sling.xss.impl;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.owasp.validator.html.CleanResults;
 import org.owasp.validator.html.PolicyException;
 import org.owasp.validator.html.ScanException;
@@ -43,14 +44,16 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
      */
     @Override
     public boolean check(final PolicyHandler policyHandler, final String str) {
-        try {
-            return policyHandler.getAntiSamy().scan(str).getNumberOfErrors() == 0;
-        } catch (final ScanException se) {
-            log.warn("Unable to scan input.", se);
-            log.debug("Provided input: {}", str);
-        } catch (final PolicyException pe) {
-            log.warn("Unable to check input.", pe);
-            log.debug("Provided input: {}", str);
+        if (StringUtils.isNotEmpty(str)) {
+            try {
+                return policyHandler.getAntiSamy().scan(str).getNumberOfErrors() == 0;
+            } catch (final ScanException se) {
+                log.warn("Unable to scan input.", se);
+                log.debug("Provided input: {}", str);
+            } catch (final PolicyException pe) {
+                log.warn("Unable to check input.", pe);
+                log.debug("Provided input: {}", str);
+            }
         }
         return false;
     }
@@ -60,26 +63,28 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
      */
     @Override
     public String filter(final PolicyHandler policyHandler, final String str) {
-        try {
-            log.debug("Protecting (HTML -> HTML) :\n{}", str);
-            final CleanResults results = policyHandler.getAntiSamy().scan(str);
-            final String cleaned = results.getCleanHTML();
-            @SuppressWarnings("unchecked")
-            final List<String> errors = results.getErrorMessages();
-            for (final String error : errors) {
-                log.info("AntiSamy warning: {}", error);
-            }
-            log.debug("Protected (HTML -> HTML):\n{}", cleaned);
+        if (StringUtils.isNotEmpty(str)) {
+            try {
+                log.debug("Protecting (HTML -> HTML) :\n{}", str);
+                final CleanResults results = policyHandler.getAntiSamy().scan(str);
+                final String cleaned = results.getCleanHTML();
+                @SuppressWarnings("unchecked")
+                final List<String> errors = results.getErrorMessages();
+                for (final String error : errors) {
+                    log.info("AntiSamy warning: {}", error);
+                }
+                log.debug("Protected (HTML -> HTML):\n{}", cleaned);
 
-            return cleaned;
-        } catch (final ScanException se) {
-            log.warn("Unable to scan input.", se);
-            log.debug("Provided input: {}", str);
-        } catch (final PolicyException pe) {
-            log.warn("Unable to check input.", pe);
-            log.debug("Provided input: {}", str);
+                return cleaned;
+            } catch (final ScanException se) {
+                log.warn("Unable to scan input.", se);
+                log.debug("Provided input: {}", str);
+            } catch (final PolicyException pe) {
+                log.warn("Unable to check input.", pe);
+                log.debug("Provided input: {}", str);
+            }
         }
-        return "";
+        return StringUtils.EMPTY;
     }
 
     /**
