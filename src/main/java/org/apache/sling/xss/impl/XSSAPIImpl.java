@@ -19,7 +19,7 @@ package org.apache.sling.xss.impl;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -202,28 +202,25 @@ public class XSSAPIImpl implements XSSAPI {
                 }
             }
             if (mangledPath != null) {
-                try {
-                    URI mangledURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), mangledPath,
-                            uri.getRawQuery(), uri.getRawFragment());
-                    StringBuilder uriBuilder = new StringBuilder();
-                    if (StringUtils.isNotEmpty(mangledURI.getScheme()) && StringUtils.isNotEmpty(mangledURI.getAuthority())) {
-                        uriBuilder.append(mangledURI.getScheme()).append("://").append(mangledURI.getRawAuthority());
-                    }
-                    if (StringUtils.isNotEmpty(mangledURI.getPath())) {
-                        uriBuilder.append(mangledURI.getRawPath());
-                    }
-                    if (StringUtils.isNotEmpty(mangledURI.getQuery())) {
-                        uriBuilder.append("?").append(mangledURI.getRawQuery());
-                    }
-                    if (StringUtils.isNotEmpty(mangledURI.getFragment())) {
-                        uriBuilder.append("#").append(mangledURI.getRawFragment());
-                    }
-                    return uriBuilder.toString();
-                } catch (URISyntaxException e) {
-                    LOGGER.warn("Invalid URI.", e);
+                URI mangledURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),
+                        URLDecoder.decode(mangledPath, "UTF-8"),
+                        uri.getRawQuery(), uri.getRawFragment());
+                StringBuilder uriBuilder = new StringBuilder();
+                if (StringUtils.isNotEmpty(mangledURI.getScheme()) && StringUtils.isNotEmpty(mangledURI.getAuthority())) {
+                    uriBuilder.append(mangledURI.getScheme()).append("://").append(mangledURI.getRawAuthority());
                 }
+                if (StringUtils.isNotEmpty(mangledURI.getPath())) {
+                    uriBuilder.append(mangledURI.getRawPath());
+                }
+                if (StringUtils.isNotEmpty(mangledURI.getQuery())) {
+                    uriBuilder.append("?").append(mangledURI.getRawQuery());
+                }
+                if (StringUtils.isNotEmpty(mangledURI.getFragment())) {
+                    uriBuilder.append("#").append(mangledURI.getRawFragment());
+                }
+                return uriBuilder.toString();
             }
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             LOGGER.warn("Invalid URI.", e);
         }
         return absPath;
