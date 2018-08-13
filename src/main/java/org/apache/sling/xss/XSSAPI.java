@@ -19,9 +19,8 @@
 package org.apache.sling.xss;
 
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -92,7 +91,7 @@ public interface XSSAPI {
      * @param url the source URL
      * @return a sanitized URL (possibly empty)
      */
-    @Nonnull
+    @NotNull
     String getValidHref(@Nullable String url);
 
     /**
@@ -234,7 +233,7 @@ public interface XSSAPI {
      * @param source a string containing the source HTML
      * @return a string containing the sanitized HTML which may be an empty string if {@code source} is {@code null} or empty
      */
-    @Nonnull
+    @NotNull
     String filterHTML(@Nullable String source);
 
 }

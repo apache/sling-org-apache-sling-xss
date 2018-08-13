@@ -26,8 +26,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.api.resource.LoginException;
@@ -40,6 +38,7 @@ import org.apache.sling.api.resource.observation.ResourceChangeListener;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.xss.ProtectionContext;
 import org.apache.sling.xss.XSSFilter;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -198,7 +197,7 @@ public class XSSFilterImpl implements XSSFilter {
         return false;
     }
 
-    private boolean runHrefValidation(@Nonnull String url) {
+    private boolean runHrefValidation(@NotNull String url) {
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
         boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
         if (!isValid) {
@@ -306,7 +305,7 @@ public class XSSFilterImpl implements XSSFilter {
 
     private class PolicyChangeListener implements ResourceChangeListener, ExternalResourceChangeListener {
         @Override
-        public void onChange(@Nonnull List<ResourceChange> resourceChanges) {
+        public void onChange(@NotNull List<ResourceChange> resourceChanges) {
             for (ResourceChange change : resourceChanges) {
                 if (change.getPath().endsWith(policyPath)) {
                     logger.info("Detected policy file change ({}) at {}. Updating policy handler.", change.getType().name(), change.getPath());

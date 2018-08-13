@@ -19,7 +19,7 @@
  *
  * @version 2.0.0
  */
-@Version("2.0.0")
+@Version("2.0.1")
 package org.apache.sling.xss;
 
 import org.osgi.annotation.versioning.Version;

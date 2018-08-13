@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
 import javax.json.Json;
 import javax.json.JsonReaderFactory;
 import javax.xml.parsers.SAXParser;
@@ -35,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.xss.ProtectionContext;
 import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.XSSFilter;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -230,7 +230,7 @@ public class XSSAPIImpl implements XSSAPI {
      * @see org.apache.sling.xss.XSSAPI#getValidHref(String)
      */
     @Override
-    @Nonnull
+    @NotNull
     public String getValidHref(final String url) {
         if (StringUtils.isNotEmpty(url)) {
             // Percent-encode characters that are not allowed in unquoted
@@ -469,7 +469,7 @@ public class XSSAPIImpl implements XSSAPI {
      * @see org.apache.sling.xss.XSSAPI#filterHTML(String)
      */
     @Override
-    @Nonnull
+    @NotNull
     public String filterHTML(String source) {
         return xssFilter.filter(ProtectionContext.HTML_HTML_CONTENT, source);
     }
