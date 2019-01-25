@@ -114,9 +114,6 @@
                             esapi;inline=true,
                             encoder;inline=true
                         </Embed-Dependency>
-                        <Sling-Initial-Content>
-                            SLING-INF/content;path:=/libs/sling/xss;overwrite:=true;ignoreImportProviders:=xml
-                        </Sling-Initial-Content>
                     </instructions>
                 </configuration>
             </plugin>

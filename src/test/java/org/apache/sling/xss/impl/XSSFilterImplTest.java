@@ -18,6 +18,8 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
+import org.apache.sling.api.resource.PersistenceException;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.apache.sling.xss.XSSFilter;
@@ -36,20 +38,40 @@ public class XSSFilterImplTest {
 
     private XSSFilter xssFilter;
 
-    @Before
-    public void setUp() {
-        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
-        context.registerInjectActivateService(new XSSFilterImpl());
-        xssFilter = context.getService(XSSFilter.class);
-    }
-
     @After
     public void tearDown() {
         xssFilter = null;
     }
 
     @Test
+    public void testResourceBasedPolicy() {
+        context.load().binaryFile(this.getClass().getClassLoader().getResourceAsStream(XSSFilterImpl.EMBEDDED_POLICY_PATH),
+                "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH);
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.registerInjectActivateService(new XSSFilterImpl());
+        xssFilter = context.getService(XSSFilter.class);
+        XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
+        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
+        assertFalse("Expected a Resource based policy.", antiSamyPolicy.isEmbedded());
+        assertEquals("This is not the policy we're looking for.", "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH, antiSamyPolicy.getPath());
+    }
+
+    @Test
+    public void testDefaultEmbeddedPolicy() {
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.registerInjectActivateService(new XSSFilterImpl());
+        xssFilter = context.getService(XSSFilter.class);
+        XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
+        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
+        assertTrue("Expected the default embedded policy.", antiSamyPolicy.isEmbedded());
+        assertEquals("This is not the policy we're looking for.", XSSFilterImpl.EMBEDDED_POLICY_PATH, antiSamyPolicy.getPath());
+    }
+
+    @Test
     public void isValidHref() {
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.registerInjectActivateService(new XSSFilterImpl());
+        xssFilter = context.getService(XSSFilter.class);
         checkIsValid("javascript:alert(1)", false);
         checkIsValid("", true);
         checkIsValid("%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29", false);
