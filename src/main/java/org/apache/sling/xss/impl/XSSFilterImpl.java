@@ -140,16 +140,17 @@ public class XSSFilterImpl implements XSSFilter {
     );
 
     static final String DEFAULT_POLICY_PATH = "sling/xss/config.xml";
-    private static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";
-    private PolicyHandler policyHandler;
+    static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";
     private Attribute hrefAttribute;
     private String policyPath;
-    private boolean policyLoadedFromFile;
     private ServiceRegistration<ResourceChangeListener> serviceRegistration;
 
     // available contexts
     private final XSSFilterRule htmlHtmlContext = new HtmlToHtmlContentContext();
     private final XSSFilterRule plainHtmlContext = new PlainTextToHtmlContentContext();
+
+    private volatile AntiSamyPolicy activePolicy;
+    private volatile PolicyHandler policyHandler;
 
     @Reference
     private ResourceResolverFactory resourceResolverFactory;
@@ -197,6 +198,10 @@ public class XSSFilterImpl implements XSSFilter {
         return false;
     }
 
+    AntiSamyPolicy getActivePolicy() {
+        return activePolicy;
+    }
+
     private boolean runHrefValidation(@NotNull String url) {
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
         boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
@@ -210,7 +215,6 @@ public class XSSFilterImpl implements XSSFilter {
     @Modified
     protected void activate(ComponentContext componentContext, Configuration configuration) {
         // load default handler
-        policyLoadedFromFile = false;
         policyPath = configuration.policyPath();
         updatePolicy();
         if (serviceRegistration != null) {
@@ -219,17 +223,15 @@ public class XSSFilterImpl implements XSSFilter {
         Dictionary<String, Object> rclProperties = new Hashtable<>();
         rclProperties.put(ResourceChangeListener.CHANGES, new String[]{"ADDED", "CHANGED", "REMOVED"});
         rclProperties.put(ResourceChangeListener.PATHS, policyPath);
-        if (policyLoadedFromFile) {
-            serviceRegistration = componentContext.getBundleContext()
-                    .registerService(ResourceChangeListener.class, new PolicyChangeListener(), rclProperties);
-            logger.info("Registered a resource change listener for file {}.", policyPath);
-        }
+        serviceRegistration = componentContext.getBundleContext()
+                .registerService(ResourceChangeListener.class, new PolicyChangeListener(), rclProperties);
+        logger.info("Registered a resource change listener for file {}.", policyPath);
     }
 
     @Deactivate
     protected void deactivate() {
         if (serviceRegistration != null) {
-            serviceRegistration.unregister();;
+            serviceRegistration.unregister();
         }
     }
 
@@ -238,11 +240,12 @@ public class XSSFilterImpl implements XSSFilter {
         try (final ResourceResolver xssResourceResolver = resourceResolverFactory.getServiceResourceResolver(null)) {
             Resource policyResource = xssResourceResolver.getResource(policyPath);
             if (policyResource != null) {
-                try (InputStream policyStream = policyResource.adaptTo(InputStream.class)) {
+                activePolicy = new AntiSamyPolicy(false, policyResource.getPath());
+                try (InputStream policyStream = activePolicy.read()) {
                     setPolicyHandler(new PolicyHandler(policyStream));
-                    logger.info("Installed policy from {}.", policyResource.getPath());
-                    policyLoadedFromFile = true;
+                    logger.info("Installed policy from {}.", activePolicy.path);
                 } catch (Exception e) {
+                    activePolicy = null;
                     Throwable[] suppressed = e.getSuppressed();
                     if (suppressed.length > 0) {
                         for (Throwable t : suppressed) {
@@ -259,10 +262,12 @@ public class XSSFilterImpl implements XSSFilter {
             // the content was not installed but the service is active; let's use the embedded file for the default handler
             logger.info("Could not find a policy file at the configured location {}. Attempting to use the default resource embedded in" +
                     " the bundle.", policyPath);
-            try (InputStream policyStream = this.getClass().getClassLoader().getResourceAsStream(EMBEDDED_POLICY_PATH)) {
+            activePolicy = new AntiSamyPolicy(true, EMBEDDED_POLICY_PATH);
+            try (InputStream policyStream = activePolicy.read()) {
                 setPolicyHandler(new PolicyHandler(policyStream));
-                logger.info("Installed policy from the embedded {} file from the bundle.", EMBEDDED_POLICY_PATH);
+                logger.info("Installed policy from the embedded {} file from the bundle.", activePolicy.path);
             } catch (Exception e) {
+                activePolicy = null;
                 Throwable[] suppressed = e.getSuppressed();
                 if (suppressed.length > 0) {
                     for (Throwable t : suppressed) {
@@ -272,7 +277,7 @@ public class XSSFilterImpl implements XSSFilter {
                 logger.error("Unable to load policy from embedded policy file.", e);
             }
         }
-        if (policyHandler == null) {
+        if (policyHandler == null || activePolicy == null) {
             throw new IllegalStateException("Cannot load a policy handler.");
         }
     }
@@ -312,6 +317,40 @@ public class XSSFilterImpl implements XSSFilter {
                     updatePolicy();
                 }
             }
+        }
+    }
+
+    class AntiSamyPolicy {
+        private final boolean embedded;
+        private final String path;
+
+        AntiSamyPolicy(boolean embedded, String path) {
+            this.embedded = embedded;
+            this.path = path;
+        }
+
+        InputStream read() {
+            if (embedded) {
+                return this.getClass().getClassLoader().getResourceAsStream(EMBEDDED_POLICY_PATH);
+            }
+            try (final ResourceResolver xssResourceResolver = resourceResolverFactory.getServiceResourceResolver(null)) {
+                Resource policyResource = xssResourceResolver.getResource(path);
+                if (policyResource != null) {
+                    return policyResource.adaptTo(InputStream.class);
+                } else {
+                    throw new IllegalStateException("Cannot read policy from " + path + ".");
+                }
+            } catch (LoginException e) {
+                throw new IllegalStateException("Cannot read policy.", e);
+            }
+        }
+
+        boolean isEmbedded() {
+            return embedded;
+        }
+
+        String getPath() {
+            return path;
         }
     }
 }
