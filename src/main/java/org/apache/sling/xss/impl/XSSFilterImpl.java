@@ -141,7 +141,6 @@ public class XSSFilterImpl implements XSSFilter {
 
     static final String DEFAULT_POLICY_PATH = "sling/xss/config.xml";
     static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";
-    private PolicyHandler policyHandler;
     private Attribute hrefAttribute;
     private String policyPath;
     private ServiceRegistration<ResourceChangeListener> serviceRegistration;
@@ -150,7 +149,8 @@ public class XSSFilterImpl implements XSSFilter {
     private final XSSFilterRule htmlHtmlContext = new HtmlToHtmlContentContext();
     private final XSSFilterRule plainHtmlContext = new PlainTextToHtmlContentContext();
 
-    private AntiSamyPolicy activePolicy;
+    private volatile AntiSamyPolicy activePolicy;
+    private volatile PolicyHandler policyHandler;
 
     @Reference
     private ResourceResolverFactory resourceResolverFactory;
@@ -321,8 +321,8 @@ public class XSSFilterImpl implements XSSFilter {
     }
 
     class AntiSamyPolicy {
-        private boolean embedded;
-        private String path;
+        private final boolean embedded;
+        private final String path;
 
         AntiSamyPolicy(boolean embedded, String path) {
             this.embedded = embedded;
