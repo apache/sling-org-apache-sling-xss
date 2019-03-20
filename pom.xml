@@ -112,7 +112,8 @@
                         <Embed-Dependency>
                             antisamy;inline=true,
                             esapi;inline=true,
-                            encoder;inline=true
+                            encoder;inline=true,
+                            xml-apis;inline=true
                         </Embed-Dependency>
                     </instructions>
                 </configuration>
