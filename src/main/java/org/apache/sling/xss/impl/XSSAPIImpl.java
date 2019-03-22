@@ -70,19 +70,25 @@ public class XSSAPIImpl implements XSSAPI {
 
     @Activate
     protected void activate() {
-        factory = SAXParserFactory.newInstance();
-        factory.setValidating(false);
-        factory.setNamespaceAware(true);
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
-            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        } catch (Exception e) {
-            LOGGER.error("SAX parser configuration error: " + e.getMessage(), e);
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+            factory = SAXParserFactory.newInstance();
+            factory.setValidating(false);
+            factory.setNamespaceAware(true);
+            try {
+                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            } catch (Exception e) {
+                LOGGER.error("SAX parser configuration error: " + e.getMessage(), e);
+            }
+            Map<String, Object> config = new HashMap<>();
+            config.put("org.apache.johnzon.supports-comments", true);
+            jsonReaderFactory = Json.createReaderFactory(config);
+        } finally {
+            Thread.currentThread().setContextClassLoader(tccl);
         }
-        Map<String, Object> config = new HashMap<>();
-        config.put("org.apache.johnzon.supports-comments", true);
-        jsonReaderFactory = Json.createReaderFactory(config);
     }
 
     @Deactivate

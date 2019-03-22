@@ -81,6 +81,7 @@
                         <Import-Package>
                             !bsh,
                             !nu.xom,
+                            !org.apache.bcel.*,
                             !org.apache.log4j.spi,
                             !org.apache.log4j.xml,
                             !org.w3c.dom.svg,
@@ -113,7 +114,8 @@
                             antisamy;inline=true,
                             esapi;inline=true,
                             encoder;inline=true,
-                            xml-apis;inline=true
+                            xml-apis;inline=true,
+                            xalan;inline=true
                         </Embed-Dependency>
                     </instructions>
                 </configuration>
@@ -130,46 +132,6 @@
             <artifactId>antisamy</artifactId>
             <version>1.5.7</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>nu.xom</groupId>
-                    <artifactId>com.springsource.nu.xom</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>bsh</groupId>
-                    <artifactId>bsh</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.axsl.org.w3c.dom.svg</groupId>
-                    <artifactId>svg-dom-java</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-jxpath</groupId>
-                    <artifactId>commons-jxpath</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-digester3</artifactId>
-                </exclusion>
-                <!-- #40108 - XSS protection does not work on Java 5 -->
-                <!-- Replace batik-css 1.7 with 1.6. See below.      -->
-                <exclusion>
-                    <groupId>org.apache.xmlgraphics</groupId>
-                    <artifactId>batik-css</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <!-- <#40108 - XSS protection does not work on Java 5>  -->
-        <!-- Replace batik-css 1.7 with 1.6 to avoid breaking   -->
-        <!-- the build on Java 5. The batik-css 1.6 pom doesn't -->
-        <!-- have proper dependency metadata, so we need to     -->
-        <!-- reconstruct the full list here.                    -->
-        <!-- TODO: Remove this workaround when we dump Java 5.  -->
-        <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>batik-css</artifactId>
-            <version>1.9.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>xml-apis</groupId>
@@ -177,35 +139,17 @@
             <version>1.4.01</version>
             <scope>provided</scope>
         </dependency>
-        <!-- </#40108 - XSS protection does not work on Java 5> -->
-
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>2.7.0</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.owasp.esapi</groupId>
             <artifactId>esapi</artifactId>
             <version>2.1.0</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>nu.xom</groupId>
-                    <artifactId>com.springsource.nu.xom</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>bsh</groupId>
-                    <artifactId>bsh</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.axsl.org.w3c.dom.svg</groupId>
-                    <artifactId>svg-dom-java</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-jxpath</groupId>
-                    <artifactId>commons-jxpath</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-digester3</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -260,6 +204,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
@@ -274,16 +222,6 @@
             <artifactId>powermock-api-mockito</artifactId>
             <version>1.6.5</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.sling</groupId>
-            <artifactId>org.apache.sling.commons.johnzon</artifactId>
-            <version>1.0.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
