@@ -109,12 +109,17 @@
                             org.apache.commons.configuration.*,
                             org.apache.commons.logging.impl,
                             org.cyberneko.html.*,
+                            javax.xml.parsers;-split-package:=merge-first,
+                            javax.xml.transform;-split-package:=merge-first
                         </Private-Package>
+                        <Export-Package>
+                            org.apache.sling.xss
+                        </Export-Package>
                         <Embed-Dependency>
                             antisamy;inline=true,
                             esapi;inline=true,
                             encoder;inline=true,
-                            xml-apis;inline=true,
+                            xml-apis,
                             xalan;inline=true
                         </Embed-Dependency>
                     </instructions>
