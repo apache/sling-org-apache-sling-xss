@@ -19,17 +19,26 @@
 
 package javax.xml.transform;
 
-
 /**
- * This class is duplicated for each JAXP subpackage so keep it in
+ * <p>This class is duplicated for each JAXP subpackage so keep it in
  * sync.  It is package private.
  *
- * This code is designed to implement the JAXP 1.1 spec pluggability
+ * <p>This code is designed to implement the JAXP 1.1 spec pluggability
  * feature and is designed to run on JDK version 1.1 and later including
  * JVMs that perform early linking like the Microsoft JVM in IE 5.  Note
  * however that it must be compiled on a JDK version 1.2 or later system
  * since it calls Thread#getContextClassLoader().  The code also runs both
  * as part of an unbundled jar file and when bundled as part of the JDK.
+ *
+ * <p><strong>NOTE</strong>:
+ * <p>This class is included in order to make sure that all {@code javax.xml.parsers} factories are the ones embedded by the bundle
+ * and not the ones provided by the underlying JVM or platform.
+ *
+ * <p>For more details check the following issues:
+ * <ol>
+ *      <li>https://issues.apache.org/jira/browse/SLING-8321</li>
+ *      <li>https://issues.apache.org/jira/browse/SLING-8328</li>
+ * </ol>
  */
 final class FactoryFinder {
     
