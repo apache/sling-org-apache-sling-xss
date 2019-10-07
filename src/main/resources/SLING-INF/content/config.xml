@@ -1170,6 +1170,10 @@ http://www.w3.org/TR/html401/struct/global.html
             </attribute>
         </tag>
 
+        <!-- SLING-8771 - HTML5 figure and figcaption http://html5doctor.com/the-figure-figcaption-elements/ -->
+        <tag name="figure" action="validate"/>
+        <tag name="figcaption" action="validate"/>
+
     </tag-rules>
 
 

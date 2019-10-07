@@ -200,6 +200,24 @@ public class AntiSamyPolicyTest {
         }
     }
 
+    
+    /**
+     * Test to verify the fix for SLING-8771 - XSS Configuration should allow the HTML5 figure and figcaption tags
+     */
+    @Test
+    public void testIssueSLING8771() throws Exception {
+    	    	
+        TestInput[] tests = new TestInput[]{
+                new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>", 
+                			   "<figure", true),
+                new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>", 
+         			   "<figcaption", true),
+        };
+        for (TestInput testInput : tests) {
+            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+        }
+    }
+    
     private void testOutputContains(String input, String containedString, boolean contains) throws Exception {
         testOutputContains(input, containedString, contains, false);
     }
