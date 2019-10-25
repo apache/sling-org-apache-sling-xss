@@ -127,6 +127,12 @@ public class XSSFilterImpl implements XSSFilter {
     public static final String RELATIVE_REF = "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "?(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
     public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
 
+    private static final Pattern ON_SITE_SIMPLIFIED = Pattern.compile("([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" +
+            "(\\w)+)");
+    private static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)" +
+            "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
+
+    private static final Pattern[] BACKUP_PATTERNS = new Pattern[] {ON_SITE_SIMPLIFIED, OFF_SITE_SIMPLIFIED};
 
     // Default href configuration copied from the config.xml supplied with AntiSamy
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
@@ -206,7 +212,21 @@ public class XSSFilterImpl implements XSSFilter {
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
         boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
         if (!isValid) {
-            isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
+            try {
+                isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
+            } catch (StackOverflowError e) {
+                logger.warn("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
+                try {
+                    for (Pattern p : BACKUP_PATTERNS) {
+                        isValid = p.matcher(url.toLowerCase()).matches();
+                        if (isValid) {
+                            break;
+                        }
+                    }
+                } catch (StackOverflowError inner) {
+                    logger.error(String.format("Cannot validate url %s.", url), inner);
+                }
+            }
         }
         return isValid;
     }
