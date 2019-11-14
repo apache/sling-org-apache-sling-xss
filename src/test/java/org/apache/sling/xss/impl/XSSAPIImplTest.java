@@ -313,6 +313,18 @@ public class XSSAPIImplTest {
                 {
                         "/content/test/",
                         "/content/test/"
+                },
+                { // namespace mangling + encoded parameter values
+                        "/path/to/page/jcr:content/par?key=%25text",
+                        "/path/to/page/_jcr_content/par?key=%25text"
+                },
+                { // namespace mangling + incorrect escape sequence
+                        "/path/to/page/jcr:content/par?key=%text",
+                        ""
+                },
+                { // incorrect escape sequence
+                        "/path/to/page/_jcr_content/par?key=%text",
+                        ""
                 }
         };
 

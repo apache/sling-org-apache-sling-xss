@@ -18,7 +18,9 @@ package org.apache.sling.xss.impl;
 
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
@@ -189,45 +191,41 @@ public class XSSAPIImpl implements XSSAPI {
 
     private static final String MANGLE_NAMESPACE_IN_PREFIX = "/_";
 
-    private String mangleNamespaces(String absPath) {
+    private String mangleNamespaces(String absPath) throws URISyntaxException, UnsupportedEncodingException {
         String mangledPath = null;
-        try {
-            URI uri = new URI(absPath);
-            if (uri.getPath() != null) {
-                if (uri.getRawPath().contains(MANGLE_NAMESPACE_OUT_SUFFIX)) {
-                    final Matcher m = MANGLE_NAMESPACE_PATTERN.matcher(uri.getRawPath());
+        URI uri = new URI(absPath);
+        if (uri.getPath() != null) {
+            if (uri.getRawPath().contains(MANGLE_NAMESPACE_OUT_SUFFIX)) {
+                final Matcher m = MANGLE_NAMESPACE_PATTERN.matcher(uri.getRawPath());
 
-                    final StringBuffer buf = new StringBuffer();
-                    while (m.find()) {
-                        final String replacement = MANGLE_NAMESPACE_IN_PREFIX + m.group(1) + MANGLE_NAMESPACE_IN_SUFFIX;
-                        m.appendReplacement(buf, replacement);
-                    }
+                final StringBuffer buf = new StringBuffer();
+                while (m.find()) {
+                    final String replacement = MANGLE_NAMESPACE_IN_PREFIX + m.group(1) + MANGLE_NAMESPACE_IN_SUFFIX;
+                    m.appendReplacement(buf, replacement);
+                }
 
-                    m.appendTail(buf);
-                    mangledPath = buf.toString();
-                }
+                m.appendTail(buf);
+                mangledPath = buf.toString();
             }
-            if (mangledPath != null) {
-                URI mangledURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),
-                        URLDecoder.decode(mangledPath, "UTF-8"),
-                        uri.getRawQuery(), uri.getRawFragment());
-                StringBuilder uriBuilder = new StringBuilder();
-                if (StringUtils.isNotEmpty(mangledURI.getScheme()) && StringUtils.isNotEmpty(mangledURI.getAuthority())) {
-                    uriBuilder.append(mangledURI.getScheme()).append("://").append(mangledURI.getRawAuthority());
-                }
-                if (StringUtils.isNotEmpty(mangledURI.getPath())) {
-                    uriBuilder.append(mangledURI.getRawPath());
-                }
-                if (StringUtils.isNotEmpty(mangledURI.getQuery())) {
-                    uriBuilder.append("?").append(mangledURI.getRawQuery());
-                }
-                if (StringUtils.isNotEmpty(mangledURI.getFragment())) {
-                    uriBuilder.append("#").append(mangledURI.getRawFragment());
-                }
-                return uriBuilder.toString();
+        }
+        if (mangledPath != null) {
+            URI mangledURI = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),
+                    URLDecoder.decode(mangledPath, "UTF-8"),
+                    uri.getQuery(), uri.getFragment());
+            StringBuilder uriBuilder = new StringBuilder();
+            if (StringUtils.isNotEmpty(mangledURI.getScheme()) && StringUtils.isNotEmpty(mangledURI.getAuthority())) {
+                uriBuilder.append(mangledURI.getScheme()).append("://").append(mangledURI.getRawAuthority());
             }
-        } catch (Exception e) {
-            LOGGER.warn("Invalid URI.", e);
+            if (StringUtils.isNotEmpty(mangledURI.getPath())) {
+                uriBuilder.append(mangledURI.getRawPath());
+            }
+            if (StringUtils.isNotEmpty(mangledURI.getQuery())) {
+                uriBuilder.append("?").append(mangledURI.getRawQuery());
+            }
+            if (StringUtils.isNotEmpty(mangledURI.getFragment())) {
+                uriBuilder.append("#").append(mangledURI.getRawFragment());
+            }
+            return uriBuilder.toString();
         }
         return absPath;
     }
@@ -248,9 +246,14 @@ public class XSSAPIImpl implements XSSAPI {
                     .replaceAll("<", "%3C")
                     .replaceAll("`", "%60")
                     .replaceAll(" ", "%20");
-            encodedUrl = mangleNamespaces(encodedUrl);
-            if (xssFilter.isValidHref(encodedUrl)) {
-                return encodedUrl;
+            try {
+                encodedUrl = mangleNamespaces(encodedUrl);
+                if (xssFilter.isValidHref(encodedUrl)) {
+                    return encodedUrl;
+                }
+            } catch (Throwable t) {
+                LOGGER.warn("Unable to validate URL.", t);
+                LOGGER.debug("Passed URL: {}", url);
             }
         }
         // fall through to empty string
