@@ -1,0 +1,36 @@
+Import-Package: !bsh, \
+                !nu.xom, \
+                !org.apache.bcel.*, \
+                !org.apache.log4j.spi, \
+                !org.apache.log4j.xml, \
+                !org.w3c.dom, \
+                !org.w3c.dom.*, \
+                !org.apache.avalon.framework.logger, \
+                !org.apache.commons.digester.*, \
+                !org.apache.commons.jexl2, \
+                !org.apache.commons.jxpath.*, \
+                !org.apache.commons.lang.*, \
+                !org.apache.commons.vfs2.*, \
+                !org.apache.tools.ant.taskdefs, \
+                !org.apache.xml.resolver.*, \
+                !org.apache.xmlgraphics.java2d.color, \
+                !org.apache.log, \
+                !org.xml.sax, \
+                !org.xml.sax.*, \
+                !javax.mail.internet, \
+                !javax.servlet.jsp, \
+                !javax.servlet.jsp.tagext, \
+                !javax.xml.*, \
+                !sun.io, \
+                *
+Private-Package: org.apache.sling.xss.impl, \
+                 org.apache.batik.*, \
+                 org.w3c.css.sac, \
+                 org.apache.xerces.*, \
+                 org.apache.xml.serialize, \
+                 org.apache.commons.beanutils.*;-split-package:=merge-first, \
+                 org.apache.commons.configuration.*, \
+                 org.apache.commons.logging.impl, \
+                 org.cyberneko.html.*, \
+                 javax.xml.parsers;-split-package:=merge-first, \
+                 javax.xml.transform;-split-package:=merge-first

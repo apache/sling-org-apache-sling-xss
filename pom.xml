@@ -22,8 +22,8 @@
     <!-- ======================================================================= -->
     <parent>
         <groupId>org.apache.sling</groupId>
-        <artifactId>sling</artifactId>
-        <version>34</version>
+        <artifactId>sling-bundle-parent</artifactId>
+        <version>35</version>
         <relativePath />
     </parent>
 
@@ -31,7 +31,6 @@
     <!-- P R O J E C T                                                           -->
     <!-- ======================================================================= -->
     <artifactId>org.apache.sling.xss</artifactId>
-    <packaging>bundle</packaging>
     <version>2.1.11-SNAPSHOT</version>
 
     <name>Apache Sling XSS Protection API</name>
@@ -70,62 +69,45 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.sling</groupId>
-                <artifactId>maven-sling-plugin</artifactId>
+                <artifactId>sling-maven-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Import-Package>
-                            !bsh,
-                            !nu.xom,
-                            !org.apache.bcel.*,
-                            !org.apache.log4j.spi,
-                            !org.apache.log4j.xml,
-                            !org.w3c.dom.svg,
-                            !org.apache.avalon.framework.logger,
-                            !org.apache.commons.digester.*,
-                            !org.apache.commons.jexl2,
-                            !org.apache.commons.jxpath.*,
-                            !org.apache.commons.lang.*,
-                            !org.apache.commons.vfs2.*,
-                            !org.apache.tools.ant.taskdefs,
-                            !org.apache.xml.resolver.*,
-                            !org.apache.xmlgraphics.java2d.color,
-                            !org.apache.log,
-                            !javax.mail.internet,
-                            !javax.servlet.jsp,
-                            !javax.servlet.jsp.tagext,
-                            !sun.io,
-                            *
-                        </Import-Package>
-                        <Private-Package>
-                            org.apache.sling.xss.impl,
-                            org.apache.batik.*,
-                            org.w3c.css.sac,
-                            org.apache.xerces.*,
-                            org.apache.xml.serialize,
-                            org.apache.commons.beanutils.*;-split-package:=merge-first,
-                            org.apache.commons.configuration.*,
-                            org.apache.commons.logging.impl,
-                            org.cyberneko.html.*,
-                            javax.xml.parsers;-split-package:=merge-first,
-                            javax.xml.transform;-split-package:=merge-first
-                        </Private-Package>
-                        <Export-Package>
-                            org.apache.sling.xss
-                        </Export-Package>
-                        <Embed-Dependency>
-                            antisamy;inline=true,
-                            esapi;inline=true,
-                            encoder;inline=true,
-                            xml-apis,
-                            xalan;inline=true
-                        </Embed-Dependency>
-                    </instructions>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.owasp.antisamy</groupId>
+                                    <artifactId>antisamy</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.owasp.esapi</groupId>
+                                    <artifactId>esapi</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.owasp.encoder</groupId>
+                                    <artifactId>encoder</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>xalan</groupId>
+                                    <artifactId>xalan</artifactId>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>xml-apis</groupId>
+                                    <artifactId>xml-apis</artifactId>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
