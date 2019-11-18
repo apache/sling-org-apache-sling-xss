@@ -15,6 +15,7 @@ Import-Package: !bsh, \
                 !org.apache.xml.resolver.*, \
                 !org.apache.xmlgraphics.java2d.color, \
                 !org.apache.log, \
+                !org.owasp.*, \
                 !org.xml.sax, \
                 !org.xml.sax.*, \
                 !javax.mail.internet, \
@@ -32,5 +33,6 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.apache.commons.configuration.*, \
                  org.apache.commons.logging.impl, \
                  org.cyberneko.html.*, \
+                 org.owasp.*, \
                  javax.xml.parsers;-split-package:=merge-first, \
                  javax.xml.transform;-split-package:=merge-first
