@@ -241,16 +241,16 @@ public class XSSAPIImplTest {
                 {"repo/günter", "repo/günter"},
 
                 // JCR namespaces:
-                {"my/page/jcr:content.feed", "my/page/_jcr_content.feed"},
-                {"my/jcr:content/page/jcr:content", "my/_jcr_content/page/_jcr_content"},
-                {"my/jcr:content/encoded%20spaces", "my/_jcr_content/encoded%20spaces"},
-                {"my/jcr:content/this path has spaces", "my/_jcr_content/this%20path%20has%20spaces"},
+                {"my/page/jcr:content.feed", "my/page/jcr:content.feed"},
+                {"my/jcr:content/page/jcr:content", "my/jcr:content/page/jcr:content"},
+                {"my/jcr:content/encoded%20spaces", "my/jcr:content/encoded%20spaces"},
+                {"my/jcr:content/this path has spaces", "my/jcr:content/this%20path%20has%20spaces"},
 
                 {"\" onClick=ugly", "%22%20onClick=ugly"},
                 {"javascript:ugly", ""},
                 {"http://localhost:4502", "http://localhost:4502"},
                 {"http://localhost:4502/test", "http://localhost:4502/test"},
-                {"http://localhost:4502/jcr:content/test", "http://localhost:4502/_jcr_content/test"},
+                {"http://localhost:4502/jcr:content/test", "http://localhost:4502/jcr:content/test"},
                 {"http://localhost:4502/test.html?a=b&b=c", "http://localhost:4502/test.html?a=b&b=c"},
 
                 // space
@@ -280,15 +280,15 @@ public class XSSAPIImplTest {
                 {"/test/search.html?0_tag:id=test", "/test/search.html?0_tag:id=test"},
                 { // JCR namespaces and colons in query string
                         "/test/jcr:content/search.html?0_tag:id=test",
-                        "/test/_jcr_content/search.html?0_tag:id=test"
+                        "/test/jcr:content/search.html?0_tag:id=test"
                 },
                 { // JCR namespaces and colons in query string plus encoded path
                         "/test%20with%20encoded%20spaces/jcr:content/search.html?0_tag:id=test",
-                        "/test%20with%20encoded%20spaces/_jcr_content/search.html?0_tag:id=test"
+                        "/test%20with%20encoded%20spaces/jcr:content/search.html?0_tag:id=test"
                 },
                 { // JCR namespaces and colons in query string plus spaces in path
                         "/test with spaces/jcr:content/search.html?0_tag:id=test",
-                        "/test%20with%20spaces/_jcr_content/search.html?0_tag:id=test"
+                        "/test%20with%20spaces/jcr:content/search.html?0_tag:id=test"
                 },
                 { // ? in query string
                         "/test/search.html?0_tag:id=test?ing&1_tag:id=abc",
@@ -316,14 +316,14 @@ public class XSSAPIImplTest {
                 },
                 { // namespace mangling + encoded parameter values
                         "/path/to/page/jcr:content/par?key=%25text",
-                        "/path/to/page/_jcr_content/par?key=%25text"
+                        "/path/to/page/jcr:content/par?key=%25text"
                 },
                 { // namespace mangling + incorrect escape sequence
                         "/path/to/page/jcr:content/par?key=%text",
                         ""
                 },
                 { // incorrect escape sequence
-                        "/path/to/page/_jcr_content/par?key=%text",
+                        "/path/to/page/jcr:content/par?key=%text",
                         ""
                 }
         };
