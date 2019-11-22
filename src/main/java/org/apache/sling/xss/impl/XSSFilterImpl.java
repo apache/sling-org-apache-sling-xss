@@ -197,8 +197,8 @@ public class XSSFilterImpl implements XSSFilter {
                 return runHrefValidation(url);
             }
             return runHrefValidation(xmlDecodedURL);
-        } catch (Exception e) {
-            logger.warn("Unable to decode url.", e);
+        } catch (Throwable e) {
+            logger.warn("Unable to validate url.", e);
             logger.debug("URL input: {}", url);
         }
         return false;
@@ -215,7 +215,7 @@ public class XSSFilterImpl implements XSSFilter {
             try {
                 isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
             } catch (StackOverflowError e) {
-                logger.warn("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
+                logger.debug("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
                 try {
                     for (Pattern p : BACKUP_PATTERNS) {
                         isValid = p.matcher(url.toLowerCase()).matches();
@@ -224,7 +224,7 @@ public class XSSFilterImpl implements XSSFilter {
                         }
                     }
                 } catch (StackOverflowError inner) {
-                    logger.error(String.format("Cannot validate url %s.", url), inner);
+                    logger.debug("Detected a StackOverflowError when validating url {} with fallback regexes", url);
                 }
             }
         }
