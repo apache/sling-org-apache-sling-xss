@@ -20,10 +20,14 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import org.apache.sling.api.resource.observation.ResourceChangeListener;
+import org.apache.sling.commons.metrics.Counter;
+import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.apache.sling.xss.XSSAPI;
+import org.apache.sling.xss.impl.status.XSSStatusService;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.osgi.framework.ServiceReference;
@@ -35,7 +39,9 @@ import junit.framework.TestCase;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class XSSAPIImplTest {
 
@@ -55,10 +61,18 @@ public class XSSAPIImplTest {
      * The only exception currently is {@link #testGetValidHrefWithoutHrefConfig()}.
      */
     private void setUp() {
-        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
         context.registerInjectActivateService(new XSSFilterImpl());
         context.registerInjectActivateService(new XSSAPIImpl());
         xssAPI = context.getService(XSSAPI.class);
+    }
+
+    @Before
+    public void before() {
+        MetricsService metricsService = mock(MetricsService.class);
+        when(metricsService.counter(anyString())).thenReturn(mock(Counter.class));
+        context.registerService(MetricsService.class, metricsService);
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.registerService(new XSSStatusService());
     }
 
     @After
@@ -350,8 +364,7 @@ public class XSSAPIImplTest {
     }
 
     @Test
-    public void testGetValidHrefWithoutHrefConfig() throws Exception {
-        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+    public void testGetValidHrefWithoutHrefConfig() {
         context.load().binaryFile("/configWithoutHref.xml", "/apps/sling/xss/configWithoutHref.xml");
         context.registerInjectActivateService(new XSSFilterImpl(), new HashMap<String, Object>(){{
             put("policyPath", "/apps/sling/xss/configWithoutHref.xml");
