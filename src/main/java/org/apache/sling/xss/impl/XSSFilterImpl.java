@@ -35,9 +35,12 @@ import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.observation.ExternalResourceChangeListener;
 import org.apache.sling.api.resource.observation.ResourceChange;
 import org.apache.sling.api.resource.observation.ResourceChangeListener;
+import org.apache.sling.commons.metrics.Counter;
+import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.xss.ProtectionContext;
 import org.apache.sling.xss.XSSFilter;
+import org.apache.sling.xss.impl.status.XSSStatusService;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
@@ -164,6 +167,15 @@ public class XSSFilterImpl implements XSSFilter {
     @Reference
     private ServiceUserMapped serviceUserMapped;
 
+    @Reference
+    private MetricsService metricsService;
+
+    @Reference
+    private XSSStatusService statusService;
+
+    private Counter invalidHrefs;
+    private static final String COUNTER_INVALID_HREFS = "xss.invalid_hrefs";
+
     @Override
     public boolean check(final ProtectionContext context, final String src) {
         final XSSFilterRule ctx = this.getFilterRule(context);
@@ -204,7 +216,7 @@ public class XSSFilterImpl implements XSSFilter {
         return false;
     }
 
-    AntiSamyPolicy getActivePolicy() {
+    public AntiSamyPolicy getActivePolicy() {
         return activePolicy;
     }
 
@@ -228,12 +240,17 @@ public class XSSFilterImpl implements XSSFilter {
                 }
             }
         }
+        if (!isValid) {
+            statusService.reportInvalidUrl(url);
+            invalidHrefs.increment();
+        }
         return isValid;
     }
 
     @Activate
     @Modified
     protected void activate(ComponentContext componentContext, Configuration configuration) {
+        invalidHrefs = metricsService.counter(COUNTER_INVALID_HREFS);
         // load default handler
         policyPath = configuration.policyPath();
         updatePolicy();
@@ -340,7 +357,7 @@ public class XSSFilterImpl implements XSSFilter {
         }
     }
 
-    class AntiSamyPolicy {
+    public class AntiSamyPolicy {
         private final boolean embedded;
         private final String path;
 
@@ -349,7 +366,7 @@ public class XSSFilterImpl implements XSSFilter {
             this.path = path;
         }
 
-        InputStream read() {
+        public InputStream read() {
             if (embedded) {
                 return this.getClass().getClassLoader().getResourceAsStream(EMBEDDED_POLICY_PATH);
             }
@@ -365,11 +382,11 @@ public class XSSFilterImpl implements XSSFilter {
             }
         }
 
-        boolean isEmbedded() {
+        public boolean isEmbedded() {
             return embedded;
         }
 
-        String getPath() {
+        public String getPath() {
             return path;
         }
     }

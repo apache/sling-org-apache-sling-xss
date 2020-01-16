@@ -18,13 +18,8 @@ package org.apache.sling.xss.impl;
 
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.json.Json;

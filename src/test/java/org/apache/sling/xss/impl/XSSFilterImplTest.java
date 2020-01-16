@@ -18,17 +18,23 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
+import org.apache.sling.commons.metrics.Counter;
+import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.testing.mock.sling.junit.SlingContext;
 import org.apache.sling.xss.XSSFilter;
+import org.apache.sling.xss.impl.status.XSSStatusService;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class XSSFilterImplTest {
 
@@ -42,11 +48,19 @@ public class XSSFilterImplTest {
         xssFilter = null;
     }
 
+    @Before
+    public void setUp() {
+        MetricsService metricsService = mock(MetricsService.class);
+        when(metricsService.counter(anyString())).thenReturn(mock(Counter.class));
+        context.registerService(MetricsService.class, metricsService);
+        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
+        context.registerService(new XSSStatusService());
+    }
+
     @Test
     public void testResourceBasedPolicy() {
         context.load().binaryFile(this.getClass().getClassLoader().getResourceAsStream(XSSFilterImpl.EMBEDDED_POLICY_PATH),
                 "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH);
-        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
         context.registerInjectActivateService(new XSSFilterImpl());
         xssFilter = context.getService(XSSFilter.class);
         XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
@@ -57,7 +71,6 @@ public class XSSFilterImplTest {
 
     @Test
     public void testDefaultEmbeddedPolicy() {
-        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
         context.registerInjectActivateService(new XSSFilterImpl());
         xssFilter = context.getService(XSSFilter.class);
         XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
@@ -68,7 +81,6 @@ public class XSSFilterImplTest {
 
     @Test
     public void isValidHref() {
-        context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
         context.registerInjectActivateService(new XSSFilterImpl());
         xssFilter = context.getService(XSSFilter.class);
         checkIsValid("javascript:alert(1)", false);
