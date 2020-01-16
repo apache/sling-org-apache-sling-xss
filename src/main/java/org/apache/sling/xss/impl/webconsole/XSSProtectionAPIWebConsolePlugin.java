@@ -109,80 +109,95 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
         } else if (URI_BLOCKED_XHR.equalsIgnoreCase(request.getRequestURI())) {
             generateInvalidUrlsJSONReport(response);
         } else {
-            PrintWriter printWriter = response.getWriter();
-            printWriter.printf(LINK_TAG, RES_URI_XSS_CSS);
-            printWriter.printf(SCRIPT_TAG, RES_URI_XSS_JS);
-            printWriter.println("<div id='xss-tabs'>");
-            printWriter.println("<ul>");
-            printWriter.println("<li id='blocked-tab'><a href='#blocked'><span>Status</span></a></li>");
-            if (xssFilter != null) {
-                printWriter.printf("<li id='config-tab'><a href='%s'><span>Active Configuration</span></a></li>\n", URI_CONFIG_XHR);
+            try {
+                PrintWriter printWriter = response.getWriter();
+                printWriter.printf(LINK_TAG, RES_URI_XSS_CSS);
+                printWriter.printf(SCRIPT_TAG, RES_URI_XSS_JS);
+                printWriter.println("<div id='xss-tabs'>");
+                printWriter.println("<ul>");
+                printWriter.println("<li id='blocked-tab'><a href='#blocked'><span>Status</span></a></li>");
+                if (xssFilter != null) {
+                    printWriter.println(
+                            String.format("<li id='config-tab'><a href='%s'><span>Active Configuration</span></a></li>", URI_CONFIG_XHR));
+                }
+                printWriter.println("</ul>");
+                printWriter.println("<div id='blocked'>");
+                printWriter.println("<div class='table'>");
+                printWriter.println("<div class='ui-widget-header ui-corner-top buttonGroup'>Blocked URLs</div>");
+                printWriter.println("<table class='nicetable tablesorter' id='invalid-urls'>");
+                printWriter.println("<thead>");
+                printWriter.println("<tr>");
+                printWriter.println("<th class='header'>URL</th>");
+                printWriter.println("<th class='header'>Times Blocked</th>");
+                printWriter.println("</tr>");
+                printWriter.println("</thead>");
+                printWriter.println("<tbody id='invalid-urls-rows'>");
+                printWriter.println("</tbody>");
+                printWriter.println("</table>");
+                printWriter.println("</div></div></div>");
+            } catch (IOException e) {
+                LOGGER.error("Unable to generate scaffold for the webconsole plugin output.", e);
             }
-            printWriter.println("</ul>");
-            printWriter.println("<div id='blocked'>");
-            printWriter.println("<div class='table'>");
-            printWriter.println("<div class='ui-widget-header ui-corner-top buttonGroup'>Blocked URLs</div>");
-            printWriter.println("<table class='nicetable tablesorter' id='invalid-urls'>");
-            printWriter.println("<thead>");
-            printWriter.println("<tr>");
-            printWriter.println("<th class='header'>URL</th>");
-            printWriter.println("<th class='header'>Times Blocked</th>");
-            printWriter.println("</tr>");
-            printWriter.println("</thead>");
-            printWriter.println("<tbody id='invalid-urls-rows'>");
-            printWriter.println("</tbody>");
-            printWriter.println("</table>");
-            printWriter.println("</div></div></div>");
         }
     }
 
-    private void streamAntiSamyConfiguration(HttpServletResponse response) throws IOException {
-        response.setContentType("application/xml");
-        response.setHeader("Content-Disposition", "attachment; filename=config.xml");
-        XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
-        IOUtils.copy(xssFilterImpl.getActivePolicy().read(), response.getOutputStream());
+    private void streamAntiSamyConfiguration(HttpServletResponse response) {
+        try {
+            XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
+            IOUtils.copy(xssFilterImpl.getActivePolicy().read(), response.getOutputStream());
+            response.setContentType("application/xml");
+            response.setHeader("Content-Disposition", "attachment; filename=config.xml");
+        } catch (IOException e) {
+            LOGGER.error("Unable to stream AntiSamy configuration.", e);
+        }
+
     }
 
-    private void generateInvalidUrlsJSONReport(HttpServletResponse response) throws IOException {
+    private void generateInvalidUrlsJSONReport(HttpServletResponse response) {
         JsonArrayBuilder hrefs = Json.createArrayBuilder();
         for (Map.Entry<String, AtomicInteger> entry : statusService.getInvalidUrls().entrySet()) {
             JsonObject href =
                     Json.createObjectBuilder().add("href", entry.getKey()).add("times", entry.getValue().intValue()).build();
             hrefs.add(href);
         }
-        response.setContentType("application/json");
         try (JsonWriter writer = Json.createWriter(response.getWriter())) {
             writer.writeObject(Json.createObjectBuilder().add("hrefs", hrefs.build()).build());
+            response.setContentType("application/json");
+        } catch (IOException e) {
+            LOGGER.error("Unable to write JSON report for invalid URLs.", e);
         }
+
     }
 
-    private void writeAntiSamyConfiguration(HttpServletResponse response) throws IOException {
+    private void writeAntiSamyConfiguration(HttpServletResponse response) {
         response.setContentType("text/html");
         XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
         XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
         if (antiSamyPolicy != null) {
-            PrintWriter printWriter = response.getWriter();
-            printWriter.printf(SCRIPT_TAG, RES_URI_CONFIG_JS);
-            printWriter.write("<div id='config'>");
-            printWriter.printf(LINK_TAG, RES_URI_PRETTIFY_CSS);
-            printWriter.printf(SCRIPT_TAG, RES_URI_PRETTIFY_JS);
-            printWriter.write("<p class='statline ui-state-highlight'>The current AntiSamy configuration ");
-            if (antiSamyPolicy.isEmbedded()) {
-                printWriter.write("is the default one embedded in the org.apache.sling.xss bundle.");
-            } else {
-                printWriter.printf("is loaded from %s.", antiSamyPolicy.getPath());
+            try {
+                PrintWriter printWriter = response.getWriter();
+                printWriter.printf(SCRIPT_TAG, RES_URI_CONFIG_JS);
+                printWriter.write("<div id='config'>");
+                printWriter.printf(LINK_TAG, RES_URI_PRETTIFY_CSS);
+                printWriter.printf(SCRIPT_TAG, RES_URI_PRETTIFY_JS);
+                printWriter.write("<p class='statline ui-state-highlight'>The current AntiSamy configuration ");
+                if (antiSamyPolicy.isEmbedded()) {
+                    printWriter.write("is the default one embedded in the org.apache.sling.xss bundle.");
+                } else {
+                    printWriter.printf("is loaded from %s.", antiSamyPolicy.getPath());
+                }
+                printWriter.write("<button style='float:right' type='button' id='download-config'>Download</button></p>");
+                String contents = "";
+                try (InputStream configurationStream = antiSamyPolicy.read()) {
+                    contents = IOUtils.toString(configurationStream, StandardCharsets.UTF_8);
+                }
+                printWriter.write("<pre class='prettyprint linenums'>");
+                printWriter.write(StringEscapeUtils.escapeHtml4(contents));
+                printWriter.write("</pre>");
+                printWriter.write("</div>");
+            } catch (IOException e) {
+                LOGGER.error("Unable to write the AntiSamy configuration tab.", e);
             }
-            printWriter.write("<button style='float:right' type='button' id='download-config'>Download</button></p>");
-            String contents = "";
-            try (InputStream configurationStream = antiSamyPolicy.read()) {
-                contents = IOUtils.toString(configurationStream, StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                LOGGER.error("Unable to read policy file.", e);
-            }
-            printWriter.write("<pre class='prettyprint linenums'>");
-            printWriter.write(StringEscapeUtils.escapeHtml4(contents));
-            printWriter.write("</pre>");
-            printWriter.write("</div>");
         }
     }
 
@@ -191,15 +206,16 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
      * @param response the response
      * @param file the file name
      * @param contentType the content type of the resource
-     * @throws IOException if any IO error occurs
      */
-    private void streamResource(HttpServletResponse response, String file, String contentType) throws IOException {
+    private void streamResource(HttpServletResponse response, String file, String contentType) {
         try (InputStream cssStream =
                      getClass().getClassLoader().getResourceAsStream(INTERNAL_RESOURCES_FOLDER + "/" + file)) {
             if (cssStream != null) {
                 response.setContentType(contentType);
                 IOUtils.copy(cssStream, response.getOutputStream());
             }
+        } catch (IOException e) {
+            LOGGER.error(String.format("Unable to stream bundled resource %s.", file), e);
         }
     }
 }
