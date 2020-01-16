@@ -34,4 +34,18 @@ public class FixedSizeMap<K, V> extends LinkedHashMap<K, V> {
     protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
         return size() > maxSize;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof FixedSizeMap) {
+            FixedSizeMap other = (FixedSizeMap) o;
+            return super.equals(other) && maxSize == other.maxSize;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() + maxSize;
+    }
 }
