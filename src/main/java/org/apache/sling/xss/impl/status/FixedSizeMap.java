@@ -25,28 +25,8 @@ public class FixedSizeMap<K, V> extends LinkedHashMap<K, V> {
 
     private final int maxSize;
 
-    public FixedSizeMap(int initialCapacity, float loadFactor, int maxSize) {
-        super(initialCapacity, loadFactor);
-        this.maxSize = maxSize;
-    }
-
-    public FixedSizeMap(int initialCapacity, int maxSize) {
-        super(initialCapacity);
-        this.maxSize = maxSize;
-    }
-
     public FixedSizeMap(int maxSize) {
         super();
-        this.maxSize = maxSize;
-    }
-
-    public FixedSizeMap(Map<? extends K, ? extends V> m, int maxSize) {
-        super(m);
-        this.maxSize = maxSize;
-    }
-
-    public FixedSizeMap(int initialCapacity, float loadFactor, boolean accessOrder, int maxSize) {
-        super(initialCapacity, loadFactor, accessOrder);
         this.maxSize = maxSize;
     }
 

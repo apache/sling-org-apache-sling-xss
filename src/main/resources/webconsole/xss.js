@@ -16,6 +16,44 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-$(document).ready(function() {
-    $('#xss-tabs').tabs();
+$(document).ready(function () {
+
+    function populateBlocked(ui) {
+        var tab = ui.tab || ui.newTab;
+        if (tab.attr('id') === 'blocked-tab') {
+            $.ajax(window.location + '/blocked.json', {
+                success: function (data) {
+                    if (data && data.hrefs) {
+                        if (data.hrefs.length > 0) {
+                            var rows = '';
+                            for (var i = 0; i < data.hrefs.length; i++) {
+                                var cssClass = (i % 2) === 0 ? 'even' : 'odd';
+                                rows += `<tr class="${cssClass} ui-state-default">
+                                            <td>${data.hrefs[i].href}</td>
+                                            <td>${data.hrefs[i].times}</td>
+                                        </tr>`;
+                            }
+                            $('#invalid-urls-rows').html(rows);
+                            var table = $('#invalid-urls');
+                            table.trigger('update');
+                            var sorting = [[1, 1]];
+                            table.trigger('sorton', [sorting]);
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    $('#invalid-urls').tablesorter();
+    $('#xss-tabs').tabs({
+        create: function (event, ui) {
+            populateBlocked(ui);
+        },
+        activate: function (event, ui) {
+            populateBlocked(ui);
+        }
+    });
 });
+
+
