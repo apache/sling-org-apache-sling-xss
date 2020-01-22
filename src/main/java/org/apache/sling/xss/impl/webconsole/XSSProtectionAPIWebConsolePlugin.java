@@ -143,10 +143,10 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
 
     private void streamAntiSamyConfiguration(HttpServletResponse response) {
         try {
-            XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
-            IOUtils.copy(xssFilterImpl.getActivePolicy().read(), response.getOutputStream());
             response.setContentType("application/xml");
             response.setHeader("Content-Disposition", "attachment; filename=config.xml");
+            XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
+            IOUtils.copy(xssFilterImpl.getActivePolicy().read(), response.getOutputStream());
         } catch (IOException e) {
             LOGGER.error("Unable to stream AntiSamy configuration.", e);
         }
@@ -161,8 +161,8 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
             hrefs.add(href);
         }
         try (JsonWriter writer = Json.createWriter(response.getWriter())) {
-            writer.writeObject(Json.createObjectBuilder().add("hrefs", hrefs.build()).build());
             response.setContentType("application/json");
+            writer.writeObject(Json.createObjectBuilder().add("hrefs", hrefs.build()).build());
         } catch (IOException e) {
             LOGGER.error("Unable to write JSON report for invalid URLs.", e);
         }
