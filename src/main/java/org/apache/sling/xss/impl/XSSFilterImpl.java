@@ -26,8 +26,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.translate.NumericEntityUnescaper;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -201,15 +201,16 @@ public class XSSFilterImpl implements XSSFilter {
         try {
             String decodedURL = URLDecoder.decode(url, StandardCharsets.UTF_8.name());
             /*
-                StringEscapeUtils is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
+                NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
                 commons-text, which is not an OSGi bundle
              */
-            String xmlDecodedURL = StringEscapeUtils.unescapeXml(decodedURL);
-            if (xmlDecodedURL.equals(url) || xmlDecodedURL.equals(decodedURL)) {
+            NumericEntityUnescaper unicodeUnescaper = new NumericEntityUnescaper();
+            String unicodeUnescapedUrl = unicodeUnescaper.translate(decodedURL);
+            if (unicodeUnescapedUrl.equals(url) || unicodeUnescapedUrl.equals(decodedURL)) {
                 return runHrefValidation(url);
             }
-            return runHrefValidation(xmlDecodedURL);
-        } catch (Throwable e) {
+            return runHrefValidation(unicodeUnescapedUrl);
+        } catch (Exception e) {
             logger.warn("Unable to validate url.", e);
             logger.debug("URL input: {}", url);
         }
