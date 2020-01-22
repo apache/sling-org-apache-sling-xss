@@ -26,6 +26,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.translate.NumericEntityUnescaper;
 import org.apache.sling.api.resource.LoginException;
@@ -137,6 +138,12 @@ public class XSSFilterImpl implements XSSFilter {
 
     private static final Pattern[] BACKUP_PATTERNS = new Pattern[] {ON_SITE_SIMPLIFIED, OFF_SITE_SIMPLIFIED};
 
+    /*
+      NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
+      commons-text, which is not an OSGi bundle
+     */
+    private static final NumericEntityUnescaper UNICODE_UNESCAPER = new NumericEntityUnescaper();
+
     // Default href configuration copied from the config.xml supplied with AntiSamy
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
             "href",
@@ -200,16 +207,15 @@ public class XSSFilterImpl implements XSSFilter {
         }
         try {
             String decodedURL = URLDecoder.decode(url, StandardCharsets.UTF_8.name());
-            /*
-                NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
-                commons-text, which is not an OSGi bundle
-             */
-            NumericEntityUnescaper unicodeUnescaper = new NumericEntityUnescaper();
-            String unicodeUnescapedUrl = unicodeUnescaper.translate(decodedURL);
-            if (unicodeUnescapedUrl.equals(url) || unicodeUnescapedUrl.equals(decodedURL)) {
-                return runHrefValidation(url);
+            String unicodeUnescapedUrl = UNICODE_UNESCAPER.translate(decodedURL);
+            String urlToValidate;
+            if (unicodeUnescapedUrl.equals(decodedURL)) {
+                urlToValidate = url;
+            } else {
+                urlToValidate = unicodeUnescapedUrl;
             }
-            return runHrefValidation(unicodeUnescapedUrl);
+            urlToValidate = StringEscapeUtils.unescapeHtml4(urlToValidate);
+            return runHrefValidation(urlToValidate);
         } catch (Exception e) {
             logger.warn("Unable to validate url.", e);
             logger.debug("URL input: {}", url);
