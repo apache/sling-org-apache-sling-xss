@@ -6,6 +6,7 @@ Import-Package: !bsh, \
                 !org.w3c.dom, \
                 !org.w3c.dom.*, \
                 !org.apache.avalon.framework.logger, \
+                !org.apache.commons.collections.*, \
                 !org.apache.commons.digester.*, \
                 !org.apache.commons.jexl2, \
                 !org.apache.commons.jxpath.*, \
