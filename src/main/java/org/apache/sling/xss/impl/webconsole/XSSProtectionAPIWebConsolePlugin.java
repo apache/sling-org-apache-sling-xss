@@ -70,12 +70,12 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
     static final String LABEL = "xssprotection";
     static final String TITLE= "XSS Protection";
 
-    private static final String URI_ROOT = "/system/console/" + LABEL;
-    private static final String URI_CONFIG_XHR = URI_ROOT + "/config.xhr";
-    private static final String URI_BLOCKED_XHR = URI_ROOT + "/blocked.json";
-    private static final String URI_CONFIG_XML = URI_ROOT + "/config.xml";
+    private static final String PLUGIN_ROOT_PATH = "/" + LABEL;
+    private static final String URI_CONFIG_XHR = PLUGIN_ROOT_PATH + "/config.xhr";
+    private static final String URI_BLOCKED_XHR = PLUGIN_ROOT_PATH + "/blocked.json";
+    private static final String URI_CONFIG_XML = PLUGIN_ROOT_PATH + "/config.xml";
     private static final String INTERNAL_RESOURCES_FOLDER = "/webconsole";
-    private static final String RES_ROOT = URI_ROOT + INTERNAL_RESOURCES_FOLDER;
+    private static final String RES_ROOT = PLUGIN_ROOT_PATH + INTERNAL_RESOURCES_FOLDER;
     private static final String RES_URI_PRETTIFY_CSS = RES_ROOT + "/prettify.css";
     private static final String RES_URI_PRETTIFY_JS = RES_ROOT + "/prettify.js";
     private static final String RES_URI_XSS_CSS = RES_ROOT + "/xss.css";
@@ -96,29 +96,31 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
             RES_URI_CONFIG_JS));
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String file = FilenameUtils.getName(request.getRequestURI());
-        if (file != null && CSS_RESOURCES.contains(request.getRequestURI())) {
-            streamResource(response, file, "text/css");
-        } else if (file != null && JS_RESOURCES.contains(request.getRequestURI())) {
-            streamResource(response, file, "application/javascript");
-        } else if (URI_CONFIG_XHR.equalsIgnoreCase(request.getRequestURI()) && xssFilter != null) {
-            writeAntiSamyConfiguration(response);
-        } else if (URI_CONFIG_XML.equalsIgnoreCase(request.getRequestURI()) && xssFilter != null) {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+        String pluginResource = request.getPathInfo();
+        String consoleRoot = request.getRequestURI().substring(0, request.getRequestURI().indexOf(pluginResource));
+        if (CSS_RESOURCES.contains(pluginResource)) {
+            streamResource(response, FilenameUtils.getName(pluginResource), "text/css");
+        } else if (JS_RESOURCES.contains(pluginResource)) {
+            streamResource(response, FilenameUtils.getName(pluginResource), "application/javascript");
+        } else if (URI_CONFIG_XHR.equalsIgnoreCase(pluginResource) && xssFilter != null) {
+            writeAntiSamyConfiguration(consoleRoot, response);
+        } else if (URI_CONFIG_XML.equalsIgnoreCase(pluginResource) && xssFilter != null) {
             streamAntiSamyConfiguration(response);
-        } else if (URI_BLOCKED_XHR.equalsIgnoreCase(request.getRequestURI())) {
+        } else if (URI_BLOCKED_XHR.equalsIgnoreCase(pluginResource)) {
             generateInvalidUrlsJSONReport(response);
         } else {
             try {
                 PrintWriter printWriter = response.getWriter();
-                printWriter.printf(LINK_TAG, RES_URI_XSS_CSS);
-                printWriter.printf(SCRIPT_TAG, RES_URI_XSS_JS);
+                printWriter.printf(LINK_TAG, consoleRoot + RES_URI_XSS_CSS);
+                printWriter.printf(SCRIPT_TAG, consoleRoot + RES_URI_XSS_JS);
                 printWriter.println("<div id='xss-tabs'>");
                 printWriter.println("<ul>");
                 printWriter.println("<li id='blocked-tab'><a href='#blocked'><span>Status</span></a></li>");
                 if (xssFilter != null) {
                     printWriter.println(
-                            String.format("<li id='config-tab'><a href='%s'><span>Active Configuration</span></a></li>", URI_CONFIG_XHR));
+                            String.format("<li id='config-tab'><a href='%s'><span>Active Configuration</span></a></li>",
+                                    consoleRoot + URI_CONFIG_XHR));
                 }
                 printWriter.println("</ul>");
                 printWriter.println("<div id='blocked'>");
@@ -169,17 +171,17 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
 
     }
 
-    private void writeAntiSamyConfiguration(HttpServletResponse response) {
+    private void writeAntiSamyConfiguration(String consoleRoot, HttpServletResponse response) {
         response.setContentType("text/html");
         XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
         XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
         if (antiSamyPolicy != null) {
             try {
                 PrintWriter printWriter = response.getWriter();
-                printWriter.printf(SCRIPT_TAG, RES_URI_CONFIG_JS);
+                printWriter.printf(SCRIPT_TAG, consoleRoot + RES_URI_CONFIG_JS);
                 printWriter.write("<div id='config'>");
-                printWriter.printf(LINK_TAG, RES_URI_PRETTIFY_CSS);
-                printWriter.printf(SCRIPT_TAG, RES_URI_PRETTIFY_JS);
+                printWriter.printf(LINK_TAG, consoleRoot + RES_URI_PRETTIFY_CSS);
+                printWriter.printf(SCRIPT_TAG, consoleRoot + RES_URI_PRETTIFY_JS);
                 printWriter.write("<p class='statline ui-state-highlight'>The current AntiSamy configuration ");
                 if (antiSamyPolicy.isEmbedded()) {
                     printWriter.write("is the default one embedded in the org.apache.sling.xss bundle.");
