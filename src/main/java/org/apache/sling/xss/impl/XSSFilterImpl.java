@@ -131,9 +131,9 @@ public class XSSFilterImpl implements XSSFilter {
     public static final String RELATIVE_REF = "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "?(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
     public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
 
-    private static final Pattern ON_SITE_SIMPLIFIED = Pattern.compile("([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" +
+    static final Pattern ON_SITE_SIMPLIFIED = Pattern.compile("([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" +
             "(\\w)+)");
-    private static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)" +
+    static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)" +
             "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
 
     private static final Pattern[] BACKUP_PATTERNS = new Pattern[] {ON_SITE_SIMPLIFIED, OFF_SITE_SIMPLIFIED};
@@ -151,7 +151,7 @@ public class XSSFilterImpl implements XSSFilter {
                     Pattern.compile(RELATIVE_REF),
                     Pattern.compile(URI)
             ),
-            Collections.<String>emptyList(),
+            Collections.emptyList(),
             "removeAttribute", ""
     );
 

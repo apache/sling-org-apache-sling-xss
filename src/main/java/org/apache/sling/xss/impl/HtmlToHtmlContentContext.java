@@ -49,12 +49,8 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
             try {
                 Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                 return policyHandler.getAntiSamy().scan(str).getNumberOfErrors() == 0;
-            } catch (final ScanException se) {
-                log.warn("Unable to scan input.", se);
-                log.debug("Provided input: {}", str);
-            } catch (final PolicyException pe) {
-                log.warn("Unable to check input.", pe);
-                log.debug("Provided input: {}", str);
+            } catch (final Exception se) {
+                logError(se, str);
             } finally {
                 Thread.currentThread().setContextClassLoader(tccl);
             }
@@ -70,24 +66,18 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         if (StringUtils.isNotEmpty(str)) {
             ClassLoader tccl = Thread.currentThread().getContextClassLoader();
             try {
-                Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                log.debug("Protecting (HTML -> HTML) :\n{}", str);
-                final CleanResults results = policyHandler.getAntiSamy().scan(str);
-                final String cleaned = results.getCleanHTML();
-                @SuppressWarnings("unchecked")
-                final List<String> errors = results.getErrorMessages();
-                for (final String error : errors) {
-                    log.info("AntiSamy warning: {}", error);
+                final CleanResults  results = getCleanResults(policyHandler, str);
+                if (results != null) {
+                    final String cleaned = results.getCleanHTML();
+                    final List<String> errors = results.getErrorMessages();
+                    for (final String error : errors) {
+                        log.info("AntiSamy warning: {}", error);
+                    }
+                    log.debug("Protected (HTML -> HTML):\n{}", cleaned);
+                    return cleaned;
                 }
-                log.debug("Protected (HTML -> HTML):\n{}", cleaned);
-
-                return cleaned;
-            } catch (final ScanException se) {
-                log.warn("Unable to scan input.", se);
-                log.debug("Provided input: {}", str);
-            } catch (final PolicyException pe) {
-                log.warn("Unable to check input.", pe);
-                log.debug("Provided input: {}", str);
+            } catch (Exception e) {
+                logError(e, str);
             } finally {
                 Thread.currentThread().setContextClassLoader(tccl);
             }
@@ -101,5 +91,22 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
     @Override
     public boolean supportsPolicy() {
         return true;
+    }
+
+    private CleanResults getCleanResults(PolicyHandler handler, String input) throws ScanException, PolicyException {
+        CleanResults results;
+        try {
+            results = handler.getAntiSamy().scan(input);
+        } catch (StackOverflowError e) {
+            log.debug("Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}", input);
+            results = handler.getFallbackAntiSamy().scan(input);
+            log.debug("Second attempt was successful.");
+        }
+        return results;
+    }
+
+    private void logError(Exception e, String input) {
+        log.warn("Unable to check input.", e);
+        log.debug("Provided input: {}", input);
     }
 }

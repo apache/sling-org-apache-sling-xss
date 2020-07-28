@@ -16,9 +16,11 @@
  ******************************************************************************/
 package org.apache.sling.xss.impl;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.owasp.validator.html.AntiSamy;
 import org.owasp.validator.html.Policy;
 
@@ -27,8 +29,10 @@ import org.owasp.validator.html.Policy;
  */
 public class PolicyHandler {
 
-    private Policy policy;
+    private final Policy policy;
+    private Policy fallbackPolicy;
     private AntiSamy antiSamy;
+    private AntiSamy fallbackAntiSamy;
 
     /**
      * Creates a {@code PolicyHandler} from an {@link InputStream}.
@@ -40,18 +44,16 @@ public class PolicyHandler {
         // (currently: http://bugs.day.com/bugzilla/show_bug.cgi?id=31946)
         Thread currentThread = Thread.currentThread();
         ClassLoader cl = currentThread.getContextClassLoader();
-        try {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            IOUtils.copy(policyStream, baos);
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
-            this.policy = Policy.getInstance(policyStream);
+            this.policy = Policy.getInstance(bais);
+            bais.reset();
+            this.fallbackPolicy = new FallbackSlingPolicy(bais);
             this.antiSamy = new AntiSamy(this.policy);
+            this.fallbackAntiSamy = new AntiSamy(this.fallbackPolicy);
         } finally {
-            if (policyStream != null) {
-                try {
-                    policyStream.close();
-                } catch (final IOException ioe) {
-                    // ignored as we can't do anything about this (besides logging)
-                }
-            }
             currentThread.setContextClassLoader(cl);
         }
     }
@@ -62,5 +64,9 @@ public class PolicyHandler {
 
     public AntiSamy getAntiSamy() {
         return this.antiSamy;
+    }
+
+    public AntiSamy getFallbackAntiSamy() {
+        return fallbackAntiSamy;
     }
 }
