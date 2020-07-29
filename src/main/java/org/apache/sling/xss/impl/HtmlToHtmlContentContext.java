@@ -64,7 +64,6 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
     @Override
     public String filter(final PolicyHandler policyHandler, final String str) {
         if (StringUtils.isNotEmpty(str)) {
-            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
             try {
                 final CleanResults  results = getCleanResults(policyHandler, str);
                 if (results != null) {
@@ -78,8 +77,6 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
                 }
             } catch (Exception e) {
                 logError(e, str);
-            } finally {
-                Thread.currentThread().setContextClassLoader(tccl);
             }
         }
         return StringUtils.EMPTY;
@@ -95,12 +92,16 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
 
     private CleanResults getCleanResults(PolicyHandler handler, String input) throws ScanException, PolicyException {
         CleanResults results;
+        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             results = handler.getAntiSamy().scan(input);
         } catch (StackOverflowError e) {
             log.debug("Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}", input);
             results = handler.getFallbackAntiSamy().scan(input);
             log.debug("Second attempt was successful.");
+        } finally {
+            Thread.currentThread().setContextClassLoader(tccl);
         }
         return results;
     }

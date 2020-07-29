@@ -45,6 +45,7 @@ public class PolicyHandler {
         Thread currentThread = Thread.currentThread();
         ClassLoader cl = currentThread.getContextClassLoader();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            currentThread.setContextClassLoader(this.getClass().getClassLoader());
             IOUtils.copy(policyStream, baos);
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
