@@ -154,6 +154,15 @@
                     </systemProperties>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>org/apache/sling/xss/**</include>
+                    </includes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
