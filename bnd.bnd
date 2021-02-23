@@ -30,6 +30,7 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.w3c.css.sac, \
                  org.apache.xerces.*, \
                  org.apache.xml.serialize, \
+                 org.apache.xml.serializer.*, \
                  org.apache.commons.beanutils.*;-split-package:=merge-first, \
                  org.apache.commons.configuration.*, \
                  org.apache.commons.logging.impl, \
