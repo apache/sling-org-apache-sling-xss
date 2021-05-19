@@ -63,6 +63,20 @@
                         </excludes>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                    <configuration>
+                        <!-- ignore class files referenced from classes copied over to target/classes by bnd-maven-plugin -->
+                        <ignores>
+                            <ignore>org.apache.xml.*</ignore>
+                            <ignore>org.apache.commons.*</ignore>
+                            <ignore>javax.servlet.jsp.*</ignore>
+                            <ignore>org.apache.avalon.*</ignore> 
+                            <ignore>org.apache.log.*</ignore> 
+                        </ignores>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
 
@@ -70,69 +84,6 @@
             <plugin>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>sling-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/dependencies-classes</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.owasp.antisamy</groupId>
-                                    <artifactId>antisamy</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.owasp.esapi</groupId>
-                                    <artifactId>esapi</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.owasp.encoder</groupId>
-                                    <artifactId>encoder</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>xalan</groupId>
-                                    <artifactId>xalan</artifactId>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>xml-apis</groupId>
-                                    <artifactId>xml-apis</artifactId>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <!-- here the phase you need -->
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.build.directory}/dependencies-classes</directory>
-                                    <excludes>
-                                        <exclude>**/MANIFEST.MF</exclude>
-                                    </excludes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
