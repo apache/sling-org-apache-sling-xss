@@ -1,3 +1,4 @@
+# make sure to not import classes which are not actually used from the embedded JARs
 Import-Package: !bsh, \
                 !nu.xom, \
                 !org.apache.bcel.*, \
@@ -22,19 +23,9 @@ Import-Package: !bsh, \
                 !javax.mail.internet, \
                 !javax.servlet.jsp, \
                 !javax.servlet.jsp.tagext, \
+                !javax.swing.*, \
                 !javax.xml.*, \
                 !sun.io, \
                 *
-Private-Package: org.apache.sling.xss.impl, \
-                 org.apache.batik.*, \
-                 org.w3c.css.sac, \
-                 org.apache.xerces.*, \
-                 org.apache.xml.serialize, \
-                 org.apache.xml.serializer.*, \
-                 org.apache.commons.beanutils.*;-split-package:=merge-first, \
-                 org.apache.commons.configuration.*, \
-                 org.apache.commons.logging.impl, \
-                 org.cyberneko.html.*, \
-                 org.owasp.*, \
-                 javax.xml.parsers;-split-package:=merge-first, \
-                 javax.xml.transform;-split-package:=merge-first
+# embed full JARs in extracted form
+-includeresource: @antisamy-*.jar!/*,@esapi-*.jar!/*,@encoder-*.jar!/*,@xalan-*.jar!/*,@xml-apis-*.jar!/*
