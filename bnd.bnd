@@ -1,40 +1,27 @@
+# make sure to not import classes which are not actually used from the embedded JARs
 Import-Package: !bsh, \
                 !nu.xom, \
                 !org.apache.bcel.*, \
-                !org.apache.log4j.spi, \
-                !org.apache.log4j.xml, \
-                !org.w3c.dom, \
                 !org.w3c.dom.*, \
                 !org.apache.avalon.framework.logger, \
+                !org.apache.batik.*, \
+                !org.apache.commons.beanutils.*, \
                 !org.apache.commons.collections.*, \
+                !org.apache.commons.configuration.*, \
                 !org.apache.commons.digester.*, \
                 !org.apache.commons.jexl2, \
                 !org.apache.commons.jxpath.*, \
                 !org.apache.commons.lang.*, \
                 !org.apache.commons.vfs2.*, \
                 !org.apache.tools.ant.taskdefs, \
-                !org.apache.xml.resolver.*, \
-                !org.apache.xmlgraphics.java2d.color, \
-                !org.apache.log, \
+                !org.apache.xerces.*, \
+                !org.apache.xml.*, \
+                !org.cyberneko.html.*, \
                 !org.owasp.*, \
-                !org.xml.sax, \
-                !org.xml.sax.*, \
                 !javax.mail.internet, \
-                !javax.servlet.jsp, \
-                !javax.servlet.jsp.tagext, \
+                !javax.swing.*, \
                 !javax.xml.*, \
                 !sun.io, \
                 *
-Private-Package: org.apache.sling.xss.impl, \
-                 org.apache.batik.*, \
-                 org.w3c.css.sac, \
-                 org.apache.xerces.*, \
-                 org.apache.xml.serialize, \
-                 org.apache.xml.serializer.*, \
-                 org.apache.commons.beanutils.*;-split-package:=merge-first, \
-                 org.apache.commons.configuration.*, \
-                 org.apache.commons.logging.impl, \
-                 org.cyberneko.html.*, \
-                 org.owasp.*, \
-                 javax.xml.parsers;-split-package:=merge-first, \
-                 javax.xml.transform;-split-package:=merge-first
+# embed full JARs in extracted form
+-includeresource: @antisamy-*.jar!/*,@esapi-*.jar!/*,@encoder-*.jar!/*,@xalan-*.jar!/*,@xml-apis-*.jar!/*
