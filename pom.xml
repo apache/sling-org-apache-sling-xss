@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling-bundle-parent</artifactId>
-        <version>40</version>
+        <version>41</version>
         <relativePath />
     </parent>
 
@@ -61,6 +61,20 @@
                             <exclude>src/main/resources/ESAPI.properties</exclude>
                             <exclude>src/main/resources/validation.properties</exclude>
                         </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                    <configuration>
+                        <!-- ignore class files referenced from classes copied over to target/classes by bnd-maven-plugin -->
+                        <ignores>
+                            <ignore>org.apache.xml.*</ignore>
+                            <ignore>org.apache.commons.*</ignore>
+                            <ignore>javax.servlet.jsp.*</ignore>
+                            <ignore>org.apache.avalon.*</ignore> 
+                            <ignore>org.apache.log.*</ignore> 
+                        </ignores>
                     </configuration>
                 </plugin>
             </plugins>
