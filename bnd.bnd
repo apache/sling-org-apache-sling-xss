@@ -14,8 +14,8 @@ Import-Package: !bsh, \
                 !org.apache.commons.lang.*, \
                 !org.apache.commons.vfs2.*, \
                 !org.apache.tools.ant.taskdefs, \
-                !org.apache.xml.resolver.*, \
-                !org.apache.xmlgraphics.java2d.color, \
+                !org.apache.xerces.*, \
+                !org.apache.xml.*, \
                 !org.apache.log, \
                 !org.owasp.*, \
                 !org.xml.sax, \
