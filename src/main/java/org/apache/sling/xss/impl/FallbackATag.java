@@ -18,24 +18,12 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 
 import org.owasp.validator.html.model.Attribute;
 import org.owasp.validator.html.model.Tag;
 
 public class FallbackATag extends Tag {
-
-    static final Attribute FALLBACK_HREF_ATTRIBUTE = new Attribute(
-            "href",
-            Arrays.asList(
-                    XSSFilterImpl.ON_SITE_SIMPLIFIED,
-                    XSSFilterImpl.OFF_SITE_SIMPLIFIED
-            ),
-            Collections.emptyList(),
-            "removeAttribute", ""
-    );
 
     private final Tag wrapped;
 
@@ -72,7 +60,7 @@ public class FallbackATag extends Tag {
     @Override
     public Attribute getAttributeByName(String name) {
         if ("href".equalsIgnoreCase(name)) {
-            return FALLBACK_HREF_ATTRIBUTE;
+            return XSSFilterImpl.FALLBACK_HREF_ATTRIBUTE;
         }
         return wrapped.getAttributeByName(name);
     }

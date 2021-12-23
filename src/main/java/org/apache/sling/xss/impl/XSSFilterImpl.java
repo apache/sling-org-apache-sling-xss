@@ -136,7 +136,15 @@ public class XSSFilterImpl implements XSSFilter {
     static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)" +
             "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
 
-    private static final Pattern[] BACKUP_PATTERNS = new Pattern[] {ON_SITE_SIMPLIFIED, OFF_SITE_SIMPLIFIED};
+    static final Attribute FALLBACK_HREF_ATTRIBUTE = new Attribute(
+            "href",
+            Arrays.asList(
+                    ON_SITE_SIMPLIFIED,
+                    OFF_SITE_SIMPLIFIED
+            ),
+            Collections.emptyList(),
+            "removeAttribute", ""
+    );
 
     /*
       NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
@@ -229,18 +237,17 @@ public class XSSFilterImpl implements XSSFilter {
 
     private boolean runHrefValidation(@NotNull String url) {
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
-        boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
+        String urlLowerCase = url.toLowerCase();
+        boolean isValid = hrefAttribute.containsAllowedValue(urlLowerCase);
         if (!isValid) {
             try {
-                isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
+                isValid = hrefAttribute.matchesAllowedExpression(urlLowerCase);
             } catch (StackOverflowError e) {
                 logger.debug("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
                 try {
-                    for (Pattern p : BACKUP_PATTERNS) {
-                        isValid = p.matcher(url.toLowerCase()).matches();
-                        if (isValid) {
-                            break;
-                        }
+                    isValid = FALLBACK_HREF_ATTRIBUTE.containsAllowedValue(urlLowerCase);
+                    if (!isValid) {
+                        isValid = FALLBACK_HREF_ATTRIBUTE.matchesAllowedExpression(urlLowerCase);
                     }
                 } catch (StackOverflowError inner) {
                     logger.debug("Detected a StackOverflowError when validating url {} with fallback regexes", url);

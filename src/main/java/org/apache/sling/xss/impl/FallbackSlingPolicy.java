@@ -20,36 +20,18 @@ package org.apache.sling.xss.impl;
 
 import java.io.InputStream;
 
-import org.owasp.validator.html.InternalPolicy;
+import org.owasp.validator.html.Policy;
 import org.owasp.validator.html.PolicyException;
 import org.owasp.validator.html.model.Tag;
-import org.xml.sax.InputSource;
 
-public class FallbackSlingPolicy extends InternalPolicy {
-
-    private FallbackATag fallbackATag;
-    private final Object aTagLock = new Object();
+public class FallbackSlingPolicy extends Policy {
 
     public FallbackSlingPolicy(InputStream inputStream) throws PolicyException {
-       super(null, getSimpleParseContext(getTopLevelElement(new InputSource(inputStream))));
-
-    }
-
-    @Override
-    public Tag getTagByLowercaseName(String tagName) {
-        if ("a".equalsIgnoreCase(tagName)) {
-            synchronized (aTagLock) {
-                if (fallbackATag == null) {
-                    Tag wrapped = super.getTagByLowercaseName(tagName);
-                    if (wrapped != null) {
-                        fallbackATag = new FallbackATag(wrapped);
-                    }
-                }
-            }
-            if (fallbackATag != null) {
-                return fallbackATag;
-            }
-        }
-        return super.getTagByLowercaseName(tagName);
+       super(inputStream);
+       Tag original = getTagByLowercaseName("a");
+       if (original != null) {
+           Tag wrapped = new FallbackATag(original);
+           tagRules.put("a", wrapped);
+       }
     }
 }
