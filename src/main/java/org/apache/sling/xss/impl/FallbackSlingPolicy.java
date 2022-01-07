@@ -31,7 +31,7 @@ public class FallbackSlingPolicy extends InternalPolicy {
     private final Object aTagLock = new Object();
 
     public FallbackSlingPolicy(InputStream inputStream) throws PolicyException {
-       super(null, getSimpleParseContext(getTopLevelElement(new InputSource(inputStream))));
+       super(getSimpleParseContext(getTopLevelElement(new InputSource(inputStream), () -> new InputSource(inputStream))));
 
     }
 
