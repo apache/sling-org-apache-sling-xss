@@ -47,7 +47,7 @@ public class AttributeTranslatingTransformerFactoryImpl extends TransformerFacto
                 setFeature(FEATURE_SECURE_PROCESSING, true);
                 return;
             } catch (TransformerConfigurationException e) {
-                throw new IllegalArgumentException("Failed translating attribute " + name + " top feature " + FEATURE_SECURE_PROCESSING ,e);
+                throw new IllegalArgumentException("Failed translating attribute " + name + " to feature " + FEATURE_SECURE_PROCESSING ,e);
             }
         }
         super.setAttribute(name, value);
