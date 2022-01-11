@@ -19,6 +19,16 @@
 
 package javax.xml.transform;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.commons.io.IOUtils;
+
 /**
  * <p>This class is duplicated for each JAXP subpackage so keep it in
  * sync.  It is package private.
@@ -29,15 +39,21 @@ package javax.xml.transform;
  * however that it must be compiled on a JDK version 1.2 or later system
  * since it calls Thread#getContextClassLoader().  The code also runs both
  * as part of an unbundled jar file and when bundled as part of the JDK.
+ * 
+ * <p>This class does not support the full transformer factory lookup mechanism.
+ * It only supports lookups via the <tt>ServiceLoader</tt> mechanism. By virtue of the
+ * libraries embedded in the Sling XSS bundle, the fallback <tt>TransformerFactory</tt>
+ * implementation is the one provided by Xalan.</p>
  *
  * <p><strong>NOTE</strong>:
- * <p>This class is included in order to make sure that all {@code javax.xml.parsers} factories are the ones embedded by the bundle
+ * <p>This class is included in order to make sure that all {@code javax.xml.transform} factories are the ones embedded by the bundle
  * and not the ones provided by the underlying JVM or platform.
  *
  * <p>For more details check the following issues:
  * <ol>
  *      <li>https://issues.apache.org/jira/browse/SLING-8321</li>
  *      <li>https://issues.apache.org/jira/browse/SLING-8328</li>
+ *      <li>https://issues.apache.org/jira/browse/SLING-10953</li>
  * </ol>
  */
 final class FactoryFinder {
@@ -154,8 +170,46 @@ final class FactoryFinder {
             classLoader = FactoryFinder.class.getClassLoader();
         }
 
+        Object instance = loadFactoryFromServiceFile(factoryId, classLoader);
+        if ( instance != null )
+            return instance;
+
         if (debug) dPrint("loaded from fallback value: " + fallbackClassName);
         return newInstance(fallbackClassName, classLoader, true);
+    }
+
+    private static Object loadFactoryFromServiceFile(String factoryId, ClassLoader classLoader) {
+        try {
+            Enumeration<URL> serviceFiles = classLoader.getResources("/META-INF/services/" + factoryId);
+            while ( serviceFiles.hasMoreElements() ) {
+                URL url = serviceFiles.nextElement();
+                if ( debug ) {
+                    dPrint("Inspecting service file " + url );
+                }
+                try ( InputStream is = url.openStream() ) {
+                    List<String> lines = IOUtils.readLines(is, StandardCharsets.UTF_8);
+                    Optional<String> service = lines.stream()
+                        .filter( s -> ! s.trim().startsWith("#") )
+                        .filter( s -> ! s.trim().isEmpty())
+                        .findFirst();
+
+                    if ( service.isPresent() ) {
+                        try {
+                            return newInstance(service.get(), classLoader, true);
+                        } catch (ConfigurationError e) {
+                            // continue
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            if (debug) {
+                dPrint("Failed loading service files " + e.getMessage());
+                e.printStackTrace(System.err);
+            }
+        }
+
+        return null;
     }
 
     static class ConfigurationError extends Error {

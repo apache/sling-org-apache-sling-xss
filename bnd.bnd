@@ -28,7 +28,10 @@ Import-Package: !bsh, \
 Private-Package: org.apache.sling.xss.impl, \
                  org.apache.batik.*, \
                  org.w3c.css.sac, \
+                 org.apache.xalan.*, \
                  org.apache.xerces.*, \
+                 org.apache.xml.*, \
+                 org.apache.xpath.*, \
                  org.apache.xml.serialize, \
                  org.apache.xml.serializer.*, \
                  org.apache.commons.beanutils.*;-split-package:=merge-first, \
@@ -36,5 +39,6 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.apache.commons.logging.impl, \
                  org.cyberneko.html.*, \
                  org.owasp.*, \
+                 java_cup.runtime, \
                  javax.xml.parsers;-split-package:=merge-first, \
                  javax.xml.transform;-split-package:=merge-first
