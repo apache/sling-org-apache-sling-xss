@@ -40,6 +40,11 @@ public class PolicyHandler {
      * @param policyStream the InputStream from which to read this handler's {@link Policy}
      */
     public PolicyHandler(InputStream policyStream) throws Exception {
+
+        // ensure that when AntiSamy is initialised it finds the transformer factory that we want it to
+        // See https://github.com/nahsra/antisamy/commit/7ff740de5cd3577c49aca61c985f376de9f8884c
+        System.setProperty("antisamy.transformerfactory.impl", AttributeTranslatingTransformerFactoryImpl.class.getName());
+
         // fix for classloader issue with IBM JVM: see bug #31946
         // (currently: http://bugs.day.com/bugzilla/show_bug.cgi?id=31946)
         Thread currentThread = Thread.currentThread();
