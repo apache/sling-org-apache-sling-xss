@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.sling.xss.XSSFilter;
 import org.apache.sling.xss.impl.XSSFilterImpl;
 import org.apache.sling.xss.impl.status.XSSStatusService;
@@ -58,7 +58,9 @@ import org.slf4j.LoggerFactory;
 )
 public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(XSSProtectionAPIWebConsolePlugin.class);
+    //Serial Version UID
+	private static final long serialVersionUID = -8510989967759120654L;
+	private static final Logger LOGGER = LoggerFactory.getLogger(XSSProtectionAPIWebConsolePlugin.class);
     /*
         do not replace the following constants with the ones from org.apache.felix, since you'll create a wiring to those APIs; the
         current way this plugin is written allows it to optionally be available, if the Felix Web Console is installed on the OSGi
