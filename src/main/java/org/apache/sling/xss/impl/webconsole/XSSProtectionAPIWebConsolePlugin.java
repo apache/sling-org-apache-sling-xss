@@ -58,7 +58,7 @@ import org.slf4j.LoggerFactory;
 )
 public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(XSSProtectionAPIWebConsolePlugin.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XSSProtectionAPIWebConsolePlugin.class);
     /*
         do not replace the following constants with the ones from org.apache.felix, since you'll create a wiring to those APIs; the
         current way this plugin is written allows it to optionally be available, if the Felix Web Console is installed on the OSGi
