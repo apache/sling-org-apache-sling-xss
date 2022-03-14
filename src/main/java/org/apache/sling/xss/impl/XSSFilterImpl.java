@@ -26,9 +26,9 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.translate.NumericEntityUnescaper;
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.text.translate.NumericEntityUnescaper;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;

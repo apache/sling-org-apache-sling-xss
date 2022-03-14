@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.sling.xss.XSSFilter;
 import org.apache.sling.xss.impl.XSSFilterImpl;
 import org.apache.sling.xss.impl.status.XSSStatusService;
