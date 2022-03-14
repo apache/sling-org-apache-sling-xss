@@ -159,8 +159,7 @@ final class FactoryFinder {
     }
 
     static class ConfigurationError extends Error {
-        //Serial Version UID
-		private static final long serialVersionUID = 159720375000853069L;
+       
 		private Exception exception;
 
         /**

@@ -58,8 +58,6 @@ import org.slf4j.LoggerFactory;
 )
 public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
 
-    //Serial Version UID
-	private static final long serialVersionUID = -8510989967759120654L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(XSSProtectionAPIWebConsolePlugin.class);
     /*
         do not replace the following constants with the ones from org.apache.felix, since you'll create a wiring to those APIs; the
