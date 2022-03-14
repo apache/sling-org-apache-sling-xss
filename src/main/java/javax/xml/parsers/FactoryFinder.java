@@ -159,8 +159,7 @@ final class FactoryFinder {
     }
 
     static class ConfigurationError extends Error {
-       
-		private Exception exception;
+	private Exception exception;
 
         /**
          * Construct a new instance with the specified detail string and
