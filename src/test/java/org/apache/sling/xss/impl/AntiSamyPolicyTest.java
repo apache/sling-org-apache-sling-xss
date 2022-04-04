@@ -18,15 +18,16 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.apache.commons.lang3.StringUtils;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.owasp.validator.html.AntiSamy;
 import org.owasp.validator.html.Policy;
 import org.owasp.validator.html.PolicyException;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * This test suite makes sure the customised {@code config.xml} policy shipped with this module is not exposed to attacks. The test strings
@@ -38,7 +39,7 @@ public class AntiSamyPolicyTest {
     public static final String POLICY_FILE = "SLING-INF/content/config.xml";
     private static AntiSamy antiSamy;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws PolicyException {
         antiSamy = new AntiSamy(Policy.getInstance(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
     }
@@ -200,24 +201,24 @@ public class AntiSamyPolicyTest {
         }
     }
 
-    
+
     /**
      * Test to verify the fix for SLING-8771 - XSS Configuration should allow the HTML5 figure and figcaption tags
      */
     @Test
     public void testIssueSLING8771() throws Exception {
-    	    	
+
         TestInput[] tests = new TestInput[]{
-                new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>", 
+                new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>",
                 			   "<figure", true),
-                new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>", 
+                new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>",
          			   "<figcaption", true),
         };
         for (TestInput testInput : tests) {
             testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
         }
     }
-    
+
     private void testOutputContains(String input, String containedString, boolean contains) throws Exception {
         testOutputContains(input, containedString, contains, false);
     }
@@ -231,29 +232,29 @@ public class AntiSamyPolicyTest {
         String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
         String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
         if (!skipComparingInputWithOutput) {
-            assertTrue(String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
-                    input, containedString), input.toLowerCase().contains(containedString.toLowerCase()));
+            assertTrue(input.toLowerCase().contains(containedString.toLowerCase()), String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
+                    input, containedString));
         }
         if (contains) {
             if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
                 assertTrue(
-                        String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
-                                containedString), antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString));
+                        antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString), String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
+                                containedString));
             }
             if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
-                assertTrue(String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
+                assertTrue(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
                         input,
-                        containedString), antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString));
+                        containedString));
             }
         } else {
             if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
-                assertFalse(
+                assertFalse(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString),
                         String.format("Expected that DOM filtered output '%s' for input '%s', would NOT contain '%s'.", cleanDOMModeHTML,
-                                input, containedString), antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString));
+                                input, containedString));
             }
             if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
-                assertFalse(String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
-                        input, containedString), antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString));
+                assertFalse(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
+                        input, containedString));
             }
         }
     }
@@ -262,8 +263,8 @@ public class AntiSamyPolicyTest {
     private void testOutpuIsEmpty(String input) throws Exception {
         String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
         String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
-        assertTrue("Expected empty DOM filtered output for '" + input + "'.", StringUtils.isEmpty(cleanDOMModeHTML));
-        assertTrue("Expected empty SAX filtered output for '" + input + "'.", StringUtils.isEmpty(cleanSAXModeHTML));
+        assertTrue(StringUtils.isEmpty(cleanDOMModeHTML), "Expected empty DOM filtered output for '" + input + "'.");
+        assertTrue(StringUtils.isEmpty(cleanSAXModeHTML), "Expected empty SAX filtered output for '" + input + "'.");
     }
 
     private class TestInput {
