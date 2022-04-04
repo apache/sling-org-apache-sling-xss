@@ -16,6 +16,13 @@
  ******************************************************************************/
 package org.apache.sling.xss.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -23,33 +30,25 @@ import org.apache.sling.api.resource.observation.ResourceChangeListener;
 import org.apache.sling.commons.metrics.Counter;
 import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
-import org.apache.sling.testing.mock.sling.junit.SlingContext;
+import org.apache.sling.testing.mock.sling.junit5.SlingContext;
+import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
 import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.impl.status.XSSStatusService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.osgi.framework.ServiceReference;
 import org.owasp.validator.html.model.Attribute;
 import org.powermock.reflect.Whitebox;
 
-import junit.framework.TestCase;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+@ExtendWith(SlingContextExtension.class)
 public class XSSAPIImplTest {
 
     private static final String RUBBISH = "rubbish";
     private static final String RUBBISH_JSON = "[\"rubbish\"]";
     private static final String RUBBISH_XML = "<rubbish/>";
 
-    @Rule
     public SlingContext context = new SlingContext();
 
     private XSSAPI xssAPI;
@@ -66,7 +65,7 @@ public class XSSAPIImplTest {
         xssAPI = context.getService(XSSAPI.class);
     }
 
-    @Before
+    @BeforeEach
     public void before() {
         MetricsService metricsService = mock(MetricsService.class);
         when(metricsService.counter(anyString())).thenReturn(mock(Counter.class));
@@ -75,7 +74,7 @@ public class XSSAPIImplTest {
         context.registerService(new XSSStatusService());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         xssAPI = null;
     }
@@ -100,7 +99,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("HTML Encoding '" + source + "'", expected, xssAPI.encodeForHTML(source));
+            assertEquals(expected, xssAPI.encodeForHTML(source), "HTML Encoding '" + source + "'");
         }
     }
 
@@ -123,7 +122,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("HTML Encoding '" + source + "'", expected, xssAPI.encodeForHTMLAttr(source));
+            assertEquals(expected, xssAPI.encodeForHTMLAttr(source), "HTML Encoding '" + source + "'");
         }
     }
 
@@ -146,7 +145,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("XML Encoding '" + source + "'", expected, xssAPI.encodeForXML(source));
+            assertEquals(expected, xssAPI.encodeForXML(source), "XML Encoding '" + source + "'");
         }
     }
 
@@ -170,7 +169,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("XML Encoding '" + source + "'", expected, xssAPI.encodeForXMLAttr(source));
+            assertEquals(expected, xssAPI.encodeForXMLAttr(source), "XML Encoding '" + source + "'");
         }
     }
 
@@ -212,7 +211,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("Filtering '" + source + "'", expected, xssAPI.filterHTML(source));
+            assertEquals(expected, xssAPI.filterHTML(source), "Filtering '" + source + "'");
         }
     }
 
@@ -357,7 +356,7 @@ public class XSSAPIImplTest {
         }
         if (errors.length() > 0) {
             errors.insert(0, "\n");
-            TestCase.fail(errors.toString());
+            fail(errors.toString());
         }
     }
 
@@ -407,7 +406,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             Integer expected = (aTestData[1] != null) ? Integer.parseInt(aTestData[1]) : null;
 
-            TestCase.assertEquals("Validating integer '" + source + "'", expected, xssAPI.getValidInteger(source, 123));
+            assertEquals(expected, xssAPI.getValidInteger(source, 123), "Validating integer '" + source + "'");
         }
     }
 
@@ -431,7 +430,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             Long expected = (aTestData[1] != null) ? Long.parseLong(aTestData[1]) : null;
 
-            TestCase.assertEquals("Validating long '" + source + "'", expected, xssAPI.getValidLong(source, 123));
+            assertEquals(expected, xssAPI.getValidLong(source, 123), "Validating long '" + source + "'");
         }
     }
 
@@ -454,7 +453,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             Double expected = (aTestData[1] != null) ? Double.parseDouble(aTestData[1]) : null;
 
-            TestCase.assertEquals("Validating double '" + source + "'", expected, xssAPI.getValidDouble(source, 123));
+            assertEquals(expected, xssAPI.getValidDouble(source, 123), "Validating double '" + source + "'");
         }
     }
 
@@ -485,7 +484,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("Validating dimension '" + source + "'", expected, xssAPI.getValidDimension(source, "123"));
+            assertEquals(expected, xssAPI.getValidDimension(source, "123"), "Validating dimension '" + source + "'");
         }
     }
 
@@ -511,7 +510,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("Encoding '" + source + "'", expected, xssAPI.encodeForJSString(source));
+            assertEquals(expected, xssAPI.encodeForJSString(source), "Encoding '" + source + "'");
         }
     }
 
@@ -544,7 +543,7 @@ public class XSSAPIImplTest {
             String source = aTestData[0];
             String expected = aTestData[1];
 
-            TestCase.assertEquals("Validating Javascript token '" + source + "'", expected, xssAPI.getValidJSToken(source, RUBBISH));
+            assertEquals(expected, xssAPI.getValidJSToken(source, RUBBISH), "Validating Javascript token '" + source + "'");
         }
     }
 
@@ -565,7 +564,7 @@ public class XSSAPIImplTest {
             String expected = aTestData[1];
 
             String result = xssAPI.encodeForCSSString(source);
-            TestCase.assertEquals("Encoding '" + source + "'", expected, result);
+            assertEquals(expected, result, "Encoding '" + source + "'");
         }
     }
 

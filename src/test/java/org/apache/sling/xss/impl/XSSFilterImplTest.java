@@ -18,38 +18,39 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import org.apache.sling.commons.metrics.Counter;
-import org.apache.sling.commons.metrics.MetricsService;
-import org.apache.sling.serviceusermapping.ServiceUserMapped;
-import org.apache.sling.testing.mock.sling.junit.SlingContext;
-import org.apache.sling.xss.XSSFilter;
-import org.apache.sling.xss.impl.status.XSSStatusService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.apache.sling.commons.metrics.Counter;
+import org.apache.sling.commons.metrics.MetricsService;
+import org.apache.sling.serviceusermapping.ServiceUserMapped;
+import org.apache.sling.testing.mock.sling.junit5.SlingContext;
+import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
+import org.apache.sling.xss.XSSFilter;
+import org.apache.sling.xss.impl.status.XSSStatusService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+@ExtendWith(SlingContextExtension.class)
 public class XSSFilterImplTest {
 
-    @Rule
     public SlingContext context = new SlingContext();
 
     private XSSFilter xssFilter;
 
-    @After
+    @AfterEach
     public void tearDown() {
         xssFilter = null;
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         MetricsService metricsService = mock(MetricsService.class);
         when(metricsService.counter(anyString())).thenReturn(mock(Counter.class));
@@ -66,8 +67,8 @@ public class XSSFilterImplTest {
         xssFilter = context.getService(XSSFilter.class);
         XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
         XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
-        assertFalse("Expected a Resource based policy.", antiSamyPolicy.isEmbedded());
-        assertEquals("This is not the policy we're looking for.", "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH, antiSamyPolicy.getPath());
+        assertFalse(antiSamyPolicy.isEmbedded(), "Expected a Resource based policy.");
+        assertEquals("/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
     }
 
     @Test
@@ -76,8 +77,8 @@ public class XSSFilterImplTest {
         xssFilter = context.getService(XSSFilter.class);
         XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
         XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
-        assertTrue("Expected the default embedded policy.", antiSamyPolicy.isEmbedded());
-        assertEquals("This is not the policy we're looking for.", XSSFilterImpl.EMBEDDED_POLICY_PATH, antiSamyPolicy.getPath());
+        assertTrue(antiSamyPolicy.isEmbedded(), "Expected the default embedded policy.");
+        assertEquals(XSSFilterImpl.EMBEDDED_POLICY_PATH, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
     }
 
     @Test
@@ -108,9 +109,9 @@ public class XSSFilterImplTest {
 
     private void checkIsValid(String input, boolean valid) {
         if (valid) {
-            assertTrue("Expected valid href value for: " + input, xssFilter.isValidHref(input));
+            assertTrue(xssFilter.isValidHref(input), "Expected valid href value for: " + input);
         } else {
-            assertFalse("Expected invalid href value for: " + input, xssFilter.isValidHref(input));
+            assertFalse(xssFilter.isValidHref(input), "Expected invalid href value for: " + input);
         }
     }
 
