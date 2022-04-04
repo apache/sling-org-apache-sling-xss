@@ -23,7 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.owasp.validator.html.AntiSamy;
 import org.owasp.validator.html.Policy;
 import org.owasp.validator.html.PolicyException;
@@ -44,24 +46,121 @@ public class AntiSamyPolicyTest {
         antiSamy = new AntiSamy(Policy.getInstance(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
     }
 
-    @Test
-    public void testScriptFiltering() throws Exception {
-        TestInput[] tests = new TestInput[]{
+    @ParameterizedTest
+    @MethodSource("dataForScriptFiltering")
+    public void testScriptFiltering(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForEventHandlerAttributes")
+    public void testEventHandlerAttributes(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForImageFiltering")
+    public void testImageFiltering(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings= {
+        "<IMG SRC=&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058&#0000097" +
+                "&#0000108&#0000101&#0000114&#0000116&#0000040&#0000039&#0000088&#0000083&#0000083&#0000039&#0000041>",
+        "<IMG SRC=&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#x53&#x53&#x27&#x29>"
+    })
+    public void testEmptyImageFiltering(String input) throws Exception {
+        testOutputIsEmpty(input);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForURIFiltering")
+    public void testURIFiltering(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForCSSFiltering")
+    public void testCSSFiltering(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput, testInput.skipComparingInputWithOutput);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForDataAttributes")
+    public void testDataAttributes(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput, false, Mode.SAX);
+    }
+
+    /**
+     * Test to verify the fix for SLING-8771 - XSS Configuration should allow the HTML5 figure and figcaption tags
+     */
+    @ParameterizedTest
+    @MethodSource("dataForIssueSLING8771")
+    public void testIssueSLING8771(TestInput testInput) throws Exception {
+        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+    }
+
+    private void testOutputContains(String input, String containedString, boolean contains) throws Exception {
+        testOutputContains(input, containedString, contains, false);
+    }
+
+    private void testOutputContains(String input, String containedString, boolean contains, boolean skipComparingInputWithOutput) throws Exception {
+        testOutputContains(input, containedString, contains, skipComparingInputWithOutput, Mode.SAX_AND_DOM);
+    }
+
+    private void testOutputContains(String input, String containedString, boolean contains, boolean skipComparingInputWithOutput,
+                                    Mode mode) throws Exception {
+        String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
+        String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
+        if (!skipComparingInputWithOutput) {
+            assertTrue(input.toLowerCase().contains(containedString.toLowerCase()), String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
+                    input, containedString));
+        }
+        if (contains) {
+            if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
+                assertTrue(
+                        antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString), String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
+                                containedString));
+            }
+            if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
+                assertTrue(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
+                        input,
+                        containedString));
+            }
+        } else {
+            if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
+                assertFalse(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString),
+                        String.format("Expected that DOM filtered output '%s' for input '%s', would NOT contain '%s'.", cleanDOMModeHTML,
+                                input, containedString));
+            }
+            if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
+                assertFalse(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
+                        input, containedString));
+            }
+        }
+    }
+
+
+    private void testOutputIsEmpty(String input) throws Exception {
+        String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
+        String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
+        assertTrue(StringUtils.isEmpty(cleanDOMModeHTML), "Expected empty DOM filtered output for '" + input + "'.");
+        assertTrue(StringUtils.isEmpty(cleanSAXModeHTML), "Expected empty SAX filtered output for '" + input + "'.");
+    }
+
+    static TestInput[] dataForScriptFiltering() {
+        return new TestInput[]{
                 new TestInput("test<script>alert(document.cookie)</script>", "script", false),
                 new TestInput("<<<><<script src=http://fake-evil.ru/test.js>", "<script", false),
                 new TestInput("<script<script src=http://fake-evil.ru/test.js>>", "<script", false),
                 new TestInput("<SCRIPT/XSS SRC=\"http://ha.ckers.org/xss.js\"></SCRIPT>", "<script", false),
                 new TestInput("<![CDATA[]><script>alert(1)</script><![CDATA[]>]]><script>alert(2)</script>>]]>", "<script", false),
-
         };
-        for (TestInput testInput : tests) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-        }
     }
 
-    @Test
-    public void testEventHandlerAttributes() throws Exception {
-        TestInput[] tests = new TestInput[]{
+    static TestInput[] dataForEventHandlerAttributes() {
+        return new TestInput[]{
                 new TestInput("<a onblur=\"alert(secret)\" href=\"http://www.google.com\">Google</a>", "onblur", false),
                 new TestInput("<BODY onload!#$%&()*~+-_.,:;?@[/|\\]^`=alert(\"XSS\")>", "onload", false),
                 new TestInput("<BODY ONLOAD=alert('XSS')>", "alert", false),
@@ -70,14 +169,10 @@ public class AntiSamyPolicyTest {
                 new TestInput("<bogus>whatever</bogus><img src=\"https://ssl.gstatic.com/codesite/ph/images/defaultlogo.png\" " +
                         "onmouseover=\"alert('xss')\">", "onmouseover", false),
         };
-        for (TestInput testInput : tests) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-        }
     }
 
-    @Test
-    public void testImageFiltering() throws Exception {
-        TestInput[] tests = new TestInput[]{
+    static TestInput[] dataForImageFiltering() {
+        return new TestInput[]{
                 new TestInput("<img src=\"http://www.myspace.com/img.gif\"/>", "<img", true),
                 new TestInput("<img src=javascript:alert(document.cookie)>", "<img", false),
                 new TestInput(
@@ -85,25 +180,11 @@ public class AntiSamyPolicyTest {
                         "<img", false),
                 new TestInput("<IMG SRC=\"jav&#x0D;ascript:alert('XSS');\">", "alert", false),
                 new TestInput("<IMG SRC=\"javascript:alert('XSS')\"", "javascript", false),
-                new TestInput("<IMG LOWSRC=\"javascript:alert('XSS')\">", "javascript", false),
-        };
-        for (TestInput testInput : tests) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-        }
-
-        String[] emptyOutput = new String[]{
-                "<IMG SRC=&#0000106&#0000097&#0000118&#0000097&#0000115&#0000099&#0000114&#0000105&#0000112&#0000116&#0000058&#0000097" +
-                        "&#0000108&#0000101&#0000114&#0000116&#0000040&#0000039&#0000088&#0000083&#0000083&#0000039&#0000041>",
-                "<IMG SRC=&#x6A&#x61&#x76&#x61&#x73&#x63&#x72&#x69&#x70&#x74&#x3A&#x61&#x6C&#x65&#x72&#x74&#x28&#x27&#x58&#x53&#x53&#x27&#x29>"
-        };
-        for (String input : emptyOutput) {
-            testOutpuIsEmpty(input);
-        }
+                new TestInput("<IMG LOWSRC=\"javascript:alert('XSS')\">", "javascript", false),        };
     }
 
-    @Test
-    public void testURIFiltering() throws Exception {
-        TestInput[] testInputs = new TestInput[]{
+    static TestInput[] dataForURIFiltering() {
+        return new TestInput[]{
                 new TestInput("<INPUT TYPE=\"IMAGE\" SRC=\"javascript:alert('XSS');\">", "src", false),
                 new TestInput("<iframe src=http://ha.ckers.org/scriptlet.html <", "<iframe", false),
                 new TestInput("<LINK REL=\"stylesheet\" HREF=\"javascript:alert('XSS');\">", "href", false),
@@ -154,23 +235,18 @@ public class AntiSamyPolicyTest {
                 new TestInput("<a href='http://subdomain.domain/(S(ke0lpq54bw0fvp53a10e1a45))/MyPage.aspx'>test</a>", "http://subdomain" +
                         ".domain/(S(ke0lpq54bw0fvp53a10e1a45))/MyPage.aspx", true),
                 new TestInput("<a href=\"javascript&colon;alert&lpar;1&rpar;\">X</a>", "javascript", false)
-
         };
-        for (TestInput testInput : testInputs) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-        }
     }
 
-    @Test
-    public void testCSSFiltering() throws Exception {
-        TestInput[] testInputs = new TestInput[]{
+    static TestInput[] dataForCSSFiltering() {
+        return new TestInput[]{
                 new TestInput("<div style=\"position:absolute\">", "position", false),
                 new TestInput("<style>b { position:absolute }</style>", "position", false),
                 new TestInput("<div style=\"z-index:25\">test</div>", "z-index", false),
                 new TestInput("<style>z-index:25</style>", "z-index", false),
                 new TestInput("<div style=\"margin: -5em\">Test</div>", "margin", false),
                 new TestInput("<div style=\"font-family: Geneva, Arial, courier new, sans-serif\">Test</div>", "font-family", true),
-                new TestInput("<style type=\"text/css\"><![CDATA[P {\n	font-family: \"Arial Unicode MS\";\n}\n]]></style>",
+                new TestInput("<style type=\"text/css\"><![CDATA[P {\n  font-family: \"Arial Unicode MS\";\n}\n]]></style>",
                         "font-family", true),
                 new TestInput("<style type=\"text/css\"><![CDATA[P { margin-bottom: 0.08in; } ]]></style>", "margin-bottom", true),
                 new TestInput("<style type=\"text/css\"><![CDATA[\r\nP {\r\n margin-bottom: 0.08in;\r\n}\r\n]]></style>", "margin-bottom",
@@ -181,101 +257,44 @@ public class AntiSamyPolicyTest {
                 new TestInput("<font color=\"neonpink\">Test</font>", "color", false),
                 new TestInput("<font color=\"#0000\">Test</font>", "color=", false),
                 new TestInput("<font color=\"#000000\">Test</font>", "color=\"#000000\"", true),
+                new TestInput("<div style=\"color: #fff\">Test 3 letter code</div>", "color: rgb(255,255,255)", true, true),
+                new TestInput("<div style=\"color: #000000\">Test</div>", "color: rgb(0,0,0)", true, true),
+                new TestInput("<div style=\"color: #0000\">Test</div>", "style=\"\"", true, true),
         };
-        for (TestInput testInput : testInputs) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-        }
-        testOutputContains("<div style=\"color: #fff\">Test 3 letter code</div>", "color: rgb(255,255,255)", true, true);
-        testOutputContains("<div style=\"color: #000000\">Test</div>", "color: rgb(0,0,0)", true, true);
-        testOutputContains("<div style=\"color: #0000\">Test</div>", "style=\"\"", true, true);
     }
 
-    @Test
-    public void testDataAttributes() throws Exception {
-        TestInput[] testInputs = new TestInput[]{
+    static TestInput[] dataForDataAttributes() {
+        return new TestInput[]{
                 new TestInput("<p data-tag=\"abc123\">Hello World!</p>", "data-tag", true),
                 new TestInput("<p dat-tag=\"abc123\">Hello World!</p>", "dat-tag", false),
         };
-        for (TestInput testInput : testInputs) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput, false, Mode.SAX);
-        }
     }
 
-
-    /**
-     * Test to verify the fix for SLING-8771 - XSS Configuration should allow the HTML5 figure and figcaption tags
-     */
-    @Test
-    public void testIssueSLING8771() throws Exception {
-
-        TestInput[] tests = new TestInput[]{
+    static TestInput[] dataForIssueSLING8771() {
+        return new TestInput[]{
                 new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>",
-                			   "<figure", true),
+                        "<figure", true),
                 new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>",
-         			   "<figcaption", true),
+                        "<figcaption", true),
         };
-        for (TestInput testInput : tests) {
-            testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-        }
     }
 
-    private void testOutputContains(String input, String containedString, boolean contains) throws Exception {
-        testOutputContains(input, containedString, contains, false);
-    }
-
-    private void testOutputContains(String input, String containedString, boolean contains, boolean skipComparingInputWithOutput) throws Exception {
-        testOutputContains(input, containedString, contains, skipComparingInputWithOutput, Mode.SAX_AND_DOM);
-    }
-
-    private void testOutputContains(String input, String containedString, boolean contains, boolean skipComparingInputWithOutput,
-                                    Mode mode) throws Exception {
-        String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
-        String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
-        if (!skipComparingInputWithOutput) {
-            assertTrue(input.toLowerCase().contains(containedString.toLowerCase()), String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
-                    input, containedString));
-        }
-        if (contains) {
-            if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
-                assertTrue(
-                        antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString), String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
-                                containedString));
-            }
-            if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
-                assertTrue(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
-                        input,
-                        containedString));
-            }
-        } else {
-            if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
-                assertFalse(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString),
-                        String.format("Expected that DOM filtered output '%s' for input '%s', would NOT contain '%s'.", cleanDOMModeHTML,
-                                input, containedString));
-            }
-            if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
-                assertFalse(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
-                        input, containedString));
-            }
-        }
-    }
-
-
-    private void testOutpuIsEmpty(String input) throws Exception {
-        String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
-        String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
-        assertTrue(StringUtils.isEmpty(cleanDOMModeHTML), "Expected empty DOM filtered output for '" + input + "'.");
-        assertTrue(StringUtils.isEmpty(cleanSAXModeHTML), "Expected empty SAX filtered output for '" + input + "'.");
-    }
-
-    private class TestInput {
+    private static class TestInput {
         String input;
         String expectedPartialOutput;
         boolean containsExpectedPartialOutput;
+        boolean skipComparingInputWithOutput;
+
 
         public TestInput(String input, String expectedPartialOutput, boolean containsExpectedPartialOutput) {
+            this(input, expectedPartialOutput, containsExpectedPartialOutput, false);
+        }
+
+        public TestInput(String input, String expectedPartialOutput, boolean containsExpectedPartialOutput, boolean skipComparingInputWithOutput) {
             this.input = input;
             this.expectedPartialOutput = expectedPartialOutput;
             this.containsExpectedPartialOutput = containsExpectedPartialOutput;
+            this.skipComparingInputWithOutput = skipComparingInputWithOutput;
         }
     }
 

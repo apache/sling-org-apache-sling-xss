@@ -26,6 +26,9 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.sling.commons.metrics.Counter;
 import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
@@ -37,9 +40,26 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @ExtendWith(SlingContextExtension.class)
 public class XSSFilterImplTest {
+
+    static List<Object[]> dataForValidHref() {
+        List<Object[]> testData = new ArrayList<>();
+        testData.add(new Object[] {"javascript:alert(1)", false});
+        testData.add(new Object[] {"", true});
+        testData.add(new Object[] {"%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29", false});
+        testData.add(new Object[] {"&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)", false});
+        testData.add(new Object[] {"%-12", false});
+        testData.add(new Object[] {"/promotion/25%/", false});
+        testData.add(new Object[] {"#", true});
+        testData.add(new Object[] {"?foo=bar", true});
+        testData.add(new Object[] {"#javascript:alert(23)", true});
+        testData.add(new Object[] {"#\">", false});
+        return testData;
+    }
 
     public SlingContext context = new SlingContext();
 
@@ -81,20 +101,16 @@ public class XSSFilterImplTest {
         assertEquals(XSSFilterImpl.EMBEDDED_POLICY_PATH, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
     }
 
-    @Test
-    public void isValidHref() {
+    @ParameterizedTest
+    @MethodSource("dataForValidHref")
+    public void isValidHref(String input, boolean isValid) {
         context.registerInjectActivateService(new XSSFilterImpl());
         xssFilter = context.getService(XSSFilter.class);
-        checkIsValid("javascript:alert(1)", false);
-        checkIsValid("", true);
-        checkIsValid("%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29", false);
-        checkIsValid("&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)", false);
-        checkIsValid("%-12", false);
-        checkIsValid("/promotion/25%/", false);
-        checkIsValid("#", true);
-        checkIsValid("?foo=bar", true);
-        checkIsValid("#javascript:alert(23)", true);
-        checkIsValid("#\">", false);
+        if (isValid) {
+            assertTrue(xssFilter.isValidHref(input), "Expected valid href value for: " + input);
+        } else {
+            assertFalse(xssFilter.isValidHref(input), "Expected invalid href value for: " + input);
+        }
     }
 
     @Test
@@ -106,13 +122,4 @@ public class XSSFilterImplTest {
         assertNotNull(xssFilter);
         assertEquals(longURLContext, xssFilter.filter(longURLContext));
     }
-
-    private void checkIsValid(String input, boolean valid) {
-        if (valid) {
-            assertTrue(xssFilter.isValidHref(input), "Expected valid href value for: " + input);
-        } else {
-            assertFalse(xssFilter.isValidHref(input), "Expected invalid href value for: " + input);
-        }
-    }
-
 }
