@@ -36,8 +36,10 @@ import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.impl.status.XSSStatusService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.osgi.framework.ServiceReference;
 import org.owasp.validator.html.model.Attribute;
 import org.powermock.reflect.Whitebox;
@@ -79,10 +81,201 @@ public class XSSAPIImplTest {
         xssAPI = null;
     }
 
-    @Test
-    public void testEncodeForHTML() {
+    @ParameterizedTest
+    @MethodSource("dataForEncodeToHtml")
+    public void testEncodeForHTML(String source, String expected) {
         setUp();
-        String[][] testData = {
+        assertEquals(expected, xssAPI.encodeForHTML(source), "HTML Encoding '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForEncodeToHtmlAttr")
+    public void testEncodeForHTMLAttr(String source, String expected) {
+        setUp();
+        assertEquals(expected, xssAPI.encodeForHTMLAttr(source), "HTML Encoding '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForEncodeToXml")
+    public void testEncodeForXML(String source, String expected) {
+        setUp();
+        assertEquals(expected, xssAPI.encodeForXML(source), "XML Encoding '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForEncodeToXmlAttr")
+    public void testEncodeForXMLAttr(String source, String expected) {
+        setUp();
+        assertEquals(expected, xssAPI.encodeForXMLAttr(source), "XML Encoding '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForFilterHtml")
+    public void testFilterHTML(String source, String expected) {
+        setUp();
+        assertEquals(expected, xssAPI.filterHTML(source), "Filtering '" + source + "'");
+    }
+
+    private void testHref(String input, String expected) {
+            String result = xssAPI.getValidHref(input);
+            assertEquals(expected, result, "Requested '" +input + "'\nGot '" + result + "'\nExpected  '" + expected + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidHref")
+    public void testGetValidHref(String input, String expected) {
+        setUp();
+        testHref(input, expected);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidHref")
+    public void testGetValidHrefWithoutHrefConfig(String input, String expected) {
+        context.load().binaryFile("/configWithoutHref.xml", "/apps/sling/xss/configWithoutHref.xml");
+        context.registerInjectActivateService(new XSSFilterImpl(), new HashMap<String, Object>(){{
+            put("policyPath", "/apps/sling/xss/configWithoutHref.xml");
+        }});
+        context.registerInjectActivateService(new XSSAPIImpl());
+        xssAPI = context.getService(XSSAPI.class);
+        ServiceReference<ResourceChangeListener> xssFilterRCL = context.bundleContext().getServiceReference(ResourceChangeListener.class);
+        assertEquals("/apps/sling/xss/configWithoutHref.xml", xssFilterRCL.getProperty(ResourceChangeListener.PATHS));
+        // Load AntiSamy configuration without href filter
+        XSSFilterImpl xssFilter = Whitebox.getInternalState(xssAPI, "xssFilter");
+
+        Attribute hrefAttribute = Whitebox.getInternalState(xssFilter, "hrefAttribute");
+        assertEquals(hrefAttribute, XSSFilterImpl.DEFAULT_HREF_ATTRIBUTE);
+
+        // Run same tests again to check default configuration
+        testHref(input, expected);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidInteger")
+    public void testGetValidInteger(String source, String expectedAsString) {
+        setUp();
+
+        Integer expected = (expectedAsString != null) ? Integer.parseInt(expectedAsString) : null;
+        assertEquals(expected, xssAPI.getValidInteger(source, 123), "Validating integer '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidLong")
+    public void testGetValidLong(String source, String expectedAsString) {
+        setUp();
+
+        Long expected = (expectedAsString != null) ? Long.parseLong(expectedAsString) : null;
+        assertEquals(expected, xssAPI.getValidLong(source, 123), "Validating long '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidDouble")
+    public void testGetValidDouble(String source, String expectedAsString) {
+        setUp();
+
+        Double expected = (expectedAsString != null) ? Double.parseDouble(expectedAsString) : null;
+        assertEquals(expected, xssAPI.getValidDouble(source, 123), "Validating double '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidDimension")
+    public void testGetValidDimension(String source, String expected) {
+        setUp();
+
+        assertEquals(expected, xssAPI.getValidDimension(source, "123"), "Validating dimension '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidJSString")
+    public void testEncodeForJSString(String source, String expected) {
+        setUp();
+
+        assertEquals(expected, xssAPI.encodeForJSString(source), "Encoding '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidJSToken")
+    public void testGetValidJSToken(String source, String expected) {
+        setUp();
+
+        assertEquals(expected, xssAPI.getValidJSToken(source, RUBBISH), "Validating Javascript token '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForCSSString")
+    public void testEncodeForCSSString(String source, String expected) {
+        setUp();
+
+        String result = xssAPI.encodeForCSSString(source);
+        assertEquals(expected, result, "Encoding '" + source + "'");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidStyleToken")
+    public void testGetValidStyleToken(String source, String expected) {
+        setUp();
+
+        String result = xssAPI.getValidStyleToken(source, RUBBISH);
+        if (result == null || !result.equals(expected)) {
+            fail("Validating style token '" + source + "', expecting '" + expected + "', but got '" + result + "'");
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidCSSColor")
+    public void testGetValidCSSColor(String source, String expected) {
+        setUp();
+
+        String result = xssAPI.getValidCSSColor(source, RUBBISH);
+        if (result == null || !result.equals(expected)) {
+            fail("Validating CSS Color '" + source + "', expecting '" + expected + "', but got '" + result + "'");
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidMultilineComment")
+    public void testGetValidMultiLineComment(String source, String expected) {
+        setUp();
+
+        String result = xssAPI.getValidMultiLineComment(source, RUBBISH);
+        if (!result.equals(expected)) {
+            fail("Validating multiline comment '" + source + "', expecting '" + expected + "', but got '" + result + "'");
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidMultilineJSON")
+    public void testGetValidJSON(String source, String expected) {
+        setUp();
+
+        String result = xssAPI.getValidJSON(source, RUBBISH_JSON);
+        if (!result.equals(expected)) {
+            fail("Validating JSON '" + source + "', expecting '" + expected + "', but got '" + result + "'");
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForValidXML")
+    public void testGetValidXML(String source, String expected) {
+        setUp();
+
+        String result = xssAPI.getValidXML(source, RUBBISH_XML);
+        if (!result.equals(expected)) {
+            fail("Validating XML '" + source + "', expecting '" + expected + "', but got '" + result + "'");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings= {
+        "1.1.1.1",
+        "255.1.1.1"
+    })
+    public void testRegex(String input) {
+        Pattern ipPattern = Pattern.compile(XSSFilterImpl.IPv4_ADDRESS);
+        assertTrue(ipPattern.matcher(input).matches());
+    }
+
+    static String[][] dataForEncodeToHtml() {
+        return new String[][] {
                 //         Source                            Expected Result
                 //
                 {null, null},
@@ -94,19 +287,10 @@ public class XSSAPIImplTest {
                 {"günter", "günter"},
                 {"\u30e9\u30c9\u30af\u30ea\u30d5\u3001\u30de\u30e9\u30bd\u30f3\u4e94\u8f2a\u4ee3\u8868\u306b1\u4e07m\u51fa\u5834\u306b\u3082\u542b\u307f", "\u30e9\u30c9\u30af\u30ea\u30d5\u3001\u30de\u30e9\u30bd\u30f3\u4e94\u8f2a\u4ee3\u8868\u306b1\u4e07m\u51fa\u5834\u306b\u3082\u542b\u307f"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.encodeForHTML(source), "HTML Encoding '" + source + "'");
-        }
     }
 
-    @Test
-    public void testEncodeForHTMLAttr() {
-        setUp();
-        String[][] testData = {
+    static String[][] dataForEncodeToHtmlAttr() {
+        return new String[][] {
                 //         Source                            Expected Result
                 //
                 {null, null},
@@ -117,19 +301,10 @@ public class XSSAPIImplTest {
                 {"günter", "günter"},
                 {"\u30e9\u30c9\u30af\u30ea\u30d5\u3001\u30de\u30e9\u30bd\u30f3\u4e94\u8f2a\u4ee3\u8868\u306b1\u4e07m\u51fa\u5834\u306b\u3082\u542b\u307f", "\u30e9\u30c9\u30af\u30ea\u30d5\u3001\u30de\u30e9\u30bd\u30f3\u4e94\u8f2a\u4ee3\u8868\u306b1\u4e07m\u51fa\u5834\u306b\u3082\u542b\u307f"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.encodeForHTMLAttr(source), "HTML Encoding '" + source + "'");
-        }
     }
 
-    @Test
-    public void testEncodeForXML() {
-        setUp();
-        String[][] testData = {
+    static String[][] dataForEncodeToXml() {
+        return new String[][] {
                 //         Source                            Expected Result
                 //
                 {null, null},
@@ -140,19 +315,10 @@ public class XSSAPIImplTest {
 
                 {"günter", "günter"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.encodeForXML(source), "XML Encoding '" + source + "'");
-        }
     }
 
-    @Test
-    public void testEncodeForXMLAttr() {
-        setUp();
-        String[][] testData = {
+    static String[][] dataForEncodeToXmlAttr() {
+        return new String[][] {
                 //         Source                            Expected Result
                 //
                 {null, null},
@@ -164,19 +330,10 @@ public class XSSAPIImplTest {
                 {"günter", "günter"},
                 {"\"xss:expression(alert('XSS'))", "&#34;xss:expression(alert(&#39;XSS&#39;))"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.encodeForXMLAttr(source), "XML Encoding '" + source + "'");
-        }
     }
 
-    @Test
-    public void testFilterHTML() {
-        setUp();
-        String[][] testData = {
+    static String[][] dataForFilterHtml() {
+        return new String[][] {
                 //         Source                            Expected Result
                 {null, ""},
                 {"", ""},
@@ -206,17 +363,10 @@ public class XSSAPIImplTest {
                 // CVE-2016-10006
                 {"<style onload=\"alert(23)\">h1 {color:red;}</style>", "<style>h1 {\n\tcolor: red;\n}\n</style>"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.filterHTML(source), "Filtering '" + source + "'");
-        }
     }
 
-    private void testHref() {
-        String[][] testData = {
+    static String[][] dataForValidHref() {
+        return new String[][] {
                 //         Href                                        Expected Result
                 //
                 {
@@ -344,52 +494,10 @@ public class XSSAPIImplTest {
                         ""
                 }
         };
-
-        StringBuilder errors = new StringBuilder();
-        for (String[] aTestData : testData) {
-            String href = aTestData[0];
-            String expected = aTestData[1];
-            String result = xssAPI.getValidHref(href);
-            if (!expected.equals(result)) {
-                errors.append("Requested '").append(href).append("'\nGot       '").append(result).append("'\nExpected  '").append(expected).append("'\n\n");
-            }
-        }
-        if (errors.length() > 0) {
-            errors.insert(0, "\n");
-            fail(errors.toString());
-        }
     }
 
-    @Test
-    public void testGetValidHref() {
-        setUp();
-        testHref();
-    }
-
-    @Test
-    public void testGetValidHrefWithoutHrefConfig() {
-        context.load().binaryFile("/configWithoutHref.xml", "/apps/sling/xss/configWithoutHref.xml");
-        context.registerInjectActivateService(new XSSFilterImpl(), new HashMap<String, Object>(){{
-            put("policyPath", "/apps/sling/xss/configWithoutHref.xml");
-        }});
-        context.registerInjectActivateService(new XSSAPIImpl());
-        xssAPI = context.getService(XSSAPI.class);
-        ServiceReference<ResourceChangeListener> xssFilterRCL = context.bundleContext().getServiceReference(ResourceChangeListener.class);
-        assertEquals("/apps/sling/xss/configWithoutHref.xml", xssFilterRCL.getProperty(ResourceChangeListener.PATHS));
-        // Load AntiSamy configuration without href filter
-        XSSFilterImpl xssFilter = Whitebox.getInternalState(xssAPI, "xssFilter");
-
-        Attribute hrefAttribute = Whitebox.getInternalState(xssFilter, "hrefAttribute");
-        assertEquals(hrefAttribute, XSSFilterImpl.DEFAULT_HREF_ATTRIBUTE);
-
-        // Run same tests again to check default configuration
-        testHref();
-    }
-
-    @Test
-    public void testGetValidInteger() {
-        setUp();
-        String[][] testData = {
+    static String[][] dataForValidInteger() {
+        return new String[][] {
                 //         Source                                        Expected Result
                 //
                 {null, "123"},
@@ -401,404 +509,279 @@ public class XSSAPIImplTest {
                 {"", "123"},
                 {"null", "123"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            Integer expected = (aTestData[1] != null) ? Integer.parseInt(aTestData[1]) : null;
-
-            assertEquals(expected, xssAPI.getValidInteger(source, 123), "Validating integer '" + source + "'");
-        }
     }
 
-    @Test
-    public void testGetValidLong() {
-        setUp();
-        String[][] testData = {
-                //         Source                                        Expected Result
-                //
-                {null, "123"},
-                {"100", "100"},
-                {"0", "0"},
+    static String[][] dataForValidLong() {
+        return new String[][] {
+            //         Source                                        Expected Result
+            //
+            {null, "123"},
+            {"100", "100"},
+            {"0", "0"},
 
-                {"junk", "123"},
-                {"100.5", "123"},
-                {"", "123"},
-                {"null", "123"}
+            {"junk", "123"},
+            {"100.5", "123"},
+            {"", "123"},
+            {"null", "123"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            Long expected = (aTestData[1] != null) ? Long.parseLong(aTestData[1]) : null;
-
-            assertEquals(expected, xssAPI.getValidLong(source, 123), "Validating long '" + source + "'");
-        }
     }
 
-    @Test
-    public void testGetValidDouble() {
-        setUp();
-        String[][] testData = {
-                //         Source                                        Expected Result
-                //
-                {null, "123"},
-                {"100.5", "100.5"},
-                {"0", "0"},
+    static String[][] dataForValidDouble() {
+        return new String[][] {
+            //         Source                                        Expected Result
+            //
+            {null, "123"},
+            {"100.5", "100.5"},
+            {"0", "0"},
 
-                {"junk", "123"},
-                {"", "123"},
-                {"null", "123"}
+            {"junk", "123"},
+            {"", "123"},
+            {"null", "123"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            Double expected = (aTestData[1] != null) ? Double.parseDouble(aTestData[1]) : null;
-
-            assertEquals(expected, xssAPI.getValidDouble(source, 123), "Validating double '" + source + "'");
-        }
     }
 
-    @Test
-    public void testGetValidDimension() {
-        setUp();
-        String[][] testData = {
-                //         Source                                        Expected Result
-                //
-                {null, "123"},
-                {"", "123"},
-                {"100", "100"},
-                {"0", "0"},
+    static String[][] dataForValidDimension() {
+        return new String[][] {
+            //         Source                                        Expected Result
+            //
+            {null, "123"},
+            {"", "123"},
+            {"100", "100"},
+            {"0", "0"},
 
-                {"junk", "123"},
-                {"100.5", "123"},
-                {"", "123"},
-                {"null", "123"},
+            {"junk", "123"},
+            {"100.5", "123"},
+            {"", "123"},
+            {"null", "123"},
 
-                {"\"auto\"", "\"auto\""},
-                {"'auto'", "\"auto\""},
-                {"auto", "\"auto\""},
+            {"\"auto\"", "\"auto\""},
+            {"'auto'", "\"auto\""},
+            {"auto", "\"auto\""},
 
-                {"autox", "123"}
+            {"autox", "123"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.getValidDimension(source, "123"), "Validating dimension '" + source + "'");
-        }
     }
 
-    @Test
-    public void testEncodeForJSString() {
-        setUp();
-        String[][] testData = {
-                //         Source                            Expected Result
-                //
-                {null, null},
-                {"simple", "simple"},
+    static String[][] dataForValidJSString() {
+        return new String[][] {
+            //         Source                            Expected Result
+            //
+            {null, null},
+            {"simple", "simple"},
 
-                {"break\"out", "break\\x22out"},
-                {"break'out", "break\\x27out"},
+            {"break\"out", "break\\x22out"},
+            {"break'out", "break\\x27out"},
 
-                {"</script>", "<\\/script>"},
+            {"</script>", "<\\/script>"},
 
-                {"'alert(document.cookie)", "\\x27alert(document.cookie)"},
-                {"2014-04-22T10:11:24.002+01:00", "2014\\u002D04\\u002D22T10:11:24.002+01:00"}
+            {"'alert(document.cookie)", "\\x27alert(document.cookie)"},
+            {"2014-04-22T10:11:24.002+01:00", "2014\\u002D04\\u002D22T10:11:24.002+01:00"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.encodeForJSString(source), "Encoding '" + source + "'");
-        }
     }
 
-    @Test
-    public void testGetValidJSToken() {
-        setUp();
-        String[][] testData = {
-                //         Source                            Expected Result
-                //
-                {null, RUBBISH},
-                {"", RUBBISH},
-                {"simple", "simple"},
-                {"clickstreamcloud.thingy", "clickstreamcloud.thingy"},
+    static String[][] dataForValidJSToken() {
+        return new String[][] {
+            //         Source                            Expected Result
+            //
+            {null, RUBBISH},
+            {"", RUBBISH},
+            {"simple", "simple"},
+            {"clickstreamcloud.thingy", "clickstreamcloud.thingy"},
 
-                {"break out", RUBBISH},
-                {"break,out", RUBBISH},
+            {"break out", RUBBISH},
+            {"break,out", RUBBISH},
 
-                {"\"literal string\"", "\"literal string\""},
-                {"'literal string'", "'literal string'"},
-                {"\"bad literal'", RUBBISH},
-                {"'literal'); junk'", "'literal\\x27); junk'"},
+            {"\"literal string\"", "\"literal string\""},
+            {"'literal string'", "'literal string'"},
+            {"\"bad literal'", RUBBISH},
+            {"'literal'); junk'", "'literal\\x27); junk'"},
 
-                {"1200", "1200"},
-                {"3.14", "3.14"},
-                {"1,200", RUBBISH},
-                {"1200 + 1", RUBBISH}
+            {"1200", "1200"},
+            {"3.14", "3.14"},
+            {"1,200", RUBBISH},
+            {"1200 + 1", RUBBISH}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            assertEquals(expected, xssAPI.getValidJSToken(source, RUBBISH), "Validating Javascript token '" + source + "'");
-        }
     }
 
-    @Test
-    public void testEncodeForCSSString() {
-        setUp();
-        String[][] testData = {
-                // Source   Expected result
-                {null, null},
-                {"test"   , "test"},
-                {"\\"     , "\\5c"},
-                {"'"      , "\\27"},
-                {"\""     , "\\22"}
+    static String[][] dataForCSSString() {
+        return new String[][] {
+            //         Source                            Expected Result
+            //
+            {null, null},
+            {"test"   , "test"},
+            {"\\"     , "\\5c"},
+            {"'"      , "\\27"},
+            {"\""     , "\\22"}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            String result = xssAPI.encodeForCSSString(source);
-            assertEquals(expected, result, "Encoding '" + source + "'");
-        }
     }
 
-    @Test
-    public void testGetValidStyleToken() {
-        setUp();
-        String[][] testData = {
-                // Source                           Expected result
-                {null                               , RUBBISH},
-                {""                                 , RUBBISH},
+    static String[][] dataForValidStyleToken() {
+        return new String[][] {
+            // Source                           Expected result
+            {null                               , RUBBISH},
+            {""                                 , RUBBISH},
 
-                // CSS close
-                {"}"                                , RUBBISH},
+            // CSS close
+            {"}"                                , RUBBISH},
 
-                // line break
-                {"br\neak"                          , RUBBISH},
+            // line break
+            {"br\neak"                          , RUBBISH},
 
-                // no javascript:
-                {"javascript:alert(1)"              , RUBBISH},
-                {"'javascript:alert(1)'"            , RUBBISH},
-                {"\"javascript:alert('XSS')\""      , RUBBISH},
-                {"url(javascript:alert(1))"         , RUBBISH},
-                {"url('javascript:alert(1)')"       , RUBBISH},
-                {"url(\"javascript:alert('XSS')\")" , RUBBISH},
+            // no javascript:
+            {"javascript:alert(1)"              , RUBBISH},
+            {"'javascript:alert(1)'"            , RUBBISH},
+            {"\"javascript:alert('XSS')\""      , RUBBISH},
+            {"url(javascript:alert(1))"         , RUBBISH},
+            {"url('javascript:alert(1)')"       , RUBBISH},
+            {"url(\"javascript:alert('XSS')\")" , RUBBISH},
 
-                // no expression
-                {"expression(alert(1))"             , RUBBISH},
-                {"expression  (alert(1))"           , RUBBISH},
-                {"expression(this.location='a.co')" , RUBBISH},
+            // no expression
+            {"expression(alert(1))"             , RUBBISH},
+            {"expression  (alert(1))"           , RUBBISH},
+            {"expression(this.location='a.co')" , RUBBISH},
 
-                // html tags
-                {"</style><script>alert(1)</script>", RUBBISH},
+            // html tags
+            {"</style><script>alert(1)</script>", RUBBISH},
 
-                // usual CSS stuff
-                {"background-color"                 , "background-color"},
-                {"-moz-box-sizing"                  , "-moz-box-sizing"},
-                {".42%"                             , ".42%"},
-                {"#fff"                             , "#fff"},
+            // usual CSS stuff
+            {"background-color"                 , "background-color"},
+            {"-moz-box-sizing"                  , "-moz-box-sizing"},
+            {".42%"                             , ".42%"},
+            {"#fff"                             , "#fff"},
 
-                // valid strings
-                {"'literal string'"                 , "'literal string'"},
-                {"\"literal string\""               , "\"literal string\""},
-                {"'it\\'s here'"                    , "'it\\'s here'"},
-                {"\"it\\\"s here\""                 , "\"it\\\"s here\""},
+            // valid strings
+            {"'literal string'"                 , "'literal string'"},
+            {"\"literal string\""               , "\"literal string\""},
+            {"'it\\'s here'"                    , "'it\\'s here'"},
+            {"\"it\\\"s here\""                 , "\"it\\\"s here\""},
 
-                // invalid strings
-                {"\"bad string"                     , RUBBISH},
-                {"'it's here'"                      , RUBBISH},
-                {"\"it\"s here\""                   , RUBBISH},
+            // invalid strings
+            {"\"bad string"                     , RUBBISH},
+            {"'it's here'"                      , RUBBISH},
+            {"\"it\"s here\""                   , RUBBISH},
 
-                // valid parenthesis
-                {"rgb(255, 255, 255)"               , "rgb(255, 255, 255)"},
+            // valid parenthesis
+            {"rgb(255, 255, 255)"               , "rgb(255, 255, 255)"},
 
-                // invalid parenthesis
-                {"rgb(255, 255, 255"               , RUBBISH},
-                {"255, 255, 255)"                  , RUBBISH},
+            // invalid parenthesis
+            {"rgb(255, 255, 255"               , RUBBISH},
+            {"255, 255, 255)"                  , RUBBISH},
 
-                // valid tokens
-                {"url(http://example.com/test.png)", "url(http://example.com/test.png)"},
-                {"url('image/test.png')"           , "url('image/test.png')"},
+            // valid tokens
+            {"url(http://example.com/test.png)", "url(http://example.com/test.png)"},
+            {"url('image/test.png')"           , "url('image/test.png')"},
 
-                // invalid tokens
-                {"color: red"                      , RUBBISH}
+            // invalid tokens
+            {"color: red"                      , RUBBISH}
         };
+    }
 
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
+    static String[][] dataForValidCSSColor() {
+        return new String[][] {
+            //      Source                          Expected Result
+            //
+            {null, RUBBISH},
+            {"", RUBBISH},
 
-            String result = xssAPI.getValidStyleToken(source, RUBBISH);
-            if (result == null || !result.equals(expected)) {
-                fail("Validating style token '" + source + "', expecting '" + expected + "', but got '" + result + "'");
+            {"rgb(0,+0,-0)", "rgb(0,+0,-0)"},
+            {"rgba ( 0\f%, 0%,\t0%,\n100%\r)", "rgba ( 0\f%, 0%,\t0%,\n100%\r)",},
+
+            {"#ddd", "#ddd"},
+            {"#eeeeee", "#eeeeee",},
+
+            {"hsl(0,1,2)", "hsl(0,1,2)"},
+            {"hsla(0,1,2,3)", "hsla(0,1,2,3)"},
+            {"currentColor", "currentColor"},
+            {"transparent", "transparent"},
+
+            {"\f\r\n\t MenuText\f\r\n\t ", "MenuText"},
+            {"expression(99,99,99)", RUBBISH},
+            {"blue;", RUBBISH},
+            {"url(99,99,99)", RUBBISH}
+        };
+    }
+
+    static String[][] dataForValidMultilineComment() {
+        return new String[][] {
+            //Source            Expected Result
+            {null               , RUBBISH},
+            {"blah */ hack"     , RUBBISH},
+
+            {"Valid comment"    , "Valid comment"}
+        };
+    }
+
+    static String[][] dataForValidMultilineJSON() {
+        return new String[][] {
+            //Source            Expected Result
+            {null,      RUBBISH_JSON},
+            {"",        ""},
+            {"1]",      RUBBISH_JSON},
+            {"{}",      "{}"},
+            {"{1}",     RUBBISH_JSON},
+            {
+                    "{\"test\": \"test\"}",
+                    "{\"test\":\"test\"}"
+            },
+            {
+                    "{\"test\":\"test}",
+                    RUBBISH_JSON
+            },
+            {
+                    "{\"test1\":\"test1\", \"test2\": {\"test21\": \"test21\", \"test22\": \"test22\"}}",
+                    "{\"test1\":\"test1\",\"test2\":{\"test21\":\"test21\",\"test22\":\"test22\"}}"
+            },
+            {"[]",      "[]"},
+            {"[1,2]",   "[1,2]"},
+            {"[1",      RUBBISH_JSON},
+            {
+                    "[{\"test\": \"test\"}]",
+                    "[{\"test\":\"test\"}]"
             }
-        }
-    }
-
-    @Test
-    public void testGetValidCSSColor() {
-        setUp();
-        String[][] testData = {
-                //      Source                          Expected Result
-                //
-                {null, RUBBISH},
-                {"", RUBBISH},
-
-                {"rgb(0,+0,-0)", "rgb(0,+0,-0)"},
-                {"rgba ( 0\f%, 0%,\t0%,\n100%\r)", "rgba ( 0\f%, 0%,\t0%,\n100%\r)",},
-
-                {"#ddd", "#ddd"},
-                {"#eeeeee", "#eeeeee",},
-
-                {"hsl(0,1,2)", "hsl(0,1,2)"},
-                {"hsla(0,1,2,3)", "hsla(0,1,2,3)"},
-                {"currentColor", "currentColor"},
-                {"transparent", "transparent"},
-
-                {"\f\r\n\t MenuText\f\r\n\t ", "MenuText"},
-                {"expression(99,99,99)", RUBBISH},
-                {"blue;", RUBBISH},
-                {"url(99,99,99)", RUBBISH}
         };
-
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            String result = xssAPI.getValidCSSColor(source, RUBBISH);
-            if (result == null || !result.equals(expected)) {
-                fail("Validating CSS Color '" + source + "', expecting '" + expected + "', but got '" + result + "'");
-            }
-        }
     }
 
-    @Test
-    public void testGetValidMultiLineComment() {
-        setUp();
-        String[][] testData = {
-                //Source            Expected Result
-
-                {null               , RUBBISH},
-                {"blah */ hack"     , RUBBISH},
-
-                {"Valid comment"    , "Valid comment"}
+    static String[][] dataForValidXML() {
+        return new String[][] {
+            //Source            Expected Result
+            {null,      RUBBISH_XML},
+            {"",        ""},
+            {
+                    "<t/>",
+                    "<t/>"
+            },
+            {
+                    "<t>",
+                    RUBBISH_XML
+            },
+            {
+                    "<t>test</t>",
+                    "<t>test</t>"
+            },
+            {
+                    "<t>test",
+                    RUBBISH_XML
+            },
+            {
+                    "<t t=\"t\">test</t>",
+                    "<t t=\"t\">test</t>"
+            },
+            {
+                    "<t t=\"t>test</t>",
+                    RUBBISH_XML
+            },
+            {
+                    "<t><w>xyz</w></t>",
+                    "<t><w>xyz</w></t>"
+            },
+            {
+                    "<t><w>xyz</t></w>",
+                    RUBBISH_XML
+            },
+            {
+                    "<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>",
+                    "<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>"
+            }
         };
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            String result = xssAPI.getValidMultiLineComment(source, RUBBISH);
-            if (!result.equals(expected)) {
-                fail("Validating multiline comment '" + source + "', expecting '" + expected + "', but got '" + result + "'");
-            }
-        }
     }
-
-    @Test
-    public void testGetValidJSON() {
-        setUp();
-        String[][] testData = {
-                {null,      RUBBISH_JSON},
-                {"",        ""},
-                {"1]",      RUBBISH_JSON},
-                {"{}",      "{}"},
-                {"{1}",     RUBBISH_JSON},
-                {
-                        "{\"test\": \"test\"}",
-                        "{\"test\":\"test\"}"
-                },
-                {
-                        "{\"test\":\"test}",
-                        RUBBISH_JSON
-                },
-                {
-                        "{\"test1\":\"test1\", \"test2\": {\"test21\": \"test21\", \"test22\": \"test22\"}}",
-                        "{\"test1\":\"test1\",\"test2\":{\"test21\":\"test21\",\"test22\":\"test22\"}}"
-                },
-                {"[]",      "[]"},
-                {"[1,2]",   "[1,2]"},
-                {"[1",      RUBBISH_JSON},
-                {
-                        "[{\"test\": \"test\"}]",
-                        "[{\"test\":\"test\"}]"
-                }
-        };
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            String result = xssAPI.getValidJSON(source, RUBBISH_JSON);
-            if (!result.equals(expected)) {
-                fail("Validating JSON '" + source + "', expecting '" + expected + "', but got '" + result + "'");
-            }
-        }
-    }
-
-    @Test
-    public void testGetValidXML() {
-        setUp();
-        String[][] testData = {
-                {null,      RUBBISH_XML},
-                {"",        ""},
-                {
-                        "<t/>",
-                        "<t/>"
-                },
-                {
-                        "<t>",
-                        RUBBISH_XML
-                },
-                {
-                        "<t>test</t>",
-                        "<t>test</t>"
-                },
-                {
-                        "<t>test",
-                        RUBBISH_XML
-                },
-                {
-                        "<t t=\"t\">test</t>",
-                        "<t t=\"t\">test</t>"
-                },
-                {
-                        "<t t=\"t>test</t>",
-                        RUBBISH_XML
-                },
-                {
-                        "<t><w>xyz</w></t>",
-                        "<t><w>xyz</w></t>"
-                },
-                {
-                        "<t><w>xyz</t></w>",
-                        RUBBISH_XML
-                },
-                {
-                        "<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>",
-                        "<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>"
-                }
-        };
-        for (String[] aTestData : testData) {
-            String source = aTestData[0];
-            String expected = aTestData[1];
-
-            String result = xssAPI.getValidXML(source, RUBBISH_XML);
-            if (!result.equals(expected)) {
-                fail("Validating XML '" + source + "', expecting '" + expected + "', but got '" + result + "'");
-            }
-        }
-    }
-
-    @Test
-    public void testRegex() {
-        Pattern ipPattern = Pattern.compile(XSSFilterImpl.IPv4_ADDRESS);
-        assertTrue(ipPattern.matcher("1.1.1.1").matches());
-        assertTrue(ipPattern.matcher("255.1.1.1").matches());
-    }
-
 }
