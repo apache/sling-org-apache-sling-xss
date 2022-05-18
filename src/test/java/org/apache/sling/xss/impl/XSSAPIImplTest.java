@@ -361,7 +361,29 @@ public class XSSAPIImplTest {
                 // CVE-2017-14735
                 {"<a href=\"javascript&colon;alert(23)\">X</a>", "<a>X</a>"},
                 // CVE-2016-10006
-                {"<style onload=\"alert(23)\">h1 {color:red;}</style>", "<style>h1 {\n\tcolor: red;\n}\n</style>"}
+                {"<style onload=\"alert(23)\">h1 {color:red;}</style>", "<style>h1 {\n\tcolor: red;\n}\n</style>"},
+                // strip out css imports
+                { "<style>@import 'foo.css';\nh1 {color:red;}</style>", "<style>h1 {\n\tcolor: red;\n}\n</style>"},
+                // filter invalid tag names
+                { "<style>ț1 {color:red;}\nh1 {color:green;}</style>", "<style>h1 {\n\tcolor: green;\n}\n</style>"},
+                // keep valid tag names
+                { "<style>h1 {color:green;}</style>", "<style>h1 {\n\tcolor: green;\n}\n</style>"},
+                // filter invalid class names
+                { "<style>.ș1 {color:red;}\nh1 {color:green;}</style>", "<style>h1 {\n\tcolor: green;\n}\n</style>"},
+                // keep valid class names
+                { "<style>*.title {color:green;}</style>", "<style>*.title {\n\tcolor: green;\n}\n</style>"},
+                // filter invalid ids
+                { "<style>#ă1 {color:red;}\nh1 {color:green;}</style>", "<style>h1 {\n\tcolor: green;\n}\n</style>"},
+                // keep valid ids
+                { "<style>#tag-1 {color:green;}</style>", "<style>*#tag-1 {\n\tcolor: green;\n}\n</style>"},
+                // filter invalid pseudo-selectors
+                { "<style>bar:î1 {color:red;}\nh1 {color:green;}</style>", "<style>h1 {\n\tcolor: green;\n}\n</style>"},
+                // keep valid pseudo-selectors
+                { "<style>bar:first-child {color:green;}</style>", "<style>bar:first-child {\n\tcolor: green;\n}\n</style>"},
+                // filter invalid attributes
+                { "<style>h1[data-foo=zât] {color:red;}\nh1 {color:green;}</style>", "<style>h1 {\n\tcolor: green;\n}\n</style>"}
+                // keep valid attributes, unfortunately does not work
+                // { "<style>h1[data-foo=bar] {color:green;}\n</style>", "<style>h1[data-foo=bar] {\n\tcolor: green;\n}\n</style>"}
         };
     }
 
