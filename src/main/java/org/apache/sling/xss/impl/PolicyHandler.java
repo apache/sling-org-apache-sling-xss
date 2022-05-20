@@ -23,11 +23,16 @@ import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
 import org.owasp.validator.html.AntiSamy;
 import org.owasp.validator.html.Policy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class that provides the capability of securing input provided as plain text for HTML output.
  */
 public class PolicyHandler {
+
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Policy policy;
     private Policy fallbackPolicy;
@@ -50,6 +55,9 @@ public class PolicyHandler {
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
             this.policy = Policy.getInstance(bais);
+            if ( "true".equals(this.policy.getDirective(Policy.EMBED_STYLESHEETS)) ) {
+                logger.warn("The AntiSamy directive {} is set to true. This directive is deprecated and will not be supported in future Sling XSS bundle releases", Policy.EMBED_STYLESHEETS);
+            }
             bais.reset();
             this.fallbackPolicy = new FallbackSlingPolicy(bais);
             this.antiSamy = new AntiSamy(this.policy);
