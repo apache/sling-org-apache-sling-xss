@@ -21,6 +21,7 @@ package org.apache.sling.xss.impl;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,19 +50,22 @@ public class AntiSamyPolicyTest {
     @ParameterizedTest
     @MethodSource("dataForScriptFiltering")
     public void testScriptFiltering(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+         testInput.skipComparingInputWithOutput = false;
+         testInput.runCheck(Mode.SAX_AND_DOM);
     }
 
     @ParameterizedTest
     @MethodSource("dataForEventHandlerAttributes")
     public void testEventHandlerAttributes(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+         testInput.skipComparingInputWithOutput = false;
+         testInput.runCheck(Mode.SAX_AND_DOM);
     }
 
     @ParameterizedTest
     @MethodSource("dataForImageFiltering")
     public void testImageFiltering(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+         testInput.skipComparingInputWithOutput = false;
+         testInput.runCheck(Mode.SAX_AND_DOM);
     }
 
     @ParameterizedTest
@@ -77,19 +81,20 @@ public class AntiSamyPolicyTest {
     @ParameterizedTest
     @MethodSource("dataForURIFiltering")
     public void testURIFiltering(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
+         testInput.runCheck(Mode.SAX_AND_DOM);
     }
 
     @ParameterizedTest
     @MethodSource("dataForCSSFiltering")
     public void testCSSFiltering(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput, testInput.skipComparingInputWithOutput);
+         testInput.runCheck(Mode.SAX_AND_DOM);
     }
 
     @ParameterizedTest
     @MethodSource("dataForDataAttributes")
     public void testDataAttributes(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput, false, Mode.SAX);
+         testInput.skipComparingInputWithOutput = false;
+         testInput.runCheck(Mode.SAX);
     }
 
     /**
@@ -98,49 +103,8 @@ public class AntiSamyPolicyTest {
     @ParameterizedTest
     @MethodSource("dataForIssueSLING8771")
     public void testIssueSLING8771(TestInput testInput) throws Exception {
-        testOutputContains(testInput.input, testInput.expectedPartialOutput, testInput.containsExpectedPartialOutput);
-    }
-
-    private void testOutputContains(String input, String containedString, boolean contains) throws Exception {
-        testOutputContains(input, containedString, contains, false);
-    }
-
-    private void testOutputContains(String input, String containedString, boolean contains, boolean skipComparingInputWithOutput) throws Exception {
-        testOutputContains(input, containedString, contains, skipComparingInputWithOutput, Mode.SAX_AND_DOM);
-    }
-
-    private void testOutputContains(String input, String containedString, boolean contains, boolean skipComparingInputWithOutput,
-                                    Mode mode) throws Exception {
-        String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
-        String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
-        if (!skipComparingInputWithOutput) {
-            assertTrue(input.toLowerCase().contains(containedString.toLowerCase()), String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
-                    input, containedString));
+         testInput.runCheck(Mode.SAX_AND_DOM);
         }
-        if (contains) {
-            if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
-                assertTrue(
-                        antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString), String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
-                                containedString));
-            }
-            if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
-                assertTrue(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
-                        input,
-                        containedString));
-            }
-        } else {
-            if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
-                assertFalse(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(containedString),
-                        String.format("Expected that DOM filtered output '%s' for input '%s', would NOT contain '%s'.", cleanDOMModeHTML,
-                                input, containedString));
-            }
-            if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
-                assertFalse(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(containedString), String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
-                        input, containedString));
-            }
-        }
-    }
-
 
     private void testOutputIsEmpty(String input) throws Exception {
         String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
@@ -225,7 +189,7 @@ public class AntiSamyPolicyTest {
                 new TestInput("<SCRIPT SRC=http://ha.ckers.org/xss.js", "<script", false),
                 new TestInput(
                         "<div/style=&#92&#45&#92&#109&#111&#92&#122&#92&#45&#98&#92&#105&#92&#110&#100&#92&#105&#110&#92&#103:&#92&#117&#114&#108&#40&#47&#47&#98&#117&#115&#105&#110&#101&#115&#115&#92&#105&#92&#110&#102&#111&#46&#99&#111&#46&#117&#107&#92&#47&#108&#97&#98&#115&#92&#47&#120&#98&#108&#92&#47&#120&#98&#108&#92&#46&#120&#109&#108&#92&#35&#120&#115&#115&#41&>",
-                        "style", false),
+                        Pattern.compile("<div(\\s+style=\"\")?(\\s*/)?>"), true, true),
                 new TestInput("<a href='aim: &c:\\windows\\system32\\calc.exe' ini='C:\\Documents and Settings\\All Users\\Start " +
                         "Menu\\Programs\\Startup\\pwnd.bat'>", "calc.exe", false),
                 new TestInput("<!--\n<A href=\n- --><a href=javascript:alert:document.domain>test-->", "javascript", false),
@@ -284,6 +248,7 @@ public class AntiSamyPolicyTest {
         String expectedPartialOutput;
         boolean containsExpectedPartialOutput;
         boolean skipComparingInputWithOutput;
+        Pattern pattern;
 
 
         public TestInput(String input, String expectedPartialOutput, boolean containsExpectedPartialOutput) {
@@ -296,6 +261,71 @@ public class AntiSamyPolicyTest {
             this.containsExpectedPartialOutput = containsExpectedPartialOutput;
             this.skipComparingInputWithOutput = skipComparingInputWithOutput;
         }
+ 
+         public TestInput(String input, Pattern expectedPartialPattern, boolean containsExpectedPartialOutput, boolean skipComparingInputWithOutput) {
+             this.input = input;
+             this.pattern = expectedPartialPattern;
+             this.containsExpectedPartialOutput = containsExpectedPartialOutput;
+             this.skipComparingInputWithOutput = skipComparingInputWithOutput;
+         }
+ 
+         void runCheck(Mode mode) throws Exception {
+             String cleanDOMModeHTML = antiSamy.scan(input, AntiSamy.DOM).getCleanHTML();
+             String cleanSAXModeHTML = antiSamy.scan(input, AntiSamy.SAX).getCleanHTML();
+             if (!skipComparingInputWithOutput) {
+                 if(pattern != null){
+                     assertTrue(pattern.matcher(input.toLowerCase()).find(), String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
+                             input,expectedPartialOutput));
+                 }
+                 assertTrue(input.toLowerCase().contains(expectedPartialOutput.toLowerCase()), String.format("Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
+                         input,expectedPartialOutput));
+             }
+             if (containsExpectedPartialOutput) {
+                 if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
+                     if(pattern != null){
+                         assertTrue(
+                                 pattern.matcher(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML()).find(), String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
+                                         expectedPartialOutput));
+                     } else {
+                         assertTrue(
+                                 antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(expectedPartialOutput), String.format("Expected that DOM filtered output '%s' for input '%s' would contain '%s'.", cleanDOMModeHTML, input,
+                                         expectedPartialOutput));
+                     }
+                 }
+                 if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
+                     if(pattern != null){
+                         assertTrue(pattern.matcher(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML()).find(), String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
+                                 input, expectedPartialOutput));
+                     } else {
+                         assertTrue(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(expectedPartialOutput), String.format("Expected that SAX filtered output '%s' for input '%s' would contain '%s'.", cleanSAXModeHTML,
+                                 input, expectedPartialOutput));
+                     }
+                 }
+             } else {
+                 if (mode == Mode.DOM || mode == Mode.SAX_AND_DOM) {
+                     if(pattern != null){
+                         assertFalse(pattern.matcher(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML()).find(),
+                                 String.format("Expected that DOM filtered output '%s' for input '%s', would NOT contain '%s'.", cleanDOMModeHTML,
+                                         input, expectedPartialOutput));
+                     } else {
+                         assertFalse(antiSamy.scan(input, AntiSamy.DOM).getCleanHTML().contains(expectedPartialOutput),
+                                 String.format("Expected that DOM filtered output '%s' for input '%s', would NOT contain '%s'.", cleanDOMModeHTML,
+                                         input, expectedPartialOutput));
+                     }
+                 }
+                 if (mode == Mode.SAX || mode == Mode.SAX_AND_DOM) {
+                     if(pattern != null){
+                         assertFalse(pattern.matcher(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML()).find(), String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
+                                 input, expectedPartialOutput));
+                     }
+                     else {
+                         assertFalse(antiSamy.scan(input, AntiSamy.SAX).getCleanHTML().contains(expectedPartialOutput), String.format("Expected that SAX filtered output '%s' for input '%s' would NOT contain '%s'.", cleanSAXModeHTML,
+                                 input, expectedPartialOutput));
+                     }
+                 }
+             }
+         }
+ 
     }
 
     private enum Mode {
