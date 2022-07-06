@@ -18,24 +18,14 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
+public class PolicyException extends Exception {
+    private static final long serialVersionUID = 1L;
 
-import javax.xml.stream.XMLStreamException;
+    public PolicyException(Exception e) {
+        super(e);
+    }
 
-import org.apache.sling.xss.impl.xml.Policy;
-import org.apache.sling.xss.impl.xml.Tag;
-
-public class FallbackSlingPolicy extends Policy {
-
-    public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = getTagByLowercaseName("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
+    public PolicyException(String s) {
+        super(s);
     }
 }
