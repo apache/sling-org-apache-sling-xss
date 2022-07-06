@@ -18,24 +18,35 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
+import java.util.concurrent.Callable;
 
-import javax.xml.stream.XMLStreamException;
+public class CleanResults {
+    private Callable<String> cleanHTML;
 
-import org.apache.sling.xss.impl.xml.Policy;
-import org.apache.sling.xss.impl.xml.Tag;
+    public CleanResults(final String cleanHTML) {
+        this.cleanHTML = new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                return cleanHTML;
+            }
+        };
+    }
 
-public class FallbackSlingPolicy extends Policy {
+    public int getNumberOfErrors() {
+        return 0;
+        // throw new IllegalStateException();
+    }
 
-    public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = getTagByLowercaseName("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
+    public String getCleanHTML() {
+        try {
+            return cleanHTML.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    public List<String> getErrorMessages() {
+        throw new IllegalStateException();
     }
 }

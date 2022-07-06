@@ -16,12 +16,8 @@
  ******************************************************************************/
 package org.apache.sling.xss.impl;
 
-import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.owasp.validator.html.CleanResults;
-import org.owasp.validator.html.PolicyException;
-import org.owasp.validator.html.ScanException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,21 +58,17 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
      * @see XSSFilterRule#filter(PolicyHandler, java.lang.String)
      */
     @Override
-    public String filter(final PolicyHandler policyHandler, final String str) {
-        if (StringUtils.isNotEmpty(str)) {
+    public String filter(final PolicyHandler policyHandler, final String malicousString) {
+        if (StringUtils.isNotEmpty(malicousString)) {
             try {
-                final CleanResults  results = getCleanResults(policyHandler, str);
+                final CleanResults results = getCleanResults(policyHandler, malicousString);
                 if (results != null) {
                     final String cleaned = results.getCleanHTML();
-                    final List<String> errors = results.getErrorMessages();
-                    for (final String error : errors) {
-                        log.info("AntiSamy warning: {}", error);
-                    }
                     log.debug("Protected (HTML -> HTML):\n{}", cleaned);
                     return cleaned;
                 }
             } catch (Exception e) {
-                logError(e, str);
+                logError(e, malicousString);
             }
         }
         return StringUtils.EMPTY;
@@ -90,7 +82,7 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         return true;
     }
 
-    private CleanResults getCleanResults(PolicyHandler handler, String input) throws ScanException, PolicyException {
+    private CleanResults getCleanResults(PolicyHandler handler, String input) {
         CleanResults results;
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {

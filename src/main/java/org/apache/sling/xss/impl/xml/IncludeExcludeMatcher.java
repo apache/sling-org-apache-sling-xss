@@ -16,26 +16,26 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.xss.impl;
+package org.apache.sling.xss.impl.xml;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.regex.Pattern;
 
-import javax.xml.stream.XMLStreamException;
+class IncludeExcludeMatcher {
+    private final Pattern include;
+    private final Pattern exclude;
 
-import org.apache.sling.xss.impl.xml.Policy;
-import org.apache.sling.xss.impl.xml.Tag;
+    public IncludeExcludeMatcher(Pattern include, Pattern exclude) {
+        this.include = include;
+        this.exclude = exclude;
+    }
 
-public class FallbackSlingPolicy extends Policy {
+    public boolean matches(String input) {
+        if ( !include.matcher(input).matches() )
+            return false;
 
-    public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
+        if ( exclude == null )
+            return true;
 
-        super(inputStream);
-
-        Tag original = getTagByLowercaseName("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
+        return ! exclude.matcher(input).matches();
     }
 }
