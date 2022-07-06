@@ -34,6 +34,7 @@ import org.apache.sling.testing.mock.sling.junit5.SlingContext;
 import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
 import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.impl.status.XSSStatusService;
+import org.apache.sling.xss.impl.xml.Attribute;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +42,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.osgi.framework.ServiceReference;
-import org.owasp.validator.html.model.Attribute;
 import org.powermock.reflect.Whitebox;
 
 @ExtendWith(SlingContextExtension.class)

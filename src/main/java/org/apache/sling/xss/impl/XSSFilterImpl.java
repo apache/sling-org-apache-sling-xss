@@ -42,6 +42,9 @@ import org.apache.sling.serviceusermapping.ServiceUserMapped;
 import org.apache.sling.xss.ProtectionContext;
 import org.apache.sling.xss.XSSFilter;
 import org.apache.sling.xss.impl.status.XSSStatusService;
+import org.apache.sling.xss.impl.xml.Attribute;
+import org.apache.sling.xss.impl.xml.Regexp;
+import org.apache.sling.xss.impl.xml.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.ComponentContext;
@@ -53,8 +56,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
-import org.owasp.validator.html.model.Attribute;
-import org.owasp.validator.html.model.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,7 +137,13 @@ public class XSSFilterImpl implements XSSFilter {
     static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)" +
             "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
 
-    private static final Pattern[] BACKUP_PATTERNS = new Pattern[] {ON_SITE_SIMPLIFIED, OFF_SITE_SIMPLIFIED};
+    static final Attribute FALLBACK_HREF_ATTRIBUTE = new Attribute(
+            "href",
+            Arrays.asList(
+                    new Regexp("on-site-simplified", ON_SITE_SIMPLIFIED.toString()),
+                    new Regexp("off-site-simplified", OFF_SITE_SIMPLIFIED.toString())),
+            Collections.emptyList(),
+            "removeAttribute", "");
 
     /*
       NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
@@ -148,12 +155,10 @@ public class XSSFilterImpl implements XSSFilter {
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
             "href",
             Arrays.asList(
-                    Pattern.compile(RELATIVE_REF),
-                    Pattern.compile(URI)
-            ),
-            Collections.emptyList(),
-            "removeAttribute", ""
-    );
+                    new Regexp("relative-ref", RELATIVE_REF),
+                    new Regexp("uri", URI)),
+            null,
+            "removeAttribute", null);
 
     static final String DEFAULT_POLICY_PATH = "sling/xss/config.xml";
     static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";
@@ -229,18 +234,18 @@ public class XSSFilterImpl implements XSSFilter {
 
     private boolean runHrefValidation(@NotNull String url) {
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
-        boolean isValid = hrefAttribute.containsAllowedValue(url.toLowerCase());
+        String urlLowerCase = url.toLowerCase();
+        boolean isValid = hrefAttribute.containsAllowedValue(urlLowerCase);
         if (!isValid) {
             try {
-                isValid = hrefAttribute.matchesAllowedExpression(url.toLowerCase());
+                isValid = hrefAttribute.matchesAllowedExpression(urlLowerCase);
             } catch (StackOverflowError e) {
-                logger.debug("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
+                logger.debug(
+                        "Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
                 try {
-                    for (Pattern p : BACKUP_PATTERNS) {
-                        isValid = p.matcher(url.toLowerCase()).matches();
-                        if (isValid) {
-                            break;
-                        }
+                    isValid = FALLBACK_HREF_ATTRIBUTE.containsAllowedValue(urlLowerCase);
+                    if (!isValid) {
+                        isValid = FALLBACK_HREF_ATTRIBUTE.matchesAllowedExpression(urlLowerCase);
                     }
                 } catch (StackOverflowError inner) {
                     logger.debug("Detected a StackOverflowError when validating url {} with fallback regexes", url);

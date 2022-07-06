@@ -16,26 +16,20 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.xss.impl;
+package org.apache.sling.xss.impl.xml;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 
-import javax.xml.stream.XMLStreamException;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import org.apache.sling.xss.impl.xml.Policy;
-import org.apache.sling.xss.impl.xml.Tag;
+public class GlobalTagAttributes {
 
-public class FallbackSlingPolicy extends Policy {
+    @JacksonXmlElementWrapper(useWrapping = false)
+    @JacksonXmlProperty(localName = "attribute")
+    private List<Attribute> GlobalTagAttributesList;
 
-    public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = getTagByLowercaseName("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
+    public List<Attribute> getGlobalTagAttributeList() {
+        return GlobalTagAttributesList;
     }
 }

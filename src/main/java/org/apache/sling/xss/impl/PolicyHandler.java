@@ -21,23 +21,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.owasp.validator.html.AntiSamy;
-import org.owasp.validator.html.Policy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.sling.xss.impl.xml.Policy;
 
 /**
  * Class that provides the capability of securing input provided as plain text for HTML output.
  */
 public class PolicyHandler {
 
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final Policy policy;
     private Policy fallbackPolicy;
-    private AntiSamy antiSamy;
-    private AntiSamy fallbackAntiSamy;
+    private AntiSamyHtmlSanitizer antiSamy;
+    private AntiSamyHtmlSanitizer fallbackAntiSamy;
 
     /**
      * Creates a {@code PolicyHandler} from an {@link InputStream}.
@@ -55,13 +49,10 @@ public class PolicyHandler {
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
             this.policy = Policy.getInstance(bais);
-            if ( "true".equals(this.policy.getDirective(Policy.EMBED_STYLESHEETS)) ) {
-                logger.warn("The AntiSamy directive {} is set to true. This directive is deprecated and will not be supported in future Sling XSS bundle releases", Policy.EMBED_STYLESHEETS);
-            }
             bais.reset();
+            this.antiSamy = new AntiSamyHtmlSanitizer(this.policy);
             this.fallbackPolicy = new FallbackSlingPolicy(bais);
-            this.antiSamy = new AntiSamy(this.policy);
-            this.fallbackAntiSamy = new AntiSamy(this.fallbackPolicy);
+            this.fallbackAntiSamy = new AntiSamyHtmlSanitizer(this.fallbackPolicy);
         } finally {
             currentThread.setContextClassLoader(cl);
         }
@@ -71,11 +62,11 @@ public class PolicyHandler {
         return this.policy;
     }
 
-    public AntiSamy getAntiSamy() {
+    public AntiSamyHtmlSanitizer getAntiSamy() {
         return this.antiSamy;
     }
 
-    public AntiSamy getFallbackAntiSamy() {
+    public AntiSamyHtmlSanitizer getFallbackAntiSamy() {
         return fallbackAntiSamy;
     }
 }
