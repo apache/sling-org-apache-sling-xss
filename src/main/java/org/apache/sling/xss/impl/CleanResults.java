@@ -35,7 +35,6 @@ public class CleanResults {
 
     public int getNumberOfErrors() {
         return 0;
-        // throw new IllegalStateException();
     }
 
     public String getCleanHTML() {

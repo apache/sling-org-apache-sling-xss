@@ -38,15 +38,9 @@ public class Attribute {
     @JacksonXmlElementWrapper(localName = "literal-list")
     private List<Literal> literalList = null;
 
-    // private List<Pattern> patternList = regexpList.stream().map(regexp ->
-    // regexp.getPattern())
-    // .collect(Collectors.toList());
-
     @JsonCreator
     public Attribute(@JacksonXmlProperty(localName = "name", isAttribute = true) String name,
-            // @JacksonXmlElementWrapper(localName = "regexp-list")
             @JacksonXmlProperty(localName = "regexp") List<Regexp> allowedRegexps,
-            // @JacksonXmlElementWrapper(localName = "literal-list")
             @JacksonXmlProperty(localName = "literal") List<Literal> allowedValues,
             @JacksonXmlProperty(localName = "onInvalid", isAttribute = true) String onInvalid,
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description) {

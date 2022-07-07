@@ -94,7 +94,6 @@ public class Property {
 
     public List<String> getShorthands() {
         // reads out the shorthands and creats a list out of it
-
         return shorthandList != null ? shorthandList.stream().map(shorthand -> shorthand.getName())
                 .collect(Collectors.toList()) : Collections.emptyList();
     }

@@ -92,8 +92,6 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
         } else {
           String value = attrsIt.next();
           String adjustedValue = attrPolicy.apply(elementName, name, value);
-          // if (adjustedValue == null || adjustedValue.equals("") &&
-          // name.equals("style")) {
           if (adjustedValue == null) {
             if (onInvalidRemoveTagList.contains(name)) {
               removeTag = true;
