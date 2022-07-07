@@ -21,6 +21,7 @@ package org.apache.sling.xss.impl;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
 
 public class CustomPolicy {
     private PolicyFactory policyFactory;
@@ -229,7 +229,7 @@ public class CustomPolicy {
     }
 
     public AttributePolicy newDynamicAttributePolicy(boolean ignoreCase, String... allowedValues) {
-        final ImmutableSet<String> allowed = ImmutableSet.copyOf(allowedValues);
+        final List<String> allowed = Arrays.asList(allowedValues);
         return new AttributePolicy() {
             @Override
             public @Nullable String apply(String elementName, String attributeName, String uncanonValue) {

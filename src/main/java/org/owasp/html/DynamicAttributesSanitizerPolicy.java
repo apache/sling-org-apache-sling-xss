@@ -32,7 +32,7 @@ import com.google.common.collect.ImmutableSet;
 
 public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyBasedSanitizerPolicy {
 
-  private ImmutableMap<String, ElementAndAttributePolicies> elAndAttrPolicies;
+  private Map<String, ElementAndAttributePolicies> elAndAttrPolicies;
   private Map<String, AttributePolicy> dynamicAttributesPolicyMap;
   private List<String> onInvalidRemoveTagList;
 
