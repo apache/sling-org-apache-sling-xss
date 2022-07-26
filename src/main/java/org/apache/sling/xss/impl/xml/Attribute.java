@@ -28,15 +28,15 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class Attribute {
 
-    private String name = null;
-    private String description = null;
-    private String onInvalid = null;
+    private String name;
+    private String description;
+    private String onInvalid;
 
     @JacksonXmlElementWrapper(localName = "regexp-list")
-    private List<Regexp> regexpList = null;
+    private List<Regexp> regexpList;
 
     @JacksonXmlElementWrapper(localName = "literal-list")
-    private List<Literal> literalList = null;
+    private List<Literal> literalList;
 
     @JsonCreator
     public Attribute(@JacksonXmlProperty(localName = "name", isAttribute = true) String name,
@@ -46,7 +46,7 @@ public class Attribute {
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description) {
         this.name = name;
         this.description = description;
-        this.onInvalid = onInvalid;
+        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : "removeAttribute";
         this.regexpList = allowedRegexps;
         this.literalList = allowedValues;
     }
@@ -59,12 +59,7 @@ public class Attribute {
     }
 
     public String getOnInvalid() {
-        if (onInvalid != null && onInvalid.length() > 0) {
-            return onInvalid;
-        } else {
-            onInvalid = "removeAttribute";
-            return onInvalid;
-        }
+        return onInvalid;
     }
 
     public String getDescription() {
