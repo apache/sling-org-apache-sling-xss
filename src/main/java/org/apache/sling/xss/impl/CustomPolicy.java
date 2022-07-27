@@ -40,10 +40,14 @@ import org.owasp.html.PolicyFactory;
 import com.google.common.base.Predicate;
 
 public class CustomPolicy {
+    private static final String REMOVETAG_STRING = "removeTag";
+    private static final String  ALLOWDYNAMICATTRIBUTES_STRING = "allowDynamicAttributes";
+
     private PolicyFactory policyFactory;
     private List<String> onInvalidRemoveTagList = new ArrayList<>();
     private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
     private CssValidator cssValidator;
+
 
     public CustomPolicy(Policy policy) {
         removeAttributeGuards();
@@ -55,7 +59,7 @@ public class CustomPolicy {
         Map<String, Attribute> globalAttributes = policy.getGlobalAttributes();
         for (Attribute attribute : globalAttributes.values()) {
 
-            if (attribute.getOnInvalid().equals("removeTag")) {
+            if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
                 onInvalidRemoveTagList.add(attribute.getName());
             }
 
@@ -118,7 +122,7 @@ public class CustomPolicy {
 
                     // if there are allowed Attributes, map over them
                     for (Attribute attribute : allowedAttributes.values()) {
-                        if (attribute.getOnInvalid().equals("removeTag")) {
+                        if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
                             onInvalidRemoveTagList.add(attribute.getName());
                         }
                         if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
@@ -157,10 +161,10 @@ public class CustomPolicy {
         // ---------- dynamic attributes ------------
         Map<String, Attribute> dynamicAttributes = new HashMap<>();
         // checks if the dynamic attributes are allowed
-        if (policy.getDirectives().get("allowDynamicAttributes").equals("true")) {
+        if (policy.getDirectives().get(ALLOWDYNAMICATTRIBUTES_STRING).equals("true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
             for (Attribute attribute : dynamicAttributes.values()) {
-                if (attribute.getOnInvalid().equals("removeTag")) {
+                if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
                     onInvalidRemoveTagList.add(attribute.getName());
                 }
 
