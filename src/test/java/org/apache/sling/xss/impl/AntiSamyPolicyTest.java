@@ -106,7 +106,7 @@ public class AntiSamyPolicyTest {
         }
 
     private void testOutputIsEmpty(String input) throws Exception {
-         String cleanHTML = antiSamy.scan(input).getCleanHTML();
+         String cleanHTML = antiSamy.scan(input);
          assertTrue(StringUtils.isEmpty(cleanHTML), "Expected empty filtered output for '" + input + "'.");
     }
 
@@ -267,7 +267,7 @@ public class AntiSamyPolicyTest {
          }
  
          void runCheck() throws Exception {
-               String cleanHTML = antiSamy.scan(input).getCleanHTML();
+               String cleanHTML = antiSamy.scan(input);
                if (!skipComparingInputWithOutput) {
                        if (pattern != null) {
                                assertTrue(pattern.matcher(input.toLowerCase()).find(), String.format(
@@ -282,14 +282,14 @@ public class AntiSamyPolicyTest {
                if (containsExpectedPartialOutput) {
                        if (pattern != null) {
                                assertTrue(
-                                               pattern.matcher(antiSamy.scan(input).getCleanHTML()).find(),
+                                               pattern.matcher(antiSamy.scan(input)).find(),
                                                String.format("Expected that filtered output '%s' for input '%s' would partialy match to following pattern: '%s'.",
                                                                cleanHTML,
                                                                input,
                                                                expectedPartialOutput));
                        } else {
                                assertTrue(
-                                               antiSamy.scan(input).getCleanHTML().contains(expectedPartialOutput),
+                                               antiSamy.scan(input).contains(expectedPartialOutput),
                                                String.format("Expected that filtered output '%s' for input '%s' would contain '%s'.",
                                                                cleanHTML,
                                                                input,
@@ -297,12 +297,12 @@ public class AntiSamyPolicyTest {
                        }
                } else {
                        if (pattern != null) {
-                               assertFalse(pattern.matcher(antiSamy.scan(input).getCleanHTML()).find(),
+                               assertFalse(pattern.matcher(antiSamy.scan(input)).find(),
                                                String.format("Expected that filtered output '%s' for input '%s', would NOT partialy match to following pattern:: '%s'.",
                                                                cleanHTML,
                                                                input, expectedPartialOutput));
                        } else {
-                               assertFalse(antiSamy.scan(input).getCleanHTML().contains(expectedPartialOutput),
+                               assertFalse(antiSamy.scan(input).contains(expectedPartialOutput),
                                                String.format("Expected that filtered output '%s' for input '%s', would NOT contain '%s'.",
                                                                cleanHTML,
                                                                input, expectedPartialOutput));
