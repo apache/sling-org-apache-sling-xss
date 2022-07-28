@@ -33,9 +33,6 @@ import com.google.common.collect.ImmutableSet;
 
 public class AntiSamyHtmlSanitizer {
 
-    public static final Object DOM = "DOM";
-    public static final Object SAX = "SAX";
-
     private CustomPolicy custumPolicy;
     private ImmutableMap policies;
     private ImmutableSet<String> textContainers;
@@ -52,10 +49,10 @@ public class AntiSamyHtmlSanitizer {
     public String scan(String taintedHTML) {
         StringBuilder sb = new StringBuilder(taintedHTML.length());
         HtmlStreamEventReceiver out = HtmlStreamRenderer.create(sb, Handler.DO_NOTHING);
-        DynamicAttributesSanitizerPolicy customPolicy = new DynamicAttributesSanitizerPolicy(out, policies,
+        DynamicAttributesSanitizerPolicy dynamicPolice = new DynamicAttributesSanitizerPolicy(out, policies,
                 textContainers, custumPolicy.getDynamicAttributesPolicyMap(), custumPolicy.getOnInvalidRemoveTagList());
 
-        HtmlSanitizer.sanitize(taintedHTML, customPolicy, custumPolicy.getCssValidator().newStyleTagProcessor());
+        HtmlSanitizer.sanitize(taintedHTML, dynamicPolice, custumPolicy.getCssValidator().newStyleTagProcessor());
         return sb.toString();
     }
 

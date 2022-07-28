@@ -58,16 +58,16 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
      * @see XSSFilterRule#filter(PolicyHandler, java.lang.String)
      */
     @Override
-    public String filter(final PolicyHandler policyHandler, final String malicousString) {
-        if (StringUtils.isNotEmpty(malicousString)) {
+    public String filter(final PolicyHandler policyHandler, final String unsafeString) {
+        if (StringUtils.isNotEmpty(unsafeString)) {
             try {
-                final String results = getCleanResults(policyHandler, malicousString);
+                final String results = getCleanResults(policyHandler, unsafeString);
                 if (results != null) {
                     log.debug("Protected (HTML -> HTML):\n{}", results);
                     return results;
                 }
             } catch (Exception e) {
-                logError(e, malicousString);
+                logError(e, unsafeString);
             }
         }
         return StringUtils.EMPTY;

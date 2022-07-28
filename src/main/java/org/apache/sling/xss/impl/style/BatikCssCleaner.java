@@ -36,7 +36,6 @@ public class BatikCssCleaner {
     private static final String CDATA_POST = "]]>";
     private final CssPolicy cssPolicy;
 
-
     public BatikCssCleaner(CssPolicy cssPolicy) {
         this.cssPolicy = cssPolicy;
     }

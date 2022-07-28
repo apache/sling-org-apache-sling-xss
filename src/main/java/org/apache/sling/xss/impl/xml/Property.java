@@ -57,7 +57,7 @@ public class Property {
 
         this.name = name;
         this.description = description;
-        this.onInvalid = onInvalidStr;
+        this.onInvalid = onInvalidStr != null && onInvalidStr.length() > 0 ? onInvalidStr : "removeAttribute";
         this.regexpList = allowedRegexp3;
         this.literalList = allowedValue;
         this.shorthandList = shortHandRefs;
@@ -93,29 +93,23 @@ public class Property {
     }
 
     public List<String> getShorthands() {
-        // reads out the shorthands and creats a list out of it
+        // reads out the shorthands and creates a list out of it
         return shorthandList != null ? shorthandList.stream().map(shorthand -> shorthand.getName())
                 .collect(Collectors.toList()) : Collections.emptyList();
     }
 
     public List<String> getLiterals() {
-        // reads out the literals and creats a list out of it
+        // reads out the literals and creates a list out of it
         return literalList.stream().map(literal -> literal.getValue())
                 .collect(Collectors.toList());
     }
 
     public String getOnInvalid() {
-        if (onInvalid != null && onInvalid.length() > 0) {
-            return onInvalid;
-        } else {
-            onInvalid = "removeAttribute";
-            return onInvalid;
-        }
-
+        return onInvalid;
     }
 
     public List<Pattern> getRegexps() {
-        // reads out the patterns and creats a list out of it
+        // reads out the patterns and creates a list out of it
         return regexpList.stream().map(regex -> regex.getPattern())
                 .collect(Collectors.toList());
     }

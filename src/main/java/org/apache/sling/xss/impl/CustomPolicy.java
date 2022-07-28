@@ -98,59 +98,60 @@ public class CustomPolicy {
 
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
-            // Tag.action
-            case "truncate":
-                policyBuilder.allowElements(tag.getValue().getName());
+                // Tag.action
+                case "truncate":
+                    policyBuilder.allowElements(tag.getValue().getName());
 
-                break;
-            // filter: remove tags, but keep content,
-            case "filter":
-                break;
-            // remove: remove tag and contents
-            case "remove":
-                policyBuilder.disallowElements(tag.getValue().getName());
-                break;
+                    break;
+                // filter: remove tags, but keep content,
+                case "filter":
+                    break;
+                // remove: remove tag and contents
+                case "remove":
+                    policyBuilder.disallowElements(tag.getValue().getName());
+                    break;
 
-            // validate is also the default
-            // validate: keep content as long as it passes rules,
-            default:
-                policyBuilder.allowElements(tag.getValue().getName());
-                boolean styleSeen = false;
-                // get the allowed Attributes for the tag
-                Map<String, Attribute> allowedAttributes = tag.getValue().getAttributeMap();
-                if (allowedAttributes != null && allowedAttributes.size() > 0) {
+                case "validate":
+                case "":
+                    policyBuilder.allowElements(tag.getValue().getName());
+                    boolean styleSeen = false;
+                    // get the allowed Attributes for the tag
+                    Map<String, Attribute> allowedAttributes = tag.getValue().getAttributeMap();
+                    if (allowedAttributes != null && allowedAttributes.size() > 0) {
 
-                    // if there are allowed Attributes, map over them
-                    for (Attribute attribute : allowedAttributes.values()) {
-                        if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
-                            onInvalidRemoveTagList.add(attribute.getName());
-                        }
-                        if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
-                            styleSeen = true;
-                        List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                        if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
-                            for (String allowedValue : allowedValuesFromAttribute) {
-                                policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
-                                        .onElements(tag.getValue().getName());
+                        // if there are allowed Attributes, map over them
+                        for (Attribute attribute : allowedAttributes.values()) {
+                            if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
+                                onInvalidRemoveTagList.add(attribute.getName());
                             }
+                            if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
+                                styleSeen = true;
+                            List<String> allowedValuesFromAttribute = attribute.getLiterals();
+                            if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
+                                for (String allowedValue : allowedValuesFromAttribute) {
+                                    policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
+                                            .onElements(tag.getValue().getName());
+                                }
 
+                            }
+                            List<Pattern> regexsFromAttribute = attribute.getPatternList();
+                            if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
+                                policyBuilder.allowAttributes(attribute.getName())
+                                        .matching(matchesToPatterns(regexsFromAttribute))
+                                        .onElements(tag.getValue().getName());
+                            } else {
+                                policyBuilder.allowAttributes(attribute.getName()).onElements(tag.getValue().getName());
+                            }
                         }
-                        List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                        if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
-                            policyBuilder.allowAttributes(attribute.getName())
-                                    .matching(matchesToPatterns(regexsFromAttribute))
-                                    .onElements(tag.getValue().getName());
-                        } else {
-                            policyBuilder.allowAttributes(attribute.getName()).onElements(tag.getValue().getName());
+
+                        if (!styleSeen) {
+                            policyBuilder.allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
+                                    .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
                         }
                     }
-
-                    if (!styleSeen) {
-                        policyBuilder.allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
-                                .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
-                    }
-                }
-                break;
+                    break;
+                default:
+                    throw new RuntimeException("No tag action found.");
             }
         }
 
@@ -215,11 +216,6 @@ public class CustomPolicy {
                 }
                 return false;
             }
-
-            @Override
-            public boolean test(String t) {
-                return false;
-            };
         };
     }
 
