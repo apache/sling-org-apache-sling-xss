@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -74,7 +75,7 @@ public class Attribute {
         if (literalList != null && literalList.size() > 0) {
             return literalList.stream().map(literal -> literal.getValue().toLowerCase()).collect(Collectors.toList());
         }
-        return null;
+        return new ArrayList<>();
     }
 
     public List<Literal> getLiteralList() {
@@ -93,7 +94,7 @@ public class Attribute {
 
     public boolean containsAllowedValue(String valueInLowerCase) {
         List<String> literals = getLiterals();
-        return literals != null && literals.size() > 0 ? getLiterals().contains(valueInLowerCase) : false;
+        return literals != null && literals.size() > 0 ? literals.contains(valueInLowerCase) : false;
     }
 
     public boolean matchesAllowedExpression(String value) {

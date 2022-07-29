@@ -284,7 +284,8 @@ public class XSSFilterImpl implements XSSFilter {
         }
     }
 
-    private synchronized void updatePolicy() {
+    // private synchronized void updatePolicy() {
+    synchronized void updatePolicy() {
         this.policyHandler = null;
         try (final ResourceResolver xssResourceResolver = resourceResolverFactory.getServiceResourceResolver(null)) {
             Resource policyResource = xssResourceResolver.getResource(policyPath);

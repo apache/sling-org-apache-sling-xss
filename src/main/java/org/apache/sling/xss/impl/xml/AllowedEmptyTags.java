@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,7 @@ public class AllowedEmptyTags {
 
     @JacksonXmlElementWrapper(localName = "literal-list")
     @JacksonXmlProperty(localName = "literal")
-    private List<Literal> allowedEmptyTagsList;
+    private List<Literal> allowedEmptyTagsList = Collections.emptyList();
 
     public List<Literal> getLiteralList() {
         return allowedEmptyTagsList;
