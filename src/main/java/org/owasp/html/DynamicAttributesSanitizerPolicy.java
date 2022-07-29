@@ -30,6 +30,11 @@ import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+/**
+ * This class is overriding the openTag method, to make dynamic tag attributes possible.
+ * Since we want to support the antisamy config file, we have to make dynamic tag attributes possible.
+ * It is placed in the 'org.owasp.html' package because there are package private fields.
+ */
 public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyBasedSanitizerPolicy {
 
   private Map<String, ElementAndAttributePolicies> elAndAttrPolicies;
