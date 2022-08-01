@@ -190,7 +190,6 @@ public class Policy {
      * Go through the <common-regexps> section of the policy file.
      *
      * @param root                      Top level of <common-regexps>
-     * @param commonRegularExpressions2 the antisamy regexp objects
      */
     private void parseCommonRegExps(List<Regexp> root) {
         for (Regexp regex : root) {
@@ -205,7 +204,6 @@ public class Policy {
      * Go through <directives> section of the policy file.
      *
      * @param root       Top level of <directives>
-     * @param directives The directives map to update
      */
     private void parseDirectives(List<Directive> root) {
         for (Directive directive : root) {
@@ -342,19 +340,17 @@ public class Policy {
                 String description = attribute.getDescription();
 
                 // attribute has no children
-                if (regexps == null && literals == null) {
+                if (regexps.isEmpty() && literals.isEmpty()) {
 
                     Attribute commonAttribute = commonAttributes.get(attributeName);
                     if (commonAttribute != null) {
-                        // creates a new Attribut with the fetched Attribute informations if not
+                        // creates a new Attribute with the fetched Attribute's information if not
                         // available
                         newAttribute = new Attribute(attributeName,
-                                regexps != null && regexps.size() != 0 ? regexps : commonAttribute.getRegexpList(),
-                                literals != null && literals.size() != 0 ? literals : commonAttribute.getLiteralList(),
-                                onInvalid != null && onInvalid.length() != 0 ? onInvalid
-                                        : commonAttribute.getOnInvalid(),
-                                description != null && description.length() != 0 ? description
-                                        : commonAttribute.getDescription());
+                                !regexps.isEmpty() ? regexps : commonAttribute.getRegexpList(),
+                                !literals.isEmpty() ? literals : commonAttribute.getLiteralList(),
+                                !onInvalid.isEmpty() ? onInvalid : commonAttribute.getOnInvalid(),
+                                !description.isEmpty() ? description : commonAttribute.getDescription());
                     } else {
                         throw new PolicyException("Attribute '" + attributeName +
                                 "' was referenced as a common attribute in definition of '" + tagName +
