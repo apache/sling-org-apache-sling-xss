@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions
  * and limitations under the License.
  ******************************************************************************/
-package org.owasp.validator.html.XMLParser;
+package org.apache.sling.xss.impl.xml;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,11 +27,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.sling.xss.impl.PolicyException;
-import org.apache.sling.xss.impl.xml.Attribute;
-import org.apache.sling.xss.impl.xml.Policy;
 import org.apache.sling.xss.impl.xml.Policy.CssPolicy;
-import org.apache.sling.xss.impl.xml.Property;
-import org.apache.sling.xss.impl.xml.Tag;
 import org.junit.jupiter.api.Test;
 
 public class PolicyTest {

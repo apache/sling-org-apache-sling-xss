@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.style;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +33,7 @@ public class CssValidator {
     public static String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
 
     private final BatikCssCleaner cssParser;
-    private final List<String> disallowedTagNames = Arrays.asList("base", "head", "html", "meta", "param", "script", "style", "title");
+    private final List<String> disallowedTagNames = new ArrayList<>();
 
     public CssValidator(CssPolicy cssPolicy) {
         cssParser = new BatikCssCleaner(cssPolicy);

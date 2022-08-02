@@ -33,6 +33,7 @@ import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.Policy;
 import org.apache.sling.xss.impl.xml.Tag;
+import org.apache.sling.xss.impl.Constants;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
@@ -45,6 +46,7 @@ public class CustomPolicy {
     private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
     private CssValidator cssValidator;
 
+
     public CustomPolicy(Policy policy) {
         removeAttributeGuards();
         HtmlPolicyBuilder policyBuilder = new HtmlPolicyBuilder();
@@ -55,7 +57,7 @@ public class CustomPolicy {
         Map<String, Attribute> globalAttributes = policy.getGlobalAttributes();
         for (Attribute attribute : globalAttributes.values()) {
 
-            if (attribute.getOnInvalid().equals("removeTag")) {
+            if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                 onInvalidRemoveTagList.add(attribute.getName());
             }
 
@@ -65,14 +67,12 @@ public class CustomPolicy {
                         .globally();
             } else {
                 List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
-                    for (String allowedValue : allowedValuesFromAttribute) {
-                        policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue).globally();
-                    }
-
+                for (String allowedValue : allowedValuesFromAttribute) {
+                    policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue).globally();
                 }
+
                 List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
+                if (!regexsFromAttribute.isEmpty()) {
                     policyBuilder.allowAttributes(attribute.getName()).matching(matchesToPatterns(regexsFromAttribute))
                             .globally();
                 } else {
@@ -94,45 +94,40 @@ public class CustomPolicy {
 
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
-            // Tag.action
-            case "truncate":
-                policyBuilder.allowElements(tag.getValue().getName());
+                // Tag.action
+                case Constants.TRUNCATE:
+                    policyBuilder.allowElements(tag.getValue().getName());
 
-                break;
-            // filter: remove tags, but keep content,
-            case "filter":
-                break;
-            // remove: remove tag and contents
-            case "remove":
-                policyBuilder.disallowElements(tag.getValue().getName());
-                break;
+                    break;
+                // filter: remove tags, but keep content,
+                case Constants.FILTER:
+                    break;
+                // remove: remove tag and contents
+                case Constants.REMOVE:
+                    policyBuilder.disallowElements(tag.getValue().getName());
+                    break;
 
-            // validate is also the default
-            // validate: keep content as long as it passes rules,
-            default:
-                policyBuilder.allowElements(tag.getValue().getName());
-                boolean styleSeen = false;
-                // get the allowed Attributes for the tag
-                Map<String, Attribute> allowedAttributes = tag.getValue().getAttributeMap();
-                if (allowedAttributes != null && allowedAttributes.size() > 0) {
-
+                case Constants.VALIDATE:
+                case "":
+                    policyBuilder.allowElements(tag.getValue().getName());
+                    boolean styleSeen = false;
+                    // get the allowed Attributes for the tag
+                    Map<String, Attribute> allowedAttributes = tag.getValue().getAttributeMap();
                     // if there are allowed Attributes, map over them
                     for (Attribute attribute : allowedAttributes.values()) {
-                        if (attribute.getOnInvalid().equals("removeTag")) {
+                        if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                             onInvalidRemoveTagList.add(attribute.getName());
                         }
                         if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
                             styleSeen = true;
                         List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                        if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
-                            for (String allowedValue : allowedValuesFromAttribute) {
-                                policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
-                                        .onElements(tag.getValue().getName());
-                            }
-
+                        for (String allowedValue : allowedValuesFromAttribute) {
+                            policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
+                                    .onElements(tag.getValue().getName());
                         }
+
                         List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                        if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
+                        if (!regexsFromAttribute.isEmpty()) {
                             policyBuilder.allowAttributes(attribute.getName())
                                     .matching(matchesToPatterns(regexsFromAttribute))
                                     .onElements(tag.getValue().getName());
@@ -145,8 +140,9 @@ public class CustomPolicy {
                         policyBuilder.allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
                                 .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
                     }
-                }
-                break;
+                    break;
+                default:
+                    throw new RuntimeException("No tag action found.");
             }
         }
 
@@ -157,22 +153,20 @@ public class CustomPolicy {
         // ---------- dynamic attributes ------------
         Map<String, Attribute> dynamicAttributes = new HashMap<>();
         // checks if the dynamic attributes are allowed
-        if (policy.getDirectives().get("allowDynamicAttributes").equals("true")) {
+        if (policy.getDirectives().get(Constants.ALLOW_DYNAMIC_ATTRIBUTES_STRING).equals("true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
             for (Attribute attribute : dynamicAttributes.values()) {
-                if (attribute.getOnInvalid().equals("removeTag")) {
+                if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                     onInvalidRemoveTagList.add(attribute.getName());
                 }
 
                 List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
-                    for (Pattern regex : regexsFromAttribute) {
-                        dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regex));
-                    }
+                for (Pattern regex : regexsFromAttribute) {
+                    dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regex));
                 }
                 List<String> allowedValuesFromAttribute = attribute.getLiterals();
 
-                if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
+                if (!allowedValuesFromAttribute.isEmpty()) {
                     dynamicAttributesPolicyMap.put(attribute.getName(),
                             newDynamicAttributePolicy(true, allowedValuesFromAttribute.toArray(new String[0])));
                 }
@@ -211,11 +205,6 @@ public class CustomPolicy {
                 }
                 return false;
             }
-
-            @Override
-            public boolean test(String t) {
-                return false;
-            };
         };
     }
 

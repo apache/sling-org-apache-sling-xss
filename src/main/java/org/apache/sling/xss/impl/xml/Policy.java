@@ -21,7 +21,6 @@ package org.apache.sling.xss.impl.xml;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,9 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.apache.sling.xss.impl.Constants;
 import org.apache.sling.xss.impl.PolicyException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -190,7 +191,6 @@ public class Policy {
      * Go through the <common-regexps> section of the policy file.
      *
      * @param root                      Top level of <common-regexps>
-     * @param commonRegularExpressions2 the antisamy regexp objects
      */
     private void parseCommonRegExps(List<Regexp> root) {
         for (Regexp regex : root) {
@@ -205,7 +205,6 @@ public class Policy {
      * Go through <directives> section of the policy file.
      *
      * @param root       Top level of <directives>
-     * @param directives The directives map to update
      */
     private void parseDirectives(List<Directive> root) {
         for (Directive directive : root) {
@@ -237,10 +236,7 @@ public class Policy {
         if (allowedEmptyTagsList != null) {
             allowedEmptyTags = allowedEmptyTagsList.getLiterals();
         } else
-            allowedEmptyTags.addAll(Arrays.asList(
-                    "br", "hr", "a", "img", "link", "iframe", "script", "object", "applet",
-                    "frame", "base", "param", "meta", "input", "textarea", "embed",
-                    "basefont", "col"));
+            allowedEmptyTags.addAll(Constants.ALLOWED_EMPTY_TAGS);
     }
 
     // /**
@@ -295,18 +291,15 @@ public class Policy {
 
     private List<Regexp> getAllowedRegexps(List<Regexp> nameAndRegexpsList) {
         List<Regexp> allowedRegExp = new ArrayList<>();
-        if (nameAndRegexpsList != null && nameAndRegexpsList.size() > 0) {
-            for (Regexp regExpNode : nameAndRegexpsList) {
-                String regExpName = regExpNode.getName();
-                String value = regExpNode.getValue();
+        for (Regexp regExpNode : nameAndRegexpsList) {
+            String regExpName = regExpNode.getName();
+            String value = regExpNode.getValue();
 
-                if (regExpName != null && regExpName.length() > 0) {
-                    allowedRegExp
-                            .add(new Regexp(regExpNode.getName(),
-                                    commonRegularExpressions.get(regExpName).toString()));
-                } else if (value != null) {
-                    allowedRegExp.add(new Regexp(regExpName, value));
-                }
+            if (regExpName != null && regExpName.length() > 0) {
+                allowedRegExp
+                        .add(new Regexp(regExpName, commonRegularExpressions.get(regExpName).toString()));
+            } else if (value != null) {
+                allowedRegExp.add(new Regexp(regExpName, value));
             }
         }
         return allowedRegExp;
@@ -332,45 +325,40 @@ public class Policy {
             throws PolicyException {
 
         List<Attribute> tagAttributes = new ArrayList<>();
-        if (attributeList != null && attributeList.size() > 0) {
-            for (Attribute attribute : attributeList) {
-                Attribute newAttribute;
-                String attributeName = attribute.getName().toLowerCase();
-                List<Regexp> regexps = attribute.getRegexpList();
-                List<Literal> literals = attribute.getLiteralList();
-                String onInvalid = attribute.getOnInvalid();
-                String description = attribute.getDescription();
+        for (Attribute attribute : attributeList) {
+            Attribute newAttribute;
+            String attributeName = attribute.getName().toLowerCase();
+            List<Regexp> regexps = attribute.getRegexpList();
+            List<Literal> literals = attribute.getLiteralList();
+            String onInvalid = attribute.getOnInvalid();
+            String description = attribute.getDescription();
 
-                // attribute has no children
-                if (regexps == null && literals == null) {
-
-                    Attribute commonAttribute = commonAttributes.get(attributeName);
-                    if (commonAttribute != null) {
-                        // creates a new Attribut with the fetched Attribute informations if not
-                        // available
-                        newAttribute = new Attribute(attributeName,
-                                regexps != null && regexps.size() != 0 ? regexps : commonAttribute.getRegexpList(),
-                                literals != null && literals.size() != 0 ? literals : commonAttribute.getLiteralList(),
-                                onInvalid != null && onInvalid.length() != 0 ? onInvalid
-                                        : commonAttribute.getOnInvalid(),
-                                description != null && description.length() != 0 ? description
-                                        : commonAttribute.getDescription());
-                    } else {
-                        throw new PolicyException("Attribute '" + attributeName +
-                                "' was referenced as a common attribute in definition of '" + tagName +
-                                "', but does not exist in <common-attributes>");
-                    }
-
+            // attribute has no children
+            if (regexps.isEmpty() && literals.isEmpty()) {
+                Attribute commonAttribute = commonAttributes.get(attributeName);
+                if (commonAttribute != null) {
+                    // creates a new Attribute with the fetched Attribute's information if not
+                    // available
+                    newAttribute = new Attribute(attributeName,
+                            !regexps.isEmpty() ? regexps : commonAttribute.getRegexpList(),
+                            !literals.isEmpty() ? literals : commonAttribute.getLiteralList(),
+                            !onInvalid.isEmpty() ? onInvalid : commonAttribute.getOnInvalid(),
+                            !description.isEmpty() ? description : commonAttribute.getDescription());
                 } else {
-                    List<Regexp> commonAllowedRegexps = getAllowedRegexps(regexps);
-                    List<Literal> allowedValues = attribute.getLiteralList();
-                    newAttribute = new Attribute(attributeName, commonAllowedRegexps, allowedValues, onInvalid,
-                            description);
-
+                    throw new PolicyException("Attribute '" + attributeName +
+                            "' was referenced as a common attribute in definition of '" + tagName +
+                            "', but does not exist in <common-attributes>");
                 }
-                // Add fully built attribute.
-                tagAttributes.add(newAttribute);
+
+            } else {
+                List<Regexp> commonAllowedRegexps = getAllowedRegexps(regexps);
+                List<Literal> allowedValues = attribute.getLiteralList();
+                newAttribute = new Attribute(attributeName, commonAllowedRegexps, allowedValues, onInvalid,
+                        description);
+
             }
+            // Add fully built attribute.
+            tagAttributes.add(newAttribute);
         }
         return tagAttributes;
 

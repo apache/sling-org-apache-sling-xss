@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -40,15 +41,15 @@ public class AntiSamyRules {
 
     @JacksonXmlElementWrapper(localName = "directives")
     @JacksonXmlProperty(localName = "directive")
-    private List<Directive> directiveList;
+    private List<Directive> directiveList = Collections.emptyList();
 
     @JacksonXmlElementWrapper(localName = "common-regexps")
     @JacksonXmlProperty(localName = "regexp")
-    private List<Regexp> regexpList;
+    private List<Regexp> regexpList = Collections.emptyList();
 
     @JacksonXmlElementWrapper(localName = "common-attributes")
     @JacksonXmlProperty(localName = "attribute")
-    private List<Attribute> commonAttributeList;
+    private List<Attribute> commonAttributeList = Collections.emptyList();
 
     @JacksonXmlProperty(localName = "global-tag-attributes")
     private GlobalTagAttributes globalTagAttributes;
@@ -58,14 +59,14 @@ public class AntiSamyRules {
 
     @JacksonXmlElementWrapper(localName = "tag-rules")
     @JacksonXmlProperty(localName = "tag")
-    private List<Tag> tagRulesList;
+    private List<Tag> tagRulesList = Collections.emptyList();
 
     @JacksonXmlProperty(localName = "tags-to-encode")
     private TagsToEncode tagsToEncode;
 
     @JacksonXmlElementWrapper(localName = "css-rules")
     @JacksonXmlProperty(localName = "property")
-    private List<Property> propertyList;
+    private List<Property> propertyList = Collections.emptyList();
 
     @JacksonXmlProperty(localName = "allowed-empty-tags")
     private AllowedEmptyTags allowedEmptyTags;

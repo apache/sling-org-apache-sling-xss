@@ -18,34 +18,37 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
-public class CleanResults {
-    private Callable<String> cleanHTML;
+public class Constants {
+    static final String REMOVE_TAG_STRING = "removeTag";
+    public static final String REMOVE_ATTRIBUTE_STRING = "removeAttribute";
+    static final String ALLOW_DYNAMIC_ATTRIBUTES_STRING = "allowDynamicAttributes";
+    static final String TRUNCATE = "truncate";
+    static final String FILTER = "filter";
+    static final String REMOVE = "remove";
+    static final String VALIDATE = "validate";
+    
+    public static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
+        "br",
+        "hr",
+        "a",
+        "img",
+        "link",
+        "iframe",
+        "script",
+        "object",
+        "applet",
+        "frame",
+        "base",
+        "param",
+        "meta",
+        "input",
+        "textarea",
+        "embed",
+        "basefont",
+        "col"
+      );
 
-    public CleanResults(final String cleanHTML) {
-        this.cleanHTML = new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                return cleanHTML;
-            }
-        };
-    }
-
-    public int getNumberOfErrors() {
-        return 0;
-    }
-
-    public String getCleanHTML() {
-        try {
-            return cleanHTML.call();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public List<String> getErrorMessages() {
-        throw new IllegalStateException();
-    }
 }

@@ -351,9 +351,7 @@ public class XSSAPIImpl implements XSSAPI {
             return "";
         }
 
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
-            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             SAXParser parser = factory.newSAXParser();
             XMLReader reader = parser.getXMLReader();
             reader.parse(new InputSource(new StringReader(xml)));
@@ -361,8 +359,6 @@ public class XSSAPIImpl implements XSSAPI {
         } catch (Exception e) {
             LOGGER.warn("Unable to get valid XML from the input.", e);
             LOGGER.debug("XML input:\n{}", xml);
-        } finally {
-            Thread.currentThread().setContextClassLoader(tccl);
         }
         return getValidXML(defaultXml, "");
     }

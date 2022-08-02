@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -26,7 +27,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 public class DynamicTagAttributes {
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "attribute")
-    private List<Attribute> dynamicTagAttributeList;
+    private List<Attribute> dynamicTagAttributeList = Collections.emptyList();
 
     public List<Attribute> getDynamicTagAttributeList() {
         return dynamicTagAttributeList;

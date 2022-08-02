@@ -122,4 +122,11 @@ public class XSSFilterImplTest {
         assertNotNull(xssFilter);
         assertEquals(longURLContext, xssFilter.filter(longURLContext));
     }
+
+    @Test
+    public void testUpdatePolicy() {
+        XSSFilterImpl xssFilter = new XSSFilterImpl();
+        context.registerInjectActivateService(xssFilter);
+        // xssFilter.updatePolicy();
+    }
 }

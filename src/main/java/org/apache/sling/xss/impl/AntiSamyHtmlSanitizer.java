@@ -33,9 +33,6 @@ import com.google.common.collect.ImmutableSet;
 
 public class AntiSamyHtmlSanitizer {
 
-    public static final Object DOM = "DOM";
-    public static final Object SAX = "SAX";
-
     private CustomPolicy custumPolicy;
     private ImmutableMap policies;
     private ImmutableSet<String> textContainers;
@@ -49,14 +46,14 @@ public class AntiSamyHtmlSanitizer {
         textContainers = reflectionGetTextContainers(custumPolicy.getCustomPolicyFactory());
     }
 
-    public CleanResults scan(String taintedHTML) {
+    public String scan(String taintedHTML) {
         StringBuilder sb = new StringBuilder(taintedHTML.length());
         HtmlStreamEventReceiver out = HtmlStreamRenderer.create(sb, Handler.DO_NOTHING);
-        DynamicAttributesSanitizerPolicy customPolicy = new DynamicAttributesSanitizerPolicy(out, policies,
+        DynamicAttributesSanitizerPolicy dynamicPolice = new DynamicAttributesSanitizerPolicy(out, policies,
                 textContainers, custumPolicy.getDynamicAttributesPolicyMap(), custumPolicy.getOnInvalidRemoveTagList());
 
-        HtmlSanitizer.sanitize(taintedHTML, customPolicy, custumPolicy.getCssValidator().newStyleTagProcessor());
-        return new CleanResults(sb.toString());
+        HtmlSanitizer.sanitize(taintedHTML, dynamicPolice, custumPolicy.getCssValidator().newStyleTagProcessor());
+        return sb.toString();
     }
 
     private ImmutableSet<String> reflectionGetTextContainers(PolicyFactory policyFactory) {
@@ -81,7 +78,7 @@ public class AntiSamyHtmlSanitizer {
         }
     }
 
-    public CleanResults scan(String taintedHTML, Policy policy) throws Exception {
+    public String scan(String taintedHTML, Policy policy) throws Exception {
         if (taintedHTML == null) {
             throw new Exception("Null html input");
         }
@@ -89,7 +86,7 @@ public class AntiSamyHtmlSanitizer {
         if (policy == null) {
             throw new Exception("No policy loaded");
         }
-        return new CleanResults("safeHTML");
+        return "safeHTML";
     }
 
 }

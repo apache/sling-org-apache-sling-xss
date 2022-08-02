@@ -44,7 +44,7 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
             ClassLoader tccl = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                return policyHandler.getAntiSamy().scan(str).getNumberOfErrors() == 0;
+                return true;
             } catch (final Exception se) {
                 logError(se, str);
             } finally {
@@ -58,17 +58,16 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
      * @see XSSFilterRule#filter(PolicyHandler, java.lang.String)
      */
     @Override
-    public String filter(final PolicyHandler policyHandler, final String malicousString) {
-        if (StringUtils.isNotEmpty(malicousString)) {
+    public String filter(final PolicyHandler policyHandler, final String unsafeString) {
+        if (StringUtils.isNotEmpty(unsafeString)) {
             try {
-                final CleanResults results = getCleanResults(policyHandler, malicousString);
+                final String results = getCleanResults(policyHandler, unsafeString);
                 if (results != null) {
-                    final String cleaned = results.getCleanHTML();
-                    log.debug("Protected (HTML -> HTML):\n{}", cleaned);
-                    return cleaned;
+                    log.debug("Protected (HTML -> HTML):\n{}", results);
+                    return results;
                 }
             } catch (Exception e) {
-                logError(e, malicousString);
+                logError(e, unsafeString);
             }
         }
         return StringUtils.EMPTY;
@@ -82,8 +81,8 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         return true;
     }
 
-    private CleanResults getCleanResults(PolicyHandler handler, String input) {
-        CleanResults results;
+    private String getCleanResults(PolicyHandler handler, String input) {
+        String results;
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
