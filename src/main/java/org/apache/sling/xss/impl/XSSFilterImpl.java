@@ -143,7 +143,7 @@ public class XSSFilterImpl implements XSSFilter {
                     new Regexp("on-site-simplified", ON_SITE_SIMPLIFIED.toString()),
                     new Regexp("off-site-simplified", OFF_SITE_SIMPLIFIED.toString())),
             Collections.emptyList(),
-            "removeAttribute", "");
+            "removeAttribute", null);
 
     /*
       NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from

@@ -19,37 +19,49 @@
 package org.apache.sling.xss.impl.xml;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Attribute {
 
-    private String name;
-    private String description;
-    private String onInvalid;
+    @NotNull
+    private final String name;
 
-    @JacksonXmlElementWrapper(localName = "regexp-list")
-    private List<Regexp> regexpList;
+    @NotNull
+    private final String description;
 
-    @JacksonXmlElementWrapper(localName = "literal-list")
-    private List<Literal> literalList;
+    @NotNull
+    private final String onInvalid;
+
+    @NotNull
+    private final List<Regexp> regexpList;
+
+    @NotNull
+    private final List<Literal> literalList;
 
     @JsonCreator
-    public Attribute(@JacksonXmlProperty(localName = "name", isAttribute = true) String name,
-            @JacksonXmlProperty(localName = "regexp") List<Regexp> allowedRegexps,
-            @JacksonXmlProperty(localName = "literal") List<Literal> allowedValues,
+    public Attribute(@JacksonXmlProperty(localName = "name", isAttribute = true) @NotNull String name,
+            @JacksonXmlProperty(localName = "regexp-list") List<Regexp> allowedRegexps,
+            @JacksonXmlProperty(localName = "literal-list") List<Literal> literalList,
             @JacksonXmlProperty(localName = "onInvalid", isAttribute = true) String onInvalid,
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description) {
         this.name = name;
-        this.description = description;
+        this.description = Optional.ofNullable(description).orElse("");
         this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : "removeAttribute";
-        this.regexpList = allowedRegexps;
-        this.literalList = allowedValues;
+        this.regexpList = Optional.ofNullable(allowedRegexps)
+                .map(Collections::unmodifiableList)
+                .orElseGet(Collections::emptyList);
+        this.literalList = Optional.ofNullable(literalList)
+                .map(Collections::unmodifiableList)
+                .orElseGet(Collections::emptyList);
     }
 
     @Override
@@ -59,53 +71,55 @@ public class Attribute {
                 + regexpList.size() + ", literals " + literalList;
     }
 
+    @NotNull
     public String getOnInvalid() {
         return onInvalid;
     }
 
+    @NotNull
     public String getDescription() {
         return description;
     }
 
+    @NotNull
     public String getName() {
         return name;
     }
 
+    @NotNull
     public List<String> getLiterals() {
-        if (literalList != null && literalList.size() > 0) {
-            return literalList.stream().map(literal -> literal.getValue().toLowerCase()).collect(Collectors.toList());
-        }
-        return new ArrayList<>();
+        return getLiteralList().stream()
+                .map(Literal::getValue)
+                .map(String::toLowerCase)
+                .collect(Collectors.toList());
     }
 
+    @NotNull
     public List<Literal> getLiteralList() {
         return literalList;
     }
 
+    @NotNull
     public List<Pattern> getPatternList() {
-        return regexpList.stream().map(regexp -> regexp.getPattern())
+        return getRegexpList().stream()
+                .map(Regexp::getPattern)
                 .collect(Collectors.toList());
-
     }
 
+    @NotNull
     public List<Regexp> getRegexpList() {
         return regexpList;
     }
 
     public boolean containsAllowedValue(String valueInLowerCase) {
-        List<String> literals = getLiterals();
-        return literals != null && literals.size() > 0 ? literals.contains(valueInLowerCase) : false;
+        return getLiteralList().stream()
+                .map(Literal::getValue)
+                .anyMatch(valueInLowerCase::equals);
     }
 
     public boolean matchesAllowedExpression(String value) {
-        if (regexpList != null && regexpList.size() > 0) {
-            for (Regexp regexp : regexpList) {
-                if (regexp.getPattern() != null && regexp.getPattern().matcher(value).matches()) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return getPatternList().stream()
+                .anyMatch(pattern -> pattern.matcher(value).matches());
     }
 
     @Override

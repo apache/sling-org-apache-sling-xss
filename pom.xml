@@ -44,7 +44,7 @@
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-xss.git</url>
       <tag>HEAD</tag>
   </scm>
-  
+
     <properties>
         <project.build.outputTimestamp>1653046679</project.build.outputTimestamp>
     </properties>
@@ -367,6 +367,12 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.resource</artifactId>
             <version>1.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.25</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
