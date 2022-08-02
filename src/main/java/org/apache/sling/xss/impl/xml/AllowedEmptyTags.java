@@ -36,7 +36,7 @@ public class AllowedEmptyTags {
     }
 
     public List<String> getLiterals() {
-        // reads out the literals and creats a list out of it
+        // reads out the literals and creates a list out of it
         return allowedEmptyTagsList.stream().map(literal -> literal.getValue())
                 .collect(Collectors.toList());
     }
