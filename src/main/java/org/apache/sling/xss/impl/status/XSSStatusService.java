@@ -20,6 +20,7 @@ package org.apache.sling.xss.impl.status;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +54,7 @@ public class XSSStatusService {
 
     public static final int MAX_INVALID_URLS_RECORDED = 1000;
 
-    private Map<String, AtomicInteger> invalidUrls;
+    private Map<String, AtomicInteger> invalidUrls = new HashMap<>();
 
     public void reportInvalidUrl(@NotNull String url) {
         if (invalidUrls.containsKey(url)) {

@@ -31,10 +31,10 @@ import org.w3c.css.sac.InputSource;
 public class BatikCssCleaner {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final CssPolicy cssPolicy;
 
     private static final String CDATA_PRE = "<![CDATA[";
     private static final String CDATA_POST = "]]>";
-    private final CssPolicy cssPolicy;
 
     public BatikCssCleaner(CssPolicy cssPolicy) {
         this.cssPolicy = cssPolicy;

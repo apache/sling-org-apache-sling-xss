@@ -33,6 +33,7 @@ import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.Policy;
 import org.apache.sling.xss.impl.xml.Tag;
+import org.apache.sling.xss.impl.Constants;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
@@ -40,9 +41,6 @@ import org.owasp.html.PolicyFactory;
 import com.google.common.base.Predicate;
 
 public class CustomPolicy {
-    private static final String REMOVETAG_STRING = "removeTag";
-    private static final String  ALLOWDYNAMICATTRIBUTES_STRING = "allowDynamicAttributes";
-
     private PolicyFactory policyFactory;
     private List<String> onInvalidRemoveTagList = new ArrayList<>();
     private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
@@ -59,7 +57,7 @@ public class CustomPolicy {
         Map<String, Attribute> globalAttributes = policy.getGlobalAttributes();
         for (Attribute attribute : globalAttributes.values()) {
 
-            if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
+            if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                 onInvalidRemoveTagList.add(attribute.getName());
             }
 
@@ -99,19 +97,19 @@ public class CustomPolicy {
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
                 // Tag.action
-                case "truncate":
+                case Constants.TRUNCATE:
                     policyBuilder.allowElements(tag.getValue().getName());
 
                     break;
                 // filter: remove tags, but keep content,
-                case "filter":
+                case Constants.FILTER:
                     break;
                 // remove: remove tag and contents
-                case "remove":
+                case Constants.REMOVE:
                     policyBuilder.disallowElements(tag.getValue().getName());
                     break;
 
-                case "validate":
+                case Constants.VALIDATE:
                 case "":
                     policyBuilder.allowElements(tag.getValue().getName());
                     boolean styleSeen = false;
@@ -121,7 +119,7 @@ public class CustomPolicy {
 
                         // if there are allowed Attributes, map over them
                         for (Attribute attribute : allowedAttributes.values()) {
-                            if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
+                            if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                                 onInvalidRemoveTagList.add(attribute.getName());
                             }
                             if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
@@ -162,10 +160,10 @@ public class CustomPolicy {
         // ---------- dynamic attributes ------------
         Map<String, Attribute> dynamicAttributes = new HashMap<>();
         // checks if the dynamic attributes are allowed
-        if (policy.getDirectives().get(ALLOWDYNAMICATTRIBUTES_STRING).equals("true")) {
+        if (policy.getDirectives().get(Constants.ALLOW_DYNAMIC_ATTRIBUTES_STRING).equals("true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
             for (Attribute attribute : dynamicAttributes.values()) {
-                if (attribute.getOnInvalid().equals(REMOVETAG_STRING)) {
+                if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                     onInvalidRemoveTagList.add(attribute.getName());
                 }
 

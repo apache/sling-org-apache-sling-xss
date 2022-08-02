@@ -143,7 +143,7 @@ public class XSSFilterImpl implements XSSFilter {
                     new Regexp("on-site-simplified", ON_SITE_SIMPLIFIED.toString()),
                     new Regexp("off-site-simplified", OFF_SITE_SIMPLIFIED.toString())),
             Collections.emptyList(),
-            "removeAttribute", null);
+            Constants.REMOVE_ATTRIBUTE_STRING, null);
 
     /*
       NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
@@ -158,7 +158,7 @@ public class XSSFilterImpl implements XSSFilter {
                     new Regexp("relative-ref", RELATIVE_REF),
                     new Regexp("uri", URI)),
             null,
-            "removeAttribute", null);
+            Constants.REMOVE_ATTRIBUTE_STRING, null);
 
     static final String DEFAULT_POLICY_PATH = "sling/xss/config.xml";
     static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";
@@ -240,8 +240,7 @@ public class XSSFilterImpl implements XSSFilter {
             try {
                 isValid = hrefAttribute.matchesAllowedExpression(urlLowerCase);
             } catch (StackOverflowError e) {
-                logger.debug(
-                        "Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
+                logger.debug("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
                 try {
                     isValid = FALLBACK_HREF_ATTRIBUTE.containsAllowedValue(urlLowerCase);
                     if (!isValid) {

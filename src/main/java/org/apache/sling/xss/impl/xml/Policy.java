@@ -32,6 +32,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.apache.sling.xss.impl.Constants;
 import org.apache.sling.xss.impl.PolicyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,10 +236,7 @@ public class Policy {
         if (allowedEmptyTagsList != null) {
             allowedEmptyTags = allowedEmptyTagsList.getLiterals();
         } else
-            allowedEmptyTags.addAll(Arrays.asList(
-                    "br", "hr", "a", "img", "link", "iframe", "script", "object", "applet",
-                    "frame", "base", "param", "meta", "input", "textarea", "embed",
-                    "basefont", "col"));
+            allowedEmptyTags.addAll(Constants.ALLOWED_EMPTY_TAGS);
     }
 
     // /**

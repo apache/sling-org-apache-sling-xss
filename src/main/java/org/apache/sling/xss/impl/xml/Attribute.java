@@ -18,17 +18,17 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.sling.xss.impl.Constants;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Attribute {
 
@@ -55,7 +55,7 @@ public class Attribute {
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description) {
         this.name = name;
         this.description = Optional.ofNullable(description).orElse("");
-        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : "removeAttribute";
+        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : Constants.REMOVE_ATTRIBUTE_STRING;
         this.regexpList = Optional.ofNullable(allowedRegexps)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);
