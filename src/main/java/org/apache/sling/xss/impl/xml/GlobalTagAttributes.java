@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -27,7 +28,7 @@ public class GlobalTagAttributes {
 
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "attribute")
-    private List<Attribute> GlobalTagAttributesList;
+    private List<Attribute> GlobalTagAttributesList = Collections.emptyList();
 
     public List<Attribute> getGlobalTagAttributeList() {
         return GlobalTagAttributesList;

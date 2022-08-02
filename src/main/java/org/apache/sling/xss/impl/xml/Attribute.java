@@ -35,16 +35,9 @@ public class Attribute {
     @NotNull
     private final String name;
 
-    @NotNull
     private final String description;
-
-    @NotNull
     private final String onInvalid;
-
-    @NotNull
     private final List<Regexp> regexpList;
-
-    @NotNull
     private final List<Literal> literalList;
 
     @JsonCreator

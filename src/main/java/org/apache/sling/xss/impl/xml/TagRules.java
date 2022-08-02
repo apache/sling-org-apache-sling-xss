@@ -18,12 +18,13 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class TagRules {
     @JacksonXmlProperty(localName = "tag")
-    private List<Tag> tagRulesList;
+    private List<Tag> tagRulesList = Collections.emptyList();
 
 }

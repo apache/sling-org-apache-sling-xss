@@ -67,14 +67,12 @@ public class CustomPolicy {
                         .globally();
             } else {
                 List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
-                    for (String allowedValue : allowedValuesFromAttribute) {
-                        policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue).globally();
-                    }
-
+                for (String allowedValue : allowedValuesFromAttribute) {
+                    policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue).globally();
                 }
+
                 List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
+                if (!regexsFromAttribute.isEmpty()) {
                     policyBuilder.allowAttributes(attribute.getName()).matching(matchesToPatterns(regexsFromAttribute))
                             .globally();
                 } else {
@@ -115,37 +113,32 @@ public class CustomPolicy {
                     boolean styleSeen = false;
                     // get the allowed Attributes for the tag
                     Map<String, Attribute> allowedAttributes = tag.getValue().getAttributeMap();
-                    if (allowedAttributes != null && allowedAttributes.size() > 0) {
-
-                        // if there are allowed Attributes, map over them
-                        for (Attribute attribute : allowedAttributes.values()) {
-                            if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
-                                onInvalidRemoveTagList.add(attribute.getName());
-                            }
-                            if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
-                                styleSeen = true;
-                            List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                            if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
-                                for (String allowedValue : allowedValuesFromAttribute) {
-                                    policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
-                                            .onElements(tag.getValue().getName());
-                                }
-
-                            }
-                            List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                            if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
-                                policyBuilder.allowAttributes(attribute.getName())
-                                        .matching(matchesToPatterns(regexsFromAttribute))
-                                        .onElements(tag.getValue().getName());
-                            } else {
-                                policyBuilder.allowAttributes(attribute.getName()).onElements(tag.getValue().getName());
-                            }
+                    // if there are allowed Attributes, map over them
+                    for (Attribute attribute : allowedAttributes.values()) {
+                        if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
+                            onInvalidRemoveTagList.add(attribute.getName());
+                        }
+                        if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
+                            styleSeen = true;
+                        List<String> allowedValuesFromAttribute = attribute.getLiterals();
+                        for (String allowedValue : allowedValuesFromAttribute) {
+                            policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
+                                    .onElements(tag.getValue().getName());
                         }
 
-                        if (!styleSeen) {
-                            policyBuilder.allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
-                                    .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
+                        List<Pattern> regexsFromAttribute = attribute.getPatternList();
+                        if (!regexsFromAttribute.isEmpty()) {
+                            policyBuilder.allowAttributes(attribute.getName())
+                                    .matching(matchesToPatterns(regexsFromAttribute))
+                                    .onElements(tag.getValue().getName());
+                        } else {
+                            policyBuilder.allowAttributes(attribute.getName()).onElements(tag.getValue().getName());
                         }
+                    }
+
+                    if (!styleSeen) {
+                        policyBuilder.allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
+                                .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
                     }
                     break;
                 default:
@@ -168,14 +161,12 @@ public class CustomPolicy {
                 }
 
                 List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                if (regexsFromAttribute != null && regexsFromAttribute.size() > 0) {
-                    for (Pattern regex : regexsFromAttribute) {
-                        dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regex));
-                    }
+                for (Pattern regex : regexsFromAttribute) {
+                    dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regex));
                 }
                 List<String> allowedValuesFromAttribute = attribute.getLiterals();
 
-                if (allowedValuesFromAttribute != null && allowedValuesFromAttribute.size() > 0) {
+                if (!allowedValuesFromAttribute.isEmpty()) {
                     dynamicAttributesPolicyMap.put(attribute.getName(),
                             newDynamicAttributePolicy(true, allowedValuesFromAttribute.toArray(new String[0])));
                 }

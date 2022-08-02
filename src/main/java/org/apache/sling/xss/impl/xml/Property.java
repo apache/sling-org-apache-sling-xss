@@ -20,8 +20,12 @@ package org.apache.sling.xss.impl.xml;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.apache.sling.xss.impl.Constants;
+import org.jetbrains.annotations.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -48,7 +52,7 @@ public class Property {
 
     @JsonCreator
     public Property(@JacksonXmlProperty(localName = "name", isAttribute = true) String name,
-            @JacksonXmlProperty(localName = "regexp") List<Regexp> allowedRegexp3,
+            @JacksonXmlProperty(localName = "regexp") List<Regexp> allowedRegexps,
             @JacksonXmlProperty(localName = "literal") List<Literal> allowedValue,
             @JacksonXmlProperty(localName = "shorthand") List<Shorthand> shortHandRefs,
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description,
@@ -56,11 +60,17 @@ public class Property {
             @JacksonXmlProperty(isAttribute = true, localName = "default") String defaultValue) {
 
         this.name = name;
-        this.description = description;
-        this.onInvalid = onInvalidStr != null && onInvalidStr.length() > 0 ? onInvalidStr : "removeAttribute";
-        this.regexpList = allowedRegexp3;
-        this.literalList = allowedValue;
-        this.shorthandList = shortHandRefs;
+        this.description = Optional.ofNullable(description).orElse("");
+        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : Constants.REMOVE_ATTRIBUTE_STRING;
+        this.regexpList = Optional.ofNullable(allowedRegexps)
+                .map(Collections::unmodifiableList)
+                .orElseGet(Collections::emptyList);
+        this.literalList = Optional.ofNullable(literalList)
+                .map(Collections::unmodifiableList)
+                .orElseGet(Collections::emptyList);
+        this.shorthandList = Optional.ofNullable(shortHandRefs)
+                .map(Collections::unmodifiableList)
+                .orElseGet(Collections::emptyList);
         this.defaultValue = defaultValue;
     }
 
@@ -94,8 +104,8 @@ public class Property {
 
     public List<String> getShorthands() {
         // reads out the shorthands and creates a list out of it
-        return shorthandList != null ? shorthandList.stream().map(shorthand -> shorthand.getName())
-                .collect(Collectors.toList()) : Collections.emptyList();
+        return shorthandList.stream().map(shorthand -> shorthand.getName())
+                .collect(Collectors.toList());
     }
 
     public List<String> getLiterals() {

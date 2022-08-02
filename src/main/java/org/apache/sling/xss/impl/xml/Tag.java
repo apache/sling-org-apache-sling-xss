@@ -18,8 +18,10 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,7 +40,9 @@ public class Tag {
             @JacksonXmlProperty(isAttribute = true, localName = "action") String action,
             @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "attribute") List<Attribute> attributeList) {
         this.name = name.toLowerCase();
-        this.attributeList = attributeList;
+        this.attributeList = Optional.ofNullable(attributeList)
+                .map(Collections::unmodifiableList)
+                .orElseGet(Collections::emptyList);
         this.action = action.toLowerCase();
 
     }

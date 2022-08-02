@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.xml;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -26,7 +27,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 public class TagsToEncode {
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "tag")
-    private List<String> tagToEncode;
+    private List<String> tagToEncode = Collections.emptyList();
 
     public List<String> getTagToEncode() {
         return tagToEncode;
