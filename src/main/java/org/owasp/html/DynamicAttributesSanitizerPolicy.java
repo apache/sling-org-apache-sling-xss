@@ -31,7 +31,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * This class overrides the openTag method, to make dynamic tag attributes possible.
+ * Exdense the default policy to suport dynamic attributes.
+ * 
  * Since we want to support the antisamy config file, we have to make dynamic tag attributes possible.
  * It is placed in the 'org.owasp.html' package because there are package private fields.
  */

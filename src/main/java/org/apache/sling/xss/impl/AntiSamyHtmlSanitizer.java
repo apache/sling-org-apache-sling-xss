@@ -37,9 +37,6 @@ public class AntiSamyHtmlSanitizer {
     private ImmutableMap policies;
     private ImmutableSet<String> textContainers;
 
-    public AntiSamyHtmlSanitizer() {
-    }
-
     public AntiSamyHtmlSanitizer(Policy policy) {
         this.custumPolicy = new CustomPolicy(policy);
         policies = reflectionGetPolicies(custumPolicy.getCustomPolicyFactory());
@@ -88,5 +85,4 @@ public class AntiSamyHtmlSanitizer {
         }
         return "safeHTML";
     }
-
 }
