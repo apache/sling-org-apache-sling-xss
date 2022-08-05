@@ -48,7 +48,7 @@ public class PolicyHandler {
             IOUtils.copy(policyStream, baos);
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
-            this.policy = Policy.getInstance(bais);
+            this.policy = new Policy(bais);
             bais.reset();
             this.antiSamy = new AntiSamyHtmlSanitizer(this.policy);
             this.fallbackPolicy = new FallbackSlingPolicy(bais);

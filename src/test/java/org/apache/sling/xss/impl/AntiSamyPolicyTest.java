@@ -46,7 +46,7 @@ public class AntiSamyPolicyTest {
 
     @BeforeAll
     public static void setup() throws PolicyException, XMLStreamException, IOException {
-        antiSamy = new AntiSamyHtmlSanitizer(Policy.getInstance(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
+        antiSamy = new AntiSamyHtmlSanitizer(new Policy(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
     }
 
     @ParameterizedTest

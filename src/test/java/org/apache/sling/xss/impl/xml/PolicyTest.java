@@ -35,7 +35,7 @@ public class PolicyTest {
     @Test
     public void loadDefaultPolicy() throws Exception, PolicyException {
         InputStream input = Policy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml");
-        Policy policy = Policy.getInstance(input);
+        Policy policy = new Policy(input);
         Map<String, Pattern> regexp = policy.getCommonRegularExpressions();
         List<String> empty = policy.getAllowedEmptyTags();
         List<String> closingTag = policy.getRequireClosingTags();
