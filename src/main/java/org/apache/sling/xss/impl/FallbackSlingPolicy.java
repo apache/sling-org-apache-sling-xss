@@ -23,16 +23,16 @@ import java.io.InputStream;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.apache.sling.xss.impl.xml.Policy;
+import org.apache.sling.xss.impl.xml.PolicyProvider;
 import org.apache.sling.xss.impl.xml.Tag;
 
-public class FallbackSlingPolicy extends Policy {
+public class FallbackSlingPolicy extends PolicyProvider {
 
     public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
 
         super(inputStream);
 
-        Tag original = getTagByLowercaseName("a");
+        Tag original = tagRules.get("a");
         if (original != null) {
             Tag wrapped = new FallbackATag(original);
             tagRules.put("a", wrapped);

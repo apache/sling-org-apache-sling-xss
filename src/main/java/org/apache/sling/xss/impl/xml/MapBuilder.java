@@ -27,9 +27,9 @@ import org.apache.sling.xss.impl.PolicyException;
 
 class MapBuilder {
 
-    Policy policy;
+    PolicyProvider policy;
 
-    public void createRulesMap(Policy policy, AntiSamyRules topLevelElement) throws PolicyException {
+    public void createRulesMap(PolicyProvider policy, AntiSamyRules topLevelElement) throws PolicyException {
         this.policy = policy;
 
         parseCommonRegExps(topLevelElement.getRegexpList());

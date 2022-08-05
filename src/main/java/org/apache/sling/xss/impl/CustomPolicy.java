@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 
 import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
-import org.apache.sling.xss.impl.xml.Policy;
+import org.apache.sling.xss.impl.xml.PolicyProvider;
 import org.apache.sling.xss.impl.xml.Tag;
 
 import org.owasp.html.AttributePolicy;
@@ -46,7 +46,7 @@ public class CustomPolicy {
     private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
     private CssValidator cssValidator;
 
-    public CustomPolicy(Policy policy) {
+    public CustomPolicy(PolicyProvider policy) {
         removeAttributeGuards();
         HtmlPolicyBuilder policyBuilder = new HtmlPolicyBuilder();
 

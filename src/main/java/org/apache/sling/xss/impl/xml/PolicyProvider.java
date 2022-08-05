@@ -31,7 +31,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.sling.xss.impl.PolicyException;
 
-public class Policy {
+public class PolicyProvider {
 
     protected final Map<String, Pattern> commonRegularExpressions = new HashMap<>();
     protected final Map<String, Attribute> commonAttributes = new HashMap<>();
@@ -131,15 +131,11 @@ public class Policy {
                 commonRegularExpressions, directives);
     }
 
-    public Policy(InputStream input) throws PolicyException, XMLStreamException, IOException {
+    public PolicyProvider(InputStream input) throws PolicyException, XMLStreamException, IOException {
         XmlParser xmlParser = new XmlParser();
         MapBuilder mapBuilder = new MapBuilder();
         AntiSamyRules root = null;
         root = xmlParser.createRules(input);
         mapBuilder.createRulesMap(this, root);
-    }
-
-    public Tag getTagByLowercaseName(String a) {
-        return tagRules.get(a);
     }
 }

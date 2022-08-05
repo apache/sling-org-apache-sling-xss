@@ -21,22 +21,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.sling.xss.impl.xml.Policy;
+import org.apache.sling.xss.impl.xml.PolicyProvider;
 
 /**
  * Class that provides the capability of securing input provided as plain text for HTML output.
  */
 public class PolicyHandler {
 
-    private final Policy policy;
-    private Policy fallbackPolicy;
-    private AntiSamyHtmlSanitizer antiSamy;
-    private AntiSamyHtmlSanitizer fallbackAntiSamy;
+    private final PolicyProvider policy;
+    private PolicyProvider fallbackPolicy;
+    private HtmlSanitizer htmlSanitizer;
+    private HtmlSanitizer fallbackHtmlSanitizer;
 
     /**
      * Creates a {@code PolicyHandler} from an {@link InputStream}.
      *
-     * @param policyStream the InputStream from which to read this handler's {@link Policy}
+     * @param policyStream the InputStream from which to read this handler's {@link PolicyProvider}
      */
     public PolicyHandler(InputStream policyStream) throws Exception {
         // fix for classloader issue with IBM JVM: see bug #31946
@@ -48,25 +48,25 @@ public class PolicyHandler {
             IOUtils.copy(policyStream, baos);
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
-            this.policy = new Policy(bais);
+            this.policy = new PolicyProvider(bais);
             bais.reset();
-            this.antiSamy = new AntiSamyHtmlSanitizer(this.policy);
+            this.htmlSanitizer = new HtmlSanitizer(this.policy);
             this.fallbackPolicy = new FallbackSlingPolicy(bais);
-            this.fallbackAntiSamy = new AntiSamyHtmlSanitizer(this.fallbackPolicy);
+            this.fallbackHtmlSanitizer = new HtmlSanitizer(this.fallbackPolicy);
         } finally {
             currentThread.setContextClassLoader(cl);
         }
     }
 
-    public Policy getPolicy() {
+    public PolicyProvider getPolicy() {
         return this.policy;
     }
 
-    public AntiSamyHtmlSanitizer getAntiSamy() {
-        return this.antiSamy;
+    public HtmlSanitizer getHtmlSanitizer() {
+        return this.htmlSanitizer;
     }
 
-    public AntiSamyHtmlSanitizer getFallbackAntiSamy() {
-        return fallbackAntiSamy;
+    public HtmlSanitizer getFallbackHtmlSanitizer() {
+        return fallbackHtmlSanitizer;
     }
 }
