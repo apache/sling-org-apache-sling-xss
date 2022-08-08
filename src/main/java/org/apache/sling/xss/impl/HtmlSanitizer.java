@@ -20,10 +20,9 @@ package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
 
-import org.apache.sling.xss.impl.xml.Policy;
+import org.apache.sling.xss.impl.xml.PolicyProvider;
 import org.owasp.html.DynamicAttributesSanitizerPolicy;
 import org.owasp.html.Handler;
-import org.owasp.html.HtmlSanitizer;
 import org.owasp.html.HtmlStreamEventReceiver;
 import org.owasp.html.HtmlStreamRenderer;
 import org.owasp.html.PolicyFactory;
@@ -31,16 +30,13 @@ import org.owasp.html.PolicyFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-public class AntiSamyHtmlSanitizer {
+public class HtmlSanitizer {
 
     private CustomPolicy custumPolicy;
     private ImmutableMap policies;
     private ImmutableSet<String> textContainers;
 
-    public AntiSamyHtmlSanitizer() {
-    }
-
-    public AntiSamyHtmlSanitizer(Policy policy) {
+    public HtmlSanitizer(PolicyProvider policy) {
         this.custumPolicy = new CustomPolicy(policy);
         policies = reflectionGetPolicies(custumPolicy.getCustomPolicyFactory());
         textContainers = reflectionGetTextContainers(custumPolicy.getCustomPolicyFactory());
@@ -52,7 +48,8 @@ public class AntiSamyHtmlSanitizer {
         DynamicAttributesSanitizerPolicy dynamicPolice = new DynamicAttributesSanitizerPolicy(out, policies,
                 textContainers, custumPolicy.getDynamicAttributesPolicyMap(), custumPolicy.getOnInvalidRemoveTagList());
 
-        HtmlSanitizer.sanitize(taintedHTML, dynamicPolice, custumPolicy.getCssValidator().newStyleTagProcessor());
+        org.owasp.html.HtmlSanitizer.sanitize(taintedHTML, dynamicPolice,
+                custumPolicy.getCssValidator().newStyleTagProcessor());
         return sb.toString();
     }
 
@@ -78,7 +75,7 @@ public class AntiSamyHtmlSanitizer {
         }
     }
 
-    public String scan(String taintedHTML, Policy policy) throws Exception {
+    public String scan(String taintedHTML, PolicyProvider policy) throws Exception {
         if (taintedHTML == null) {
             throw new Exception("Null html input");
         }
@@ -88,5 +85,4 @@ public class AntiSamyHtmlSanitizer {
         }
         return "safeHTML";
     }
-
 }

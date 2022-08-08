@@ -26,7 +26,7 @@ import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import org.apache.sling.xss.impl.xml.Policy;
+import org.apache.sling.xss.impl.xml.PolicyProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,11 +42,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class AntiSamyPolicyTest {
 
     public static final String POLICY_FILE = "SLING-INF/content/config.xml";
-    private static AntiSamyHtmlSanitizer antiSamy;
+    private static HtmlSanitizer antiSamy;
 
     @BeforeAll
     public static void setup() throws PolicyException, XMLStreamException, IOException {
-        antiSamy = new AntiSamyHtmlSanitizer(Policy.getInstance(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
+        antiSamy = new HtmlSanitizer(new PolicyProvider(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
     }
 
     @ParameterizedTest

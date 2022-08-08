@@ -19,11 +19,10 @@
 package org.apache.sling.xss.impl.style;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.sling.xss.impl.xml.Policy.CssPolicy;
+import org.apache.sling.xss.impl.xml.PolicyProvider.CssPolicy;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlStreamEventProcessor;
 

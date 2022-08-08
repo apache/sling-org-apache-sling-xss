@@ -22,33 +22,31 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Constants {
-    static final String REMOVE_TAG_STRING = "removeTag";
-    public static final String REMOVE_ATTRIBUTE_STRING = "removeAttribute";
-    static final String ALLOW_DYNAMIC_ATTRIBUTES_STRING = "allowDynamicAttributes";
-    static final String TRUNCATE = "truncate";
-    static final String FILTER = "filter";
-    static final String REMOVE = "remove";
-    static final String VALIDATE = "validate";
-    
-    public static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
-        "br",
-        "hr",
-        "a",
-        "img",
-        "link",
-        "iframe",
-        "script",
-        "object",
-        "applet",
-        "frame",
-        "base",
-        "param",
-        "meta",
-        "input",
-        "textarea",
-        "embed",
-        "basefont",
-        "col"
-      );
+  static final String REMOVE_TAG_STRING = "removeTag";
+  public static final String REMOVE_ATTRIBUTE_STRING = "removeAttribute";
+  static final String ALLOW_DYNAMIC_ATTRIBUTES_STRING = "allowDynamicAttributes";
+  static final String TRUNCATE = "truncate";
+  static final String FILTER = "filter";
+  static final String REMOVE = "remove";
+  static final String VALIDATE = "validate";
 
+  public static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
+      "br",
+      "hr",
+      "a",
+      "img",
+      "link",
+      "iframe",
+      "script",
+      "object",
+      "applet",
+      "frame",
+      "base",
+      "param",
+      "meta",
+      "input",
+      "textarea",
+      "embed",
+      "basefont",
+      "col");
 }

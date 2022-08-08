@@ -86,10 +86,10 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            results = handler.getAntiSamy().scan(input);
+            results = handler.getHtmlSanitizer().scan(input);
         } catch (StackOverflowError e) {
             log.debug("Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}", input);
-            results = handler.getFallbackAntiSamy().scan(input);
+            results = handler.getFallbackHtmlSanitizer().scan(input);
             log.debug("Second attempt was successful.");
         } finally {
             Thread.currentThread().setContextClassLoader(tccl);

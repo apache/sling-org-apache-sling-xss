@@ -31,9 +31,9 @@ import javax.annotation.Nullable;
 
 import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
-import org.apache.sling.xss.impl.xml.Policy;
+import org.apache.sling.xss.impl.xml.PolicyProvider;
 import org.apache.sling.xss.impl.xml.Tag;
-import org.apache.sling.xss.impl.Constants;
+
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
@@ -46,8 +46,7 @@ public class CustomPolicy {
     private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
     private CssValidator cssValidator;
 
-
-    public CustomPolicy(Policy policy) {
+    public CustomPolicy(PolicyProvider policy) {
         removeAttributeGuards();
         HtmlPolicyBuilder policyBuilder = new HtmlPolicyBuilder();
 
@@ -55,8 +54,8 @@ public class CustomPolicy {
 
         // ------------ this is for the global attributes -------------
         Map<String, Attribute> globalAttributes = policy.getGlobalAttributes();
-        for (Attribute attribute : globalAttributes.values()) {
 
+        for (Attribute attribute : globalAttributes.values()) {
             if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                 onInvalidRemoveTagList.add(attribute.getName());
             }
@@ -78,7 +77,6 @@ public class CustomPolicy {
                 } else {
                     policyBuilder.allowAttributes(attribute.getName()).globally();
                 }
-
             }
         }
 
@@ -97,11 +95,12 @@ public class CustomPolicy {
                 // Tag.action
                 case Constants.TRUNCATE:
                     policyBuilder.allowElements(tag.getValue().getName());
-
                     break;
+
                 // filter: remove tags, but keep content,
                 case Constants.FILTER:
                     break;
+
                 // remove: remove tag and contents
                 case Constants.REMOVE:
                     policyBuilder.disallowElements(tag.getValue().getName());
@@ -115,11 +114,15 @@ public class CustomPolicy {
                     Map<String, Attribute> allowedAttributes = tag.getValue().getAttributeMap();
                     // if there are allowed Attributes, map over them
                     for (Attribute attribute : allowedAttributes.values()) {
+
                         if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
                             onInvalidRemoveTagList.add(attribute.getName());
                         }
-                        if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName()))
+
+                        if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName())) {
                             styleSeen = true;
+                        }
+
                         List<String> allowedValuesFromAttribute = attribute.getLiterals();
                         for (String allowedValue : allowedValuesFromAttribute) {
                             policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
@@ -141,6 +144,7 @@ public class CustomPolicy {
                                 .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
                     }
                     break;
+
                 default:
                     throw new RuntimeException("No tag action found.");
             }
@@ -152,6 +156,7 @@ public class CustomPolicy {
 
         // ---------- dynamic attributes ------------
         Map<String, Attribute> dynamicAttributes = new HashMap<>();
+
         // checks if the dynamic attributes are allowed
         if (policy.getDirectives().get(Constants.ALLOW_DYNAMIC_ATTRIBUTES_STRING).equals("true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
@@ -164,8 +169,8 @@ public class CustomPolicy {
                 for (Pattern regex : regexsFromAttribute) {
                     dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regex));
                 }
-                List<String> allowedValuesFromAttribute = attribute.getLiterals();
 
+                List<String> allowedValuesFromAttribute = attribute.getLiterals();
                 if (!allowedValuesFromAttribute.isEmpty()) {
                     dynamicAttributesPolicyMap.put(attribute.getName(),
                             newDynamicAttributePolicy(true, allowedValuesFromAttribute.toArray(new String[0])));
@@ -228,7 +233,8 @@ public class CustomPolicy {
         };
     }
 
-    // java html sanitizer has some default Attribute Guards, which we don't want. So we are removing them here
+    // java html sanitizer has some default Attribute Guards, which we don't want.
+    // So we are removing them here
     private void removeAttributeGuards() {
         try {
             Field guards = HtmlPolicyBuilder.class.getDeclaredField("ATTRIBUTE_GUARDS");
@@ -250,5 +256,4 @@ public class CustomPolicy {
             modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         }
     }
-
 }

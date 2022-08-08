@@ -31,9 +31,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * This class overrides the openTag method, to make dynamic tag attributes possible.
- * Since we want to support the antisamy config file, we have to make dynamic tag attributes possible.
- * It is placed in the 'org.owasp.html' package because there are package private fields.
+ * Exdense the default policy to suport dynamic attributes.
+ * 
+ * Since we want to support the antisamy config file, we have to make dynamic
+ * tag attributes possible.
+ * It is placed in the 'org.owasp.html' package because there are package
+ * private fields.
  */
 public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyBasedSanitizerPolicy {
 
@@ -79,7 +82,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
         String name = attrsIt.next();
 
         AttributePolicy attrPolicy = null;
-        //check if the attribute name starts with an dynamic tag, to handle it specialy
+        // check if the attribute name starts with an dynamic tag, to handle it specialy
         for (String dynamicAttribute : dynamicAttributesPolicyMap.keySet()) {
           if (name.startsWith(dynamicAttribute)) {
             attrPolicy = dynamicAttributesPolicyMap.get(dynamicAttribute);

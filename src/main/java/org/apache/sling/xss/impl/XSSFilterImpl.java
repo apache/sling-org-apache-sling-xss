@@ -345,7 +345,7 @@ public class XSSFilterImpl implements XSSFilter {
     }
 
     private void setPolicyHandler(PolicyHandler policyHandler) {
-        Tag linkTag = policyHandler.getPolicy().getTagByLowercaseName("a");
+        Tag linkTag = policyHandler.getPolicy().getTagRules().get("a");
         Attribute hrefAttribute = (linkTag != null) ? linkTag.getAttributeByName("href") : null;
         if (hrefAttribute == null) {
             // Fallback to default configuration
