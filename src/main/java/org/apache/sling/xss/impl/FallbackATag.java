@@ -30,7 +30,7 @@ public class FallbackATag extends Tag {
     private final Tag wrapped;
 
     public FallbackATag(Tag wrapped) {
-        super("a", Constants.VALIDATE, new ArrayList<Attribute>());
+        super("a", AntiSamyConstants.VALIDATE_ACTION, new ArrayList<Attribute>());
         this.wrapped = wrapped;
     }
 

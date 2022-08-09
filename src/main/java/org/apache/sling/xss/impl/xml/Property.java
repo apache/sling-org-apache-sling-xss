@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.sling.xss.impl.Constants;
+import org.apache.sling.xss.impl.AntiSamyConstants;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -60,7 +60,7 @@ public class Property {
 
         this.name = name;
         this.description = Optional.ofNullable(description).orElse("");
-        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : Constants.REMOVE_ATTRIBUTE_STRING;
+        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : AntiSamyConstants.REMOVE_ATTRIBUTE_ONINVALID_ACTION;
         this.regexpList = Optional.ofNullable(allowedRegexps)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);

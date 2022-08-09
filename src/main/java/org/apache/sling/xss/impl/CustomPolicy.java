@@ -45,6 +45,8 @@ public class CustomPolicy {
     private List<String> onInvalidRemoveTagList = new ArrayList<>();
     private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
     private CssValidator cssValidator;
+    static final String ALLOW_DYNAMIC_ATTRIBUTES = "allowDynamicAttributes";
+    static final String REMOVE_TAG_ONINVALID_ACTION = "removeTag";
 
     public CustomPolicy(PolicyProvider policy) {
         removeAttributeGuards();
@@ -56,7 +58,7 @@ public class CustomPolicy {
         Map<String, Attribute> globalAttributes = policy.getGlobalAttributes();
 
         for (Attribute attribute : globalAttributes.values()) {
-            if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
+            if (attribute.getOnInvalid().equals(REMOVE_TAG_ONINVALID_ACTION)) {
                 onInvalidRemoveTagList.add(attribute.getName());
             }
 
@@ -93,20 +95,20 @@ public class CustomPolicy {
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
                 // Tag.action
-                case Constants.TRUNCATE:
+                case AntiSamyConstants.TRUNCATE_ACTION:
                     policyBuilder.allowElements(tag.getValue().getName());
                     break;
 
                 // filter: remove tags, but keep content,
-                case Constants.FILTER:
+                case AntiSamyConstants.FILTER_ACTION:
                     break;
 
                 // remove: remove tag and contents
-                case Constants.REMOVE:
+                case AntiSamyConstants.REMOVE_ACTION:
                     policyBuilder.disallowElements(tag.getValue().getName());
                     break;
 
-                case Constants.VALIDATE:
+                case AntiSamyConstants.VALIDATE_ACTION:
                 case "":
                     policyBuilder.allowElements(tag.getValue().getName());
                     boolean styleSeen = false;
@@ -115,7 +117,7 @@ public class CustomPolicy {
                     // if there are allowed Attributes, map over them
                     for (Attribute attribute : allowedAttributes.values()) {
 
-                        if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
+                        if (attribute.getOnInvalid().equals(REMOVE_TAG_ONINVALID_ACTION)) {
                             onInvalidRemoveTagList.add(attribute.getName());
                         }
 
@@ -158,10 +160,10 @@ public class CustomPolicy {
         Map<String, Attribute> dynamicAttributes = new HashMap<>();
 
         // checks if the dynamic attributes are allowed
-        if (policy.getDirectives().get(Constants.ALLOW_DYNAMIC_ATTRIBUTES_STRING).equals("true")) {
+        if (policy.getDirectives().get(ALLOW_DYNAMIC_ATTRIBUTES).equals("true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
             for (Attribute attribute : dynamicAttributes.values()) {
-                if (attribute.getOnInvalid().equals(Constants.REMOVE_TAG_STRING)) {
+                if (attribute.getOnInvalid().equals(REMOVE_TAG_ONINVALID_ACTION)) {
                     onInvalidRemoveTagList.add(attribute.getName());
                 }
 

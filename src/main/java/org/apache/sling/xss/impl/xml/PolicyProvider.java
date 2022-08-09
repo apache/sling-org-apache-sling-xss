@@ -42,6 +42,7 @@ public class PolicyProvider {
     protected final Map<String, Attribute> dynamicAttributes = new HashMap<>();
     protected List<String> allowedEmptyTags = new ArrayList<>();
     protected final List<String> requireClosingTags = new ArrayList<>();
+
     public static class CssPolicy {
 
         private final Map<String, Property> cssRules;
@@ -132,7 +133,7 @@ public class PolicyProvider {
     }
 
     public PolicyProvider(InputStream input) throws PolicyException, XMLStreamException, IOException {
-        XmlParser xmlParser = new XmlParser();
+        AntiSamyXmlParser xmlParser = new AntiSamyXmlParser();
         MapBuilder mapBuilder = new MapBuilder();
         AntiSamyRules root = null;
         root = xmlParser.createRules(input);

@@ -19,15 +19,36 @@
 package org.apache.sling.xss.impl.xml;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.sling.xss.impl.Constants;
 import org.apache.sling.xss.impl.PolicyException;
 
 class MapBuilder {
 
     PolicyProvider policy;
+    // Antisamy hardcodes the allowed-empty-tags default:
+    // https://github.com/nahsra/antisamy/blob/main/src/main/java/org/owasp/validator/html/scan/Constants.java#L37
+    public static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
+            "br",
+            "hr",
+            "a",
+            "img",
+            "link",
+            "iframe",
+            "script",
+            "object",
+            "applet",
+            "frame",
+            "base",
+            "param",
+            "meta",
+            "input",
+            "textarea",
+            "embed",
+            "basefont",
+            "col");
 
     public void createRulesMap(PolicyProvider policy, AntiSamyRules topLevelElement) throws PolicyException {
         this.policy = policy;
@@ -89,7 +110,7 @@ class MapBuilder {
         if (allowedEmptyTagsList != null) {
             policy.allowedEmptyTags = allowedEmptyTagsList.getLiterals();
         } else
-            policy.allowedEmptyTags.addAll(Constants.ALLOWED_EMPTY_TAGS);
+            policy.allowedEmptyTags.addAll(ALLOWED_EMPTY_TAGS);
     }
 
     // /**
@@ -139,7 +160,7 @@ class MapBuilder {
                         + "' was not defined in <common-attributes>");
         }
     }
-    
+
     private void parseTagRules(List<Tag> root) throws PolicyException {
         if (root == null)
             return;

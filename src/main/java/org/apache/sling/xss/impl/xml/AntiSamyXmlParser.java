@@ -32,7 +32,7 @@ import com.ctc.wstx.stax.WstxInputFactory;
 import com.ctc.wstx.stax.WstxOutputFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
-public class XmlParser {
+public class AntiSamyXmlParser {
 
     private static final String DIRECTIVE_EMBED_STYLE_SHEETS = "embedStyleSheets";
 
@@ -46,8 +46,9 @@ public class XmlParser {
         xmlStreamReader = xmlInputFactory.createXMLStreamReader(input);
         XmlMapper mapper = new XmlMapper(xmlInputFactory, new WstxOutputFactory());
         rules = mapper.readValue(xmlStreamReader, AntiSamyRules.class);
-        if ( "true".equals(rules.getDirectivesByName().get(DIRECTIVE_EMBED_STYLE_SHEETS)) ) {
-            logger.warn("Unsupported configuration directive {} is set to true and will be ignored", DIRECTIVE_EMBED_STYLE_SHEETS);
+        if ("true".equals(rules.getDirectivesByName().get(DIRECTIVE_EMBED_STYLE_SHEETS))) {
+            logger.warn("Unsupported configuration directive {} is set to true and will be ignored",
+                    DIRECTIVE_EMBED_STYLE_SHEETS);
         }
         return rules;
     }
