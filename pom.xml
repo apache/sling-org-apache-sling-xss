@@ -221,10 +221,16 @@
             </exclusions>
         </dependency>
         <dependency>
-          <groupId>org.apache.xmlgraphics</groupId>
-          <artifactId>batik-css</artifactId>
-          <version>1.14</version>
-          <scope>provided</scope>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-css</artifactId>
+            <version>1.14</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis-ext</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.w3c.css</groupId>
