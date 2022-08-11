@@ -288,25 +288,21 @@ public class XSSFilterImpl implements XSSFilter {
         try (final ResourceResolver xssResourceResolver = resourceResolverFactory.getServiceResourceResolver(null)) {
             Resource policyResource = xssResourceResolver.getResource(policyPath);
             if (policyResource != null) {
-                activePolicy = new AntiSamyPolicy(false, policyResource.getPath());
-                try (InputStream policyStream = activePolicy.read()) {
-                    setPolicyHandler(new PolicyHandler(policyStream));
-                    logger.info("Installed policy from {}.", activePolicy.path);
-                } catch (Exception e) {
-                    activePolicy = null;
-                    Throwable[] suppressed = e.getSuppressed();
-                    if (suppressed.length > 0) {
-                        for (Throwable t : suppressed) {
-                            logger.error("Unable to load policy from " + policyResource.getPath(), t);
-                        }
-                    }
-                    logger.error("Unable to load policy from " + policyResource.getPath(), e);
-                }
+                setActivePolicy(policyResource);
             }
         } catch (final LoginException e) {
             logger.error("Unable to load the default policy file.", e);
         }
         if (policyHandler == null) {
+            // the content was not installed but the service is active; let's use the embedded file for the default handler
+            setActiveEmbededPolicy();
+        }
+        if (policyHandler == null || activePolicy == null) {
+            throw new IllegalStateException("Cannot load a policy handler.");
+        }
+    }
+
+    private void setActiveEmbededPolicy() {
             // the content was not installed but the service is active; let's use the embedded file for the default handler
             logger.info("Could not find a policy file at the configured location {}. Attempting to use the default resource embedded in" +
                     " the bundle.", policyPath);
@@ -324,9 +320,23 @@ public class XSSFilterImpl implements XSSFilter {
                 }
                 logger.error("Unable to load policy from embedded policy file.", e);
             }
-        }
-        if (policyHandler == null || activePolicy == null) {
-            throw new IllegalStateException("Cannot load a policy handler.");
+        
+    }
+
+    private void setActivePolicy(Resource policyResource) {
+        activePolicy = new AntiSamyPolicy(false, policyResource.getPath());
+        try (InputStream policyStream = activePolicy.read()) {
+            setPolicyHandler(new PolicyHandler(policyStream));
+            logger.info("Installed policy from {}.", activePolicy.path);
+        } catch (Exception e) {
+            activePolicy = null;
+            Throwable[] suppressed = e.getSuppressed();
+            if (suppressed.length > 0) {
+                for (Throwable t : suppressed) {
+                    logger.error("Unable to load policy from " + policyResource.getPath(), t);
+                }
+            }
+            logger.error("Unable to load policy from " + policyResource.getPath(), e);
         }
     }
 

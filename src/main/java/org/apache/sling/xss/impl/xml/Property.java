@@ -103,13 +103,13 @@ public class Property {
 
     public List<String> getShorthands() {
         // reads out the shorthands and creates a list out of it
-        return shorthandList.stream().map(shorthand -> shorthand.getName())
+        return shorthandList.stream().map(Shorthand::getName)
                 .collect(Collectors.toList());
     }
 
     public List<String> getLiterals() {
         // reads out the literals and creates a list out of it
-        return literalList.stream().map(literal -> literal.getValue())
+        return literalList.stream().map(Literal::getValue)
                 .collect(Collectors.toList());
     }
 
@@ -119,7 +119,7 @@ public class Property {
 
     public List<Pattern> getRegexps() {
         // reads out the patterns and creates a list out of it
-        return regexpList.stream().map(regex -> regex.getPattern())
+        return regexpList.stream().map(Regexp::getPattern)
                 .collect(Collectors.toList());
     }
 }

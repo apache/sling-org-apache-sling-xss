@@ -28,8 +28,8 @@ import org.owasp.html.HtmlStreamEventProcessor;
 
 public class CssValidator {
 
-    public static String STYLE_TAG_NAME = "style";
-    public static String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
+    public final static String STYLE_TAG_NAME = "style";
+    public final static String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
 
     private final BatikCssCleaner cssParser;
     private final List<String> disallowedTagNames = new ArrayList<>();

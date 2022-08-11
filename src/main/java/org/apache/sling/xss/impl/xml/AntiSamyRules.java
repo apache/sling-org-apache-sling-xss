@@ -116,14 +116,12 @@ public class AntiSamyRules {
     }
 
     public Map<String, String> getDirectivesByName() {
-        Map<String, String> directivesByName = directiveList.stream()
+        return directiveList.stream()
                 .collect(Collectors.toMap(Directive::getName, Directive::getValue));
-        return directivesByName;
     }
 
     public Map<String, Pattern> getCommonPatternByName() {
-        Map<String, Pattern> patternByName = regexpList.stream()
+        return regexpList.stream()
                 .collect(Collectors.toMap(Regexp::getName, Regexp::getPattern));
-        return patternByName;
     }
 }

@@ -30,7 +30,7 @@ class MapBuilder {
     PolicyProvider policy;
     // Antisamy hardcodes the allowed-empty-tags default:
     // https://github.com/nahsra/antisamy/blob/main/src/main/java/org/owasp/validator/html/scan/Constants.java#L37
-    public static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
+    private static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
             "br",
             "hr",
             "a",
@@ -106,7 +106,7 @@ class MapBuilder {
     // * @param allowedEmptyTagsListNode Top level of <allowed-empty-tags>
     // * @param allowedEmptyTags The tags that can be empty
     // */
-    private void parseAllowedEmptyTags(AllowedEmptyTags allowedEmptyTagsList) throws PolicyException {
+    private void parseAllowedEmptyTags(AllowedEmptyTags allowedEmptyTagsList) {
         if (allowedEmptyTagsList != null) {
             policy.allowedEmptyTags = allowedEmptyTagsList.getLiterals();
         } else
@@ -217,8 +217,7 @@ class MapBuilder {
         return tagAttributes;
     }
 
-    private void parseCSSRules(
-            List<Property> root) throws PolicyException {
+    private void parseCSSRules(List<Property> root) {
 
         for (Property property : root) {
             List<Regexp> allowedRegexp3 = getAllowedRegexps(property.getRegexpList());

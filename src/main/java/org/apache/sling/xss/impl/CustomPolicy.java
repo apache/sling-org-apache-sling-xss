@@ -121,9 +121,7 @@ public class CustomPolicy {
                             onInvalidRemoveTagList.add(attribute.getName());
                         }
 
-                        if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName())) {
-                            styleSeen = true;
-                        }
+                        styleSeen = CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName());
 
                         List<String> allowedValuesFromAttribute = attribute.getLiterals();
                         for (String allowedValue : allowedValuesFromAttribute) {
@@ -241,9 +239,7 @@ public class CustomPolicy {
         try {
             Field guards = HtmlPolicyBuilder.class.getDeclaredField("ATTRIBUTE_GUARDS");
             letMeIn(guards);
-            Map value = (Map) guards.get(null);
-            Map newValue = new HashMap();
-            guards.set(null, newValue);
+            guards.set(null, new HashMap<>());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

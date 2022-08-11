@@ -24,6 +24,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.Nullable;
 
@@ -40,7 +41,7 @@ import com.google.common.collect.ImmutableSet;
  */
 public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyBasedSanitizerPolicy {
 
-  private Map<String, ElementAndAttributePolicies> elAndAttrPolicies;
+  private Map<String, ElementAndAttributePolicies> elementAndAttrPolicies;
   private Map<String, AttributePolicy> dynamicAttributesPolicyMap;
   private List<String> onInvalidRemoveTagList;
 
@@ -49,7 +50,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
       ImmutableSet<String> allowedTextContainers,
       Map<String, AttributePolicy> dynamicAttributesPolicyMap, List<String> onInvalidRemoveTagList) {
     super(out, elAndAttrPolicies, allowedTextContainers);
-    this.elAndAttrPolicies = elAndAttrPolicies;
+    this.elementAndAttrPolicies = elAndAttrPolicies;
     this.dynamicAttributesPolicyMap = dynamicAttributesPolicyMap;
     this.onInvalidRemoveTagList = onInvalidRemoveTagList;
   }
@@ -59,8 +60,8 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
     // StylingPolicy repeats some of this code because it is more complicated
     // to refactor it into multiple method bodies, so if you change this,
     // check the override of it in that class.
-    if (elementName != null && attrs != null && elAndAttrPolicies != null) {
-      ElementAndAttributePolicies policies = elAndAttrPolicies.get(elementName);
+    if (elementName != null && attrs != null && elementAndAttrPolicies != null) {
+      ElementAndAttributePolicies policies = elementAndAttrPolicies.get(elementName);
 
       String adjustedElementName = applyPolicies2(elementName, attrs, policies);
       if (adjustedElementName != null
@@ -83,16 +84,18 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
 
         AttributePolicy attrPolicy = null;
         // check if the attribute name starts with an dynamic tag, to handle it specialy
-        for (String dynamicAttribute : dynamicAttributesPolicyMap.keySet()) {
-          if (name.startsWith(dynamicAttribute)) {
-            attrPolicy = dynamicAttributesPolicyMap.get(dynamicAttribute);
+        for (Entry<String, AttributePolicy> dynamicAttributeEntry : dynamicAttributesPolicyMap.entrySet()) {
+          if (name.startsWith(dynamicAttributeEntry.getKey())) {
+            attrPolicy = dynamicAttributeEntry.getValue();
             break;
           }
         }
+        // if it is not an dynamic attr it gets it's normal policy
         if (attrPolicy == null) {
           attrPolicy = policies.attrPolicies.get(name);
         }
 
+        // if there is no policy for this attribute, it gets removed
         if (attrPolicy == null) {
           attrsIt.remove();
           attrsIt.next();
@@ -128,7 +131,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
 
       // checks if the onInvalid action of the invalid Tag is remove, and then removes
       // it
-      adjustedElementName = removeTag ? null : policies.elPolicy.apply(elementName, attrs);
+      adjustedElementName = Boolean.TRUE.equals(removeTag) ? null : policies.elPolicy.apply(elementName, attrs);
       if (adjustedElementName != null) {
         adjustedElementName = HtmlLexer.canonicalElementName(adjustedElementName);
       }

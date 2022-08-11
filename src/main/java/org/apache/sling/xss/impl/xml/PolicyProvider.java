@@ -52,7 +52,7 @@ public class PolicyProvider {
         private final IncludeExcludeMatcher pseudoElementMatcher;
         private final IncludeExcludeMatcher attributeMatcher;
 
-        public CssPolicy(Map<String, Property> cssrules, Map<String, Pattern> commonRegExps, Map<String, String> directives) {
+        public CssPolicy(Map<String, Property> cssrules, Map<String, Pattern> commonRegExps) {
             this.cssRules = Collections.unmodifiableMap(cssrules);
             this.elementMatcher = new IncludeExcludeMatcher(commonRegExps.get("cssElementSelector"),
                     commonRegExps.get("cssElementExclusion"));
@@ -129,7 +129,7 @@ public class PolicyProvider {
 
     public CssPolicy getCssPolicy() {
         return new CssPolicy(cssRules,
-                commonRegularExpressions, directives);
+                commonRegularExpressions);
     }
 
     public PolicyProvider(InputStream input) throws PolicyException, XMLStreamException, IOException {

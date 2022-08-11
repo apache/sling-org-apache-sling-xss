@@ -19,6 +19,9 @@
 package org.apache.sling.xss.impl;
 
 public class AntiSamyConstants {
+  private AntiSamyConstants() {
+    throw new IllegalStateException("Utility class");
+  }
   public static final String REMOVE_ATTRIBUTE_ONINVALID_ACTION = "removeAttribute";
   static final String TRUNCATE_ACTION = "truncate";
   static final String FILTER_ACTION = "filter";

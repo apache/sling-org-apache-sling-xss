@@ -30,10 +30,10 @@ import org.apache.sling.xss.impl.PolicyException;
 import org.apache.sling.xss.impl.xml.PolicyProvider.CssPolicy;
 import org.junit.jupiter.api.Test;
 
-public class PolicyTest {
+class PolicyTest {
 
     @Test
-    public void loadDefaultPolicy() throws Exception, PolicyException {
+    void loadDefaultPolicy() throws Exception, PolicyException {
         InputStream input = PolicyProvider.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml");
         PolicyProvider policy = new PolicyProvider(input);
         Map<String, Pattern> regexp = policy.getCommonRegularExpressions();

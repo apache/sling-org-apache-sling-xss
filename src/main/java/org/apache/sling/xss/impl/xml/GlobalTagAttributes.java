@@ -28,9 +28,9 @@ public class GlobalTagAttributes {
 
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "attribute")
-    private List<Attribute> GlobalTagAttributesList = Collections.emptyList();
+    private List<Attribute> globalTagAttributesList = Collections.emptyList();
 
     public List<Attribute> getGlobalTagAttributeList() {
-        return GlobalTagAttributesList;
+        return globalTagAttributesList;
     }
 }

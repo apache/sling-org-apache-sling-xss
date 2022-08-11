@@ -74,9 +74,8 @@ public class Tag {
     }
 
     public Map<String, Attribute> getAttributeMap() {
-        Map<String, Attribute> attributeMap = attributeList.stream()
+        return attributeList.stream()
                 .collect(Collectors.toMap(Attribute::getName, Function.identity()));
-        return attributeMap;
     }
 
     public Attribute getAttributeByName(String name) {

@@ -124,7 +124,7 @@ public class XSSFilterImplTest {
     }
 
     @Test
-    public void testUpdatePolicy() {
+    void testUpdatePolicy() {
         XSSFilterImpl xssFilter = new XSSFilterImpl();
         context.registerInjectActivateService(xssFilter);
         // xssFilter.updatePolicy();
