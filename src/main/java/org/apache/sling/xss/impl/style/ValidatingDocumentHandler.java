@@ -24,7 +24,7 @@ import java.util.Locale;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
-import org.apache.sling.xss.impl.xml.PolicyProvider.CssPolicy;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy.CssPolicy;
 import org.apache.sling.xss.impl.xml.Property;
 import org.w3c.css.sac.CSSException;
 import org.w3c.css.sac.CombinatorCondition;

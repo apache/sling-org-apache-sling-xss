@@ -26,7 +26,7 @@ import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-import org.apache.sling.xss.impl.xml.PolicyProvider;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,7 +46,7 @@ public class AntiSamyPolicyTest {
 
     @BeforeAll
     public static void setup() throws PolicyException, XMLStreamException, IOException {
-        antiSamy = new HtmlSanitizer(new PolicyProvider(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
+        antiSamy = new HtmlSanitizer(new AntiSamyPolicy(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
     }
 
     @ParameterizedTest

@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import org.apache.batik.css.parser.Parser;
-import org.apache.sling.xss.impl.xml.PolicyProvider.CssPolicy;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy.CssPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.css.sac.CSSException;

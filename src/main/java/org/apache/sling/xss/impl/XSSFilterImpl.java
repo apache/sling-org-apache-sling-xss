@@ -143,7 +143,7 @@ public class XSSFilterImpl implements XSSFilter {
                     new Regexp("on-site-simplified", ON_SITE_SIMPLIFIED.toString()),
                     new Regexp("off-site-simplified", OFF_SITE_SIMPLIFIED.toString())),
             Collections.emptyList(),
-            AntiSamyConstants.REMOVE_ATTRIBUTE_ONINVALID_ACTION, null);
+            AntiSamyActions.REMOVE_ATTRIBUTE_ONINVALID, null);
 
     /*
       NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
@@ -158,7 +158,7 @@ public class XSSFilterImpl implements XSSFilter {
                     new Regexp("relative-ref", RELATIVE_REF),
                     new Regexp("uri", URI)),
             null,
-            AntiSamyConstants.REMOVE_ATTRIBUTE_ONINVALID_ACTION, null);
+            AntiSamyActions.REMOVE_ATTRIBUTE_ONINVALID, null);
 
     static final String DEFAULT_POLICY_PATH = "sling/xss/config.xml";
     static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";

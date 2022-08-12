@@ -31,7 +31,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.sling.xss.impl.PolicyException;
 
-public class PolicyProvider {
+public class AntiSamyPolicy {
 
     protected final Map<String, Pattern> commonRegularExpressions = new HashMap<>();
     protected final Map<String, Attribute> commonAttributes = new HashMap<>();
@@ -40,8 +40,56 @@ public class PolicyProvider {
     protected final Map<String, String> directives = new HashMap<>();
     protected final Map<String, Attribute> globalAttributes = new HashMap<>();
     protected final Map<String, Attribute> dynamicAttributes = new HashMap<>();
-    protected List<String> allowedEmptyTags = new ArrayList<>();
     protected final List<String> requireClosingTags = new ArrayList<>();
+    protected List<String> allowedEmptyTags = new ArrayList<>();
+
+    public AntiSamyPolicy(InputStream input) throws PolicyException, XMLStreamException, IOException {
+        AntiSamyXmlParser xmlParser = new AntiSamyXmlParser();
+        MapBuilder mapBuilder = new MapBuilder();
+        AntiSamyRules root = xmlParser.createRules(input);
+        mapBuilder.createRulesMap(this, root);
+    }
+
+    public Map<String, String> getDirectives() {
+        return directives;
+    }
+
+    public List<String> getRequireClosingTags() {
+        return requireClosingTags;
+    }
+
+    public Map<String, Pattern> getCommonRegularExpressions() {
+        return commonRegularExpressions;
+    }
+
+    public Map<String, Attribute> getGlobalAttributes() {
+        return globalAttributes;
+    }
+
+    public Map<String, Attribute> getCommonAttributes() {
+        return commonAttributes;
+    }
+
+    public Map<String, Property> getCssRules() {
+        return cssRules;
+    }
+
+    public List<String> getAllowedEmptyTags() {
+        return allowedEmptyTags;
+    }
+
+    public Map<String, Tag> getTagRules() {
+        return tagRules;
+    }
+
+    public Map<String, Attribute> getDynamicAttributes() {
+        return dynamicAttributes;
+    }
+
+    public CssPolicy getCssPolicy() {
+        return new CssPolicy(cssRules,
+                commonRegularExpressions);
+    }
 
     public static class CssPolicy {
 
@@ -89,54 +137,5 @@ public class PolicyProvider {
         public boolean isValidAttributeSelector(String name) {
             return attributeMatcher.matches(name);
         }
-    }
-
-    public Map<String, String> getDirectives() {
-        return directives;
-    }
-
-    public List<String> getRequireClosingTags() {
-        return requireClosingTags;
-    }
-
-    public Map<String, Pattern> getCommonRegularExpressions() {
-        return commonRegularExpressions;
-    }
-
-    public Map<String, Attribute> getGlobalAttributes() {
-        return globalAttributes;
-    }
-
-    public Map<String, Attribute> getCommonAttributes() {
-        return commonAttributes;
-    }
-
-    public Map<String, Property> getCssRules() {
-        return cssRules;
-    }
-
-    public List<String> getAllowedEmptyTags() {
-        return allowedEmptyTags;
-    }
-
-    public Map<String, Tag> getTagRules() {
-        return tagRules;
-    }
-
-    public Map<String, Attribute> getDynamicAttributes() {
-        return dynamicAttributes;
-    }
-
-    public CssPolicy getCssPolicy() {
-        return new CssPolicy(cssRules,
-                commonRegularExpressions);
-    }
-
-    public PolicyProvider(InputStream input) throws PolicyException, XMLStreamException, IOException {
-        AntiSamyXmlParser xmlParser = new AntiSamyXmlParser();
-        MapBuilder mapBuilder = new MapBuilder();
-        AntiSamyRules root = null;
-        root = xmlParser.createRules(input);
-        mapBuilder.createRulesMap(this, root);
     }
 }

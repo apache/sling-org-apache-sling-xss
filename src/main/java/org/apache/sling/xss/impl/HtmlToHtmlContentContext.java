@@ -41,14 +41,12 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
     @Override
     public boolean check(final PolicyHandler policyHandler, final String str) {
         if (StringUtils.isNotEmpty(str)) {
-            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                return true;
+                // return policyHandler.getHtmlSanitizer().scan(str).getNumberOfErrors() == 0;
+                return policyHandler.getHtmlSanitizer().scan(str).isEmpty();
             } catch (final Exception se) {
                 logError(se, str);
-            } finally {
-                Thread.currentThread().setContextClassLoader(tccl);
             }
         }
         return false;
@@ -83,7 +81,6 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
 
     private String getCleanResults(PolicyHandler handler, String input) {
         String results;
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             results = handler.getHtmlSanitizer().scan(input);
@@ -91,8 +88,6 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
             log.debug("Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}", input);
             results = handler.getFallbackHtmlSanitizer().scan(input);
             log.debug("Second attempt was successful.");
-        } finally {
-            Thread.currentThread().setContextClassLoader(tccl);
         }
         return results;
     }

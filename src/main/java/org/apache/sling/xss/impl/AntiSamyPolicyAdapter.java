@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 
 import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
-import org.apache.sling.xss.impl.xml.PolicyProvider;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.apache.sling.xss.impl.xml.Tag;
 
 import org.owasp.html.AttributePolicy;
@@ -40,15 +40,17 @@ import org.owasp.html.PolicyFactory;
 
 import com.google.common.base.Predicate;
 
-public class CustomPolicy {
-    private PolicyFactory policyFactory;
-    private List<String> onInvalidRemoveTagList = new ArrayList<>();
-    private Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
-    private CssValidator cssValidator;
-    static final String ALLOW_DYNAMIC_ATTRIBUTES = "allowDynamicAttributes";
-    static final String REMOVE_TAG_ONINVALID_ACTION = "removeTag";
+public class AntiSamyPolicyAdapter {
+    private static final String ALLOW_DYNAMIC_ATTRIBUTES = "allowDynamicAttributes";
+    private static final String REMOVE_TAG_ONINVALID_ACTION = "removeTag";
 
-    public CustomPolicy(PolicyProvider policy) {
+    private final List<String> onInvalidRemoveTagList = new ArrayList<>();
+    private final Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
+
+    private PolicyFactory policyFactory;
+    private CssValidator cssValidator;
+
+    public AntiSamyPolicyAdapter(AntiSamyPolicy policy) {
         removeAttributeGuards();
         HtmlPolicyBuilder policyBuilder = new HtmlPolicyBuilder();
 
@@ -95,20 +97,20 @@ public class CustomPolicy {
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
                 // Tag.action
-                case AntiSamyConstants.TRUNCATE_ACTION:
+                case AntiSamyActions.TRUNCATE:
                     policyBuilder.allowElements(tag.getValue().getName());
                     break;
 
                 // filter: remove tags, but keep content,
-                case AntiSamyConstants.FILTER_ACTION:
+                case AntiSamyActions.FILTER:
                     break;
 
                 // remove: remove tag and contents
-                case AntiSamyConstants.REMOVE_ACTION:
+                case AntiSamyActions.REMOVE:
                     policyBuilder.disallowElements(tag.getValue().getName());
                     break;
 
-                case AntiSamyConstants.VALIDATE_ACTION:
+                case AntiSamyActions.VALIDATE:
                 case "":
                     policyBuilder.allowElements(tag.getValue().getName());
                     boolean styleSeen = false;
@@ -183,7 +185,7 @@ public class CustomPolicy {
 
     }
 
-    public PolicyFactory getCustomPolicyFactory() {
+    public PolicyFactory getHtmlCleanerPolicyFactory() {
         return policyFactory;
     }
 
@@ -247,6 +249,8 @@ public class CustomPolicy {
 
     private void letMeIn(Field field) throws ReflectiveOperationException {
         if (!field.isAccessible())
+        //TODO: how can i use the canAccess? isAccessible is declared
+        // if (!canAccess(HtmlPolicyBuilder.class.getDeclaredField("ATTRIBUTE_GUARDS")))
             field.setAccessible(true);
         if ((field.getModifiers() & Modifier.FINAL) != 0) {
             Field modifiersField = Field.class.getDeclaredField("modifiers");

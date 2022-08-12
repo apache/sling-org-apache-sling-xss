@@ -23,10 +23,10 @@ import java.io.InputStream;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.apache.sling.xss.impl.xml.PolicyProvider;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.apache.sling.xss.impl.xml.Tag;
 
-public class FallbackSlingPolicy extends PolicyProvider {
+public class FallbackSlingPolicy extends AntiSamyPolicy {
 
     public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
 

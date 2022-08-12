@@ -27,7 +27,7 @@ import org.apache.sling.xss.impl.PolicyException;
 
 class MapBuilder {
 
-    PolicyProvider policy;
+    AntiSamyPolicy policy;
     // Antisamy hardcodes the allowed-empty-tags default:
     // https://github.com/nahsra/antisamy/blob/main/src/main/java/org/owasp/validator/html/scan/Constants.java#L37
     private static final List<String> ALLOWED_EMPTY_TAGS = Arrays.asList(
@@ -50,7 +50,7 @@ class MapBuilder {
             "basefont",
             "col");
 
-    public void createRulesMap(PolicyProvider policy, AntiSamyRules topLevelElement) throws PolicyException {
+    public void createRulesMap(AntiSamyPolicy policy, AntiSamyRules topLevelElement) throws PolicyException {
         this.policy = policy;
 
         parseCommonRegExps(topLevelElement.getRegexpList());
@@ -100,12 +100,12 @@ class MapBuilder {
         }
     }
 
-    // /**
-    // * Go through <allowed-empty-tags> section of the policy file.
-    // *
-    // * @param allowedEmptyTagsListNode Top level of <allowed-empty-tags>
-    // * @param allowedEmptyTags The tags that can be empty
-    // */
+    /**
+    * Go through <allowed-empty-tags> section of the policy file.
+    *
+    * @param allowedEmptyTagsListNode Top level of <allowed-empty-tags>
+    * @param allowedEmptyTags The tags that can be empty
+    */
     private void parseAllowedEmptyTags(AllowedEmptyTags allowedEmptyTagsList) {
         if (allowedEmptyTagsList != null) {
             policy.allowedEmptyTags = allowedEmptyTagsList.getLiterals();
@@ -113,16 +113,16 @@ class MapBuilder {
             policy.allowedEmptyTags.addAll(ALLOWED_EMPTY_TAGS);
     }
 
-    // /**
-    // * Go through <global-tag-attributes> section of the policy file.
-    // *
-    // * @param root Top level of <global-tag-attributes>
-    // * @param globalAttributes1 A HashMap of global Attributes that need
-    // validation
-    // * for every tag.
-    // * @param commonAttributes The common attributes
-    // * @throws PolicyException
-    // */
+    /**
+    * Go through <global-tag-attributes> section of the policy file.
+    *
+    * @param root Top level of <global-tag-attributes>
+    * @param globalAttributes1 A HashMap of global Attributes that need
+    validation
+    * for every tag.
+    * @param commonAttributes The common attributes
+    * @throws PolicyException
+    */
     private void parseGlobalAttributes(List<Attribute> root) throws PolicyException {
         for (Attribute ele : root) {
             String name = ele.getName();
@@ -136,25 +136,25 @@ class MapBuilder {
         }
     }
 
-    // /**
-    // * Go through <dynamic-tag-attributes> section of the policy file.
-    // *
-    // * @param root Top level of <dynamic-tag-attributes>
-    // * @param dynamicAttributes A HashMap of dynamic Attributes that need
-    // validation
-    // * for every tag.
-    // * @param commonAttributes The common attributes
-    // * @throws PolicyException
-    // */
+    /**
+    * Go through <dynamic-tag-attributes> section of the policy file.
+    *
+    * @param root Top level of <dynamic-tag-attributes>
+    * @param dynamicAttributes A HashMap of dynamic Attributes that need
+    validation
+    * for every tag.
+    * @param commonAttributes The common attributes
+    * @throws PolicyException
+    */
 
     private void parseDynamicAttributes(List<Attribute> root) throws PolicyException {
         for (Attribute ele : root) {
             String name = ele.getName();
-            Attribute toAdd = policy.commonAttributes.get(name.toLowerCase());
+            Attribute toAdd = policy.getCommonAttributes().get(name.toLowerCase());
 
             if (toAdd != null) {
                 String attrName = name.toLowerCase().substring(0, name.length() - 1);
-                policy.dynamicAttributes.put(attrName, toAdd);
+                policy.getDynamicAttributes().put(attrName, toAdd);
             } else
                 throw new PolicyException("Dynamic attribute '" + name
                         + "' was not defined in <common-attributes>");
@@ -224,7 +224,7 @@ class MapBuilder {
             Property propertyWithPatterns = new Property(property.getName(), allowedRegexp3, property.getLiteralList(),
                     property.getShorthandList(), property.getDescription(), property.getOnInvalid(),
                     property.getDefaultValue());
-            policy.cssRules.put(property.getName().toLowerCase(), propertyWithPatterns);
+            policy.getCssRules().put(property.getName().toLowerCase(), propertyWithPatterns);
         }
     }
 
@@ -236,7 +236,7 @@ class MapBuilder {
 
             if (regExpName != null && regExpName.length() > 0) {
                 allowedRegExp
-                        .add(new Regexp(regExpName, policy.commonRegularExpressions.get(regExpName).toString()));
+                        .add(new Regexp(regExpName, policy.getCommonRegularExpressions().get(regExpName).toString()));
             } else if (value != null) {
                 allowedRegExp.add(new Regexp(regExpName, value));
             }

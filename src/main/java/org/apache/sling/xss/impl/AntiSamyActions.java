@@ -18,13 +18,13 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-public class AntiSamyConstants {
-  private AntiSamyConstants() {
+public class AntiSamyActions {
+  private AntiSamyActions() {
     throw new IllegalStateException("Utility class");
   }
-  public static final String REMOVE_ATTRIBUTE_ONINVALID_ACTION = "removeAttribute";
-  static final String TRUNCATE_ACTION = "truncate";
-  static final String FILTER_ACTION = "filter";
-  static final String REMOVE_ACTION = "remove";
-  static final String VALIDATE_ACTION = "validate";
+  public static final String REMOVE_ATTRIBUTE_ONINVALID = "removeAttribute";
+  static final String TRUNCATE = "truncate";
+  static final String FILTER = "filter";
+  static final String REMOVE = "remove";
+  static final String VALIDATE = "validate";
 }

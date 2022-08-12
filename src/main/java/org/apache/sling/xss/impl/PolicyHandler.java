@@ -21,22 +21,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.sling.xss.impl.xml.PolicyProvider;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 
 /**
  * Class that provides the capability of securing input provided as plain text for HTML output.
  */
 public class PolicyHandler {
 
-    private final PolicyProvider policy;
-    private PolicyProvider fallbackPolicy;
+    private final AntiSamyPolicy policy;
+    private AntiSamyPolicy fallbackPolicy;
     private HtmlSanitizer htmlSanitizer;
     private HtmlSanitizer fallbackHtmlSanitizer;
 
     /**
      * Creates a {@code PolicyHandler} from an {@link InputStream}.
      *
-     * @param policyStream the InputStream from which to read this handler's {@link PolicyProvider}
+     * @param policyStream the InputStream from which to read this handler's {@link AntiSamyPolicy}
      */
     public PolicyHandler(InputStream policyStream) throws Exception {
         // fix for classloader issue with IBM JVM: see bug #31946
@@ -48,7 +48,7 @@ public class PolicyHandler {
             IOUtils.copy(policyStream, baos);
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             currentThread.setContextClassLoader(this.getClass().getClassLoader());
-            this.policy = new PolicyProvider(bais);
+            this.policy = new AntiSamyPolicy(bais);
             bais.reset();
             this.htmlSanitizer = new HtmlSanitizer(this.policy);
             this.fallbackPolicy = new FallbackSlingPolicy(bais);
@@ -58,7 +58,7 @@ public class PolicyHandler {
         }
     }
 
-    public PolicyProvider getPolicy() {
+    public AntiSamyPolicy getPolicy() {
         return this.policy;
     }
 

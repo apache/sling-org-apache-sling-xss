@@ -27,15 +27,15 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.sling.xss.impl.PolicyException;
-import org.apache.sling.xss.impl.xml.PolicyProvider.CssPolicy;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy.CssPolicy;
 import org.junit.jupiter.api.Test;
 
 class PolicyTest {
 
     @Test
     void loadDefaultPolicy() throws Exception, PolicyException {
-        InputStream input = PolicyProvider.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml");
-        PolicyProvider policy = new PolicyProvider(input);
+        InputStream input = AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml");
+        AntiSamyPolicy policy = new AntiSamyPolicy(input);
         Map<String, Pattern> regexp = policy.getCommonRegularExpressions();
         List<String> empty = policy.getAllowedEmptyTags();
         List<String> closingTag = policy.getRequireClosingTags();

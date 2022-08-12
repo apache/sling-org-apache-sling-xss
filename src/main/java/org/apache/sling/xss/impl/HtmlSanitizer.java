@@ -20,7 +20,7 @@ package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
 
-import org.apache.sling.xss.impl.xml.PolicyProvider;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.owasp.html.DynamicAttributesSanitizerPolicy;
 import org.owasp.html.Handler;
 import org.owasp.html.HtmlStreamEventReceiver;
@@ -32,24 +32,24 @@ import com.google.common.collect.ImmutableSet;
 
 public class HtmlSanitizer {
 
-    private CustomPolicy custumPolicy;
+    private AntiSamyPolicyAdapter customPolicy;
     private ImmutableMap policies;
     private ImmutableSet<String> textContainers;
 
-    public HtmlSanitizer(PolicyProvider policy) {
-        this.custumPolicy = new CustomPolicy(policy);
-        policies = reflectionGetPolicies(custumPolicy.getCustomPolicyFactory());
-        textContainers = reflectionGetTextContainers(custumPolicy.getCustomPolicyFactory());
+    public HtmlSanitizer(AntiSamyPolicy policy) {
+        this.customPolicy = new AntiSamyPolicyAdapter(policy);
+        policies = reflectionGetPolicies(customPolicy.getHtmlCleanerPolicyFactory());
+        textContainers = reflectionGetTextContainers(customPolicy.getHtmlCleanerPolicyFactory());
     }
 
     public String scan(String taintedHTML) {
         StringBuilder sb = new StringBuilder(taintedHTML.length());
         HtmlStreamEventReceiver out = HtmlStreamRenderer.create(sb, Handler.DO_NOTHING);
         DynamicAttributesSanitizerPolicy dynamicPolice = new DynamicAttributesSanitizerPolicy(out, policies,
-                textContainers, custumPolicy.getDynamicAttributesPolicyMap(), custumPolicy.getOnInvalidRemoveTagList());
+                textContainers, customPolicy.getDynamicAttributesPolicyMap(), customPolicy.getOnInvalidRemoveTagList());
 
         org.owasp.html.HtmlSanitizer.sanitize(taintedHTML, dynamicPolice,
-                custumPolicy.getCssValidator().newStyleTagProcessor());
+                customPolicy.getCssValidator().newStyleTagProcessor());
         return sb.toString();
     }
 
@@ -75,7 +75,7 @@ public class HtmlSanitizer {
         }
     }
 
-    public String scan(String taintedHTML, PolicyProvider policy) throws Exception {
+    public String scan(String taintedHTML, AntiSamyPolicy policy) throws Exception {
         if (taintedHTML == null) {
             throw new Exception("Null html input");
         }
