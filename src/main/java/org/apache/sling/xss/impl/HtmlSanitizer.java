@@ -42,15 +42,15 @@ public class HtmlSanitizer {
         textContainers = reflectionGetTextContainers(customPolicy.getHtmlCleanerPolicyFactory());
     }
 
-    public String scan(String taintedHTML) {
+    public SanitizedResult scan(String taintedHTML) {
         StringBuilder sb = new StringBuilder(taintedHTML.length());
         HtmlStreamEventReceiver out = HtmlStreamRenderer.create(sb, Handler.DO_NOTHING);
-        DynamicAttributesSanitizerPolicy dynamicPolice = new DynamicAttributesSanitizerPolicy(out, policies,
+        DynamicAttributesSanitizerPolicy dynamicPolicy = new DynamicAttributesSanitizerPolicy(out, policies,
                 textContainers, customPolicy.getDynamicAttributesPolicyMap(), customPolicy.getOnInvalidRemoveTagList());
 
-        org.owasp.html.HtmlSanitizer.sanitize(taintedHTML, dynamicPolice,
+        org.owasp.html.HtmlSanitizer.sanitize(taintedHTML, dynamicPolicy,
                 customPolicy.getCssValidator().newStyleTagProcessor());
-        return sb.toString();
+        return new SanitizedResult(sb.toString(), dynamicPolicy.getNumberOfErrors());
     }
 
     private ImmutableSet<String> reflectionGetTextContainers(PolicyFactory policyFactory) {

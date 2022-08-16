@@ -44,6 +44,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
   private Map<String, ElementAndAttributePolicies> elementAndAttrPolicies;
   private Map<String, AttributePolicy> dynamicAttributesPolicyMap;
   private List<String> onInvalidRemoveTagList;
+  private int numberOfErrors;
 
   public DynamicAttributesSanitizerPolicy(HtmlStreamEventReceiver out,
       ImmutableMap<String, ElementAndAttributePolicies> elAndAttrPolicies,
@@ -97,6 +98,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
 
         // if there is no policy for this attribute, it gets removed
         if (attrPolicy == null) {
+          numberOfErrors = numberOfErrors++;
           attrsIt.remove();
           attrsIt.next();
           attrsIt.remove();
@@ -104,6 +106,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
           String value = attrsIt.next();
           String adjustedValue = attrPolicy.apply(elementName, name, value);
           if (adjustedValue == null) {
+            numberOfErrors = numberOfErrors++;
             if (onInvalidRemoveTagList.contains(name)) {
               removeTag = true;
             }
@@ -139,5 +142,9 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
       adjustedElementName = null;
     }
     return adjustedElementName;
+  }
+
+  public int getNumberOfErrors() {
+    return numberOfErrors;
   }
 }
