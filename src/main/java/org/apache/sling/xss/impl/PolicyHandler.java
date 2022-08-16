@@ -39,22 +39,14 @@ public class PolicyHandler {
      * @param policyStream the InputStream from which to read this handler's {@link AntiSamyPolicy}
      */
     public PolicyHandler(InputStream policyStream) throws Exception {
-        // fix for classloader issue with IBM JVM: see bug #31946
-        // (currently: http://bugs.day.com/bugzilla/show_bug.cgi?id=31946)
-        Thread currentThread = Thread.currentThread();
-        ClassLoader cl = currentThread.getContextClassLoader();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            currentThread.setContextClassLoader(this.getClass().getClassLoader());
             IOUtils.copy(policyStream, baos);
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            currentThread.setContextClassLoader(this.getClass().getClassLoader());
             this.policy = new AntiSamyPolicy(bais);
             bais.reset();
             this.htmlSanitizer = new HtmlSanitizer(this.policy);
             this.fallbackPolicy = new FallbackSlingPolicy(bais);
             this.fallbackHtmlSanitizer = new HtmlSanitizer(this.fallbackPolicy);
-        } finally {
-            currentThread.setContextClassLoader(cl);
         }
     }
 

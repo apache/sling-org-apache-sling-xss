@@ -67,9 +67,6 @@ public class XSSAPIImpl implements XSSAPI {
 
     @Activate
     protected void activate() {
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             factory = SAXParserFactory.newInstance();
             factory.setValidating(false);
             factory.setNamespaceAware(true);
@@ -83,9 +80,6 @@ public class XSSAPIImpl implements XSSAPI {
             Map<String, Object> config = new HashMap<>();
             config.put("org.apache.johnzon.supports-comments", true);
             jsonReaderFactory = Json.createReaderFactory(config);
-        } finally {
-            Thread.currentThread().setContextClassLoader(tccl);
-        }
     }
 
     @Deactivate
