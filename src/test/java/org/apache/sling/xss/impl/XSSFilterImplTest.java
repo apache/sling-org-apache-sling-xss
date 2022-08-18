@@ -61,6 +61,21 @@ public class XSSFilterImplTest {
         return testData;
     }
 
+    static List<Object[]> dataForCheckMethod() {
+        List<Object[]> testData = new ArrayList<>();
+        testData.add(new Object[] { "<link media=\"screen\">hello</link>", true });
+        testData.add(new Object[] { "<link media=\"testingRege10\">hello</link>", true });
+        testData.add(new Object[] { "<style media=\"screen\">h1 {color:red;}</style>", true });
+        testData.add(new Object[] { "<link type=\"text/css\">valid Test</link>", true });
+        testData.add(new Object[] { "<body bgcolor=\"black\">valid Test</body>", true });
+        testData.add(new Object[] { "<div background=\"green\">invalid Test</div>", false });
+        testData.add(new Object[] { "<table border=\"3\">valid Test</table>", true });
+        testData.add(new Object[] { "<table border=\"green\">invalid Test</table>", false });
+        testData.add(new Object[] { "<script>invalid Test</script>", false });
+        testData.add(new Object[] { "", false });
+        return testData;
+    }
+
     public SlingContext context = new SlingContext();
 
     private XSSFilter xssFilter;
@@ -99,6 +114,19 @@ public class XSSFilterImplTest {
         XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
         assertTrue(antiSamyPolicy.isEmbedded(), "Expected the default embedded policy.");
         assertEquals(XSSFilterImpl.EMBEDDED_POLICY_PATH, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForCheckMethod")
+    public void testCheckMethod(String input, boolean isValid) {
+        context.registerInjectActivateService(new XSSFilterImpl());
+        xssFilter = context.getService(XSSFilter.class);
+        System.out.println(input);
+        if (isValid) {
+            assertTrue(xssFilter.check(XSSFilter.DEFAULT_CONTEXT, input), "Expected valid input value for: " + input);
+        } else {
+            assertFalse(xssFilter.check(XSSFilter.DEFAULT_CONTEXT, input), "Expected invalid input value for: " + input);
+        }
     }
 
     @ParameterizedTest

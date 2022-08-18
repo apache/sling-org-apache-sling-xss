@@ -335,6 +335,15 @@ public class XSSAPIImplTest {
     static String[][] dataForFilterHtml() {
         return new String[][] {
                 //         Source                            Expected Result
+
+                // checking if both, the literal and the regex check are executed
+                { "<link media=\"screen\">hello</link>", "<link media=\"screen\" />hello" },
+                { "<link media=\"checkRege10\">hello</link>", "<link media=\"checkRege10\" />hello" },
+
+                { "<div align=\"center\">valid Test</div>", "<div align=\"center\">valid Test</div>" },
+                { "<style media=\"screen\">h1 {color:red;}</style>", "<style media=\"screen\">h1 {\n\tcolor: red;\n}\n</style>" },
+                { "<object id=\"center\" type=\"application/x-shockwave-flash\">valid Test</object>", "<object id=\"center\" type=\"application/x-shockwave-flash\">valid Test</object>" },
+
                 {null, ""},
                 {"", ""},
                 {"simple", "simple"},

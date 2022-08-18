@@ -60,7 +60,7 @@ public class Property {
 
         this.name = name;
         this.description = Optional.ofNullable(description).orElse("");
-        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : AntiSamyActions.REMOVE_ATTRIBUTE_ONINVALID;
+        this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID;
         this.regexpList = Optional.ofNullable(allowedRegexps)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);

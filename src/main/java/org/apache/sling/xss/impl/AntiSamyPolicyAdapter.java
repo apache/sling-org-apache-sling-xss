@@ -33,7 +33,6 @@ import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.apache.sling.xss.impl.xml.Tag;
-
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
@@ -42,7 +41,7 @@ import com.google.common.base.Predicate;
 
 public class AntiSamyPolicyAdapter {
     private static final String ALLOW_DYNAMIC_ATTRIBUTES = "allowDynamicAttributes";
-    private static final String REMOVE_TAG_ONINVALID_ACTION = "removeTag";
+    private static final String REMOVE_TAG_ON_INVALID_ACTION = "removeTag";
 
     private final List<String> onInvalidRemoveTagList = new ArrayList<>();
     private final Map<String, AttributePolicy> dynamicAttributesPolicyMap = new HashMap<>();
@@ -60,7 +59,7 @@ public class AntiSamyPolicyAdapter {
         Map<String, Attribute> globalAttributes = policy.getGlobalAttributes();
 
         for (Attribute attribute : globalAttributes.values()) {
-            if (attribute.getOnInvalid().equals(REMOVE_TAG_ONINVALID_ACTION)) {
+            if (attribute.getOnInvalid().equals(REMOVE_TAG_ON_INVALID_ACTION)) {
                 onInvalidRemoveTagList.add(attribute.getName());
             }
 
@@ -84,7 +83,7 @@ public class AntiSamyPolicyAdapter {
             }
         }
 
-        // ------------ this is for the allowed emty tags -------------
+        // ------------ this is for the allowed empty tags -------------
         List<String> allowedEmptyTags = policy.getAllowedEmptyTags();
         for (String allowedEmptyTag : allowedEmptyTags) {
             policyBuilder.allowWithoutAttributes(allowedEmptyTag);
@@ -119,25 +118,31 @@ public class AntiSamyPolicyAdapter {
                     // if there are allowed Attributes, map over them
                     for (Attribute attribute : allowedAttributes.values()) {
 
-                        if (attribute.getOnInvalid().equals(REMOVE_TAG_ONINVALID_ACTION)) {
+                        if (attribute.getOnInvalid().equals(REMOVE_TAG_ON_INVALID_ACTION)) {
                             onInvalidRemoveTagList.add(attribute.getName());
                         }
 
                         styleSeen = CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName());
 
-                        List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                        for (String allowedValue : allowedValuesFromAttribute) {
-                            policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue)
-                                    .onElements(tag.getValue().getName());
-                        }
+                        List<String> literalList = attribute.getLiterals();
+                        List<Pattern> patternList = attribute.getPatternList();
 
-                        List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                        if (!regexsFromAttribute.isEmpty()) {
+                        if (!literalList.isEmpty() && !patternList.isEmpty()) {
+                            // if both, the patterns and the literals are not empty, the value should be checked with them with an OR and not with an AND.
                             policyBuilder.allowAttributes(attribute.getName())
-                                    .matching(matchesToPatterns(regexsFromAttribute))
-                                    .onElements(tag.getValue().getName());
-                        } else {
+                                .matching(matchesToPatternsAndLiterals(patternList, true, literalList))
+                                .onElements(tag.getValue().getName());
+                        }
+                        else if (!literalList.isEmpty()) {
+                            policyBuilder.allowAttributes(attribute.getName())
+                                .matching(true, literalList.toArray(new String[0]))
+                                .onElements(tag.getValue().getName());
                             policyBuilder.allowAttributes(attribute.getName()).onElements(tag.getValue().getName());
+                        }
+                        else if (!patternList.isEmpty()) {
+                            policyBuilder.allowAttributes(attribute.getName())
+                                    .matching(matchesToPatterns(patternList))
+                                    .onElements(tag.getValue().getName());
                         }
                     }
 
@@ -163,7 +168,7 @@ public class AntiSamyPolicyAdapter {
         if (policy.getDirectives().get(ALLOW_DYNAMIC_ATTRIBUTES).equals("true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
             for (Attribute attribute : dynamicAttributes.values()) {
-                if (attribute.getOnInvalid().equals(REMOVE_TAG_ONINVALID_ACTION)) {
+                if (attribute.getOnInvalid().equals(REMOVE_TAG_ON_INVALID_ACTION)) {
                     onInvalidRemoveTagList.add(attribute.getName());
                 }
 
@@ -215,6 +220,31 @@ public class AntiSamyPolicyAdapter {
         };
     }
 
+    private static Predicate<String> matchesToPatternsAndLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
+        return new Predicate<String>() {
+            @Override
+            public boolean apply(String s) {
+                // check if the string matches to the pattern
+                for (Pattern pattern : patternList) {
+                    if (pattern.matcher(s).matches()) {
+                        return true;
+                    }
+                }
+                // if the pattern does not match it goes through the literals
+                for (String string : literalList) {
+                    s = ignoreCase
+                        ? s.toLowerCase()
+                        : s;
+                    if (string.equals(s)) {
+                        return true;
+                    }
+                }
+                // if it neither matches the patterns nor the literals it returns false
+                return false;
+            }
+        };
+    }
+
     public AttributePolicy newDynamicAttributePolicy(final Pattern pattern) {
         return new AttributePolicy() {
             @Override
@@ -249,8 +279,6 @@ public class AntiSamyPolicyAdapter {
 
     private void letMeIn(Field field) throws ReflectiveOperationException {
         if (!field.isAccessible())
-        //TODO: how can i use the canAccess? isAccessible is declared
-        // if (!canAccess(HtmlPolicyBuilder.class.getDeclaredField("ATTRIBUTE_GUARDS")))
             field.setAccessible(true);
         if ((field.getModifiers() & Modifier.FINAL) != 0) {
             Field modifiersField = Field.class.getDeclaredField("modifiers");

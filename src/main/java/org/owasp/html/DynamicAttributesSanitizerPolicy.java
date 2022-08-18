@@ -32,7 +32,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * Exdense the default policy to suport dynamic attributes.
+ * Extends the default policy to support dynamic attributes.
  * 
  * Since we want to support the antisamy config file, we have to make dynamic
  * tag attributes possible.
@@ -84,7 +84,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
         String name = attrsIt.next();
 
         AttributePolicy attrPolicy = null;
-        // check if the attribute name starts with an dynamic tag, to handle it specialy
+        // check if the attribute name starts with an dynamic tag, to handle it specially
         for (Entry<String, AttributePolicy> dynamicAttributeEntry : dynamicAttributesPolicyMap.entrySet()) {
           if (name.startsWith(dynamicAttributeEntry.getKey())) {
             attrPolicy = dynamicAttributeEntry.getValue();
@@ -98,7 +98,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
 
         // if there is no policy for this attribute, it gets removed
         if (attrPolicy == null) {
-          numberOfErrors = numberOfErrors++;
+          numberOfErrors++;
           attrsIt.remove();
           attrsIt.next();
           attrsIt.remove();
@@ -106,7 +106,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
           String value = attrsIt.next();
           String adjustedValue = attrPolicy.apply(elementName, name, value);
           if (adjustedValue == null) {
-            numberOfErrors = numberOfErrors++;
+            numberOfErrors++;
             if (onInvalidRemoveTagList.contains(name)) {
               removeTag = true;
             }
@@ -139,6 +139,7 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
         adjustedElementName = HtmlLexer.canonicalElementName(adjustedElementName);
       }
     } else {
+      numberOfErrors++;
       adjustedElementName = null;
     }
     return adjustedElementName;

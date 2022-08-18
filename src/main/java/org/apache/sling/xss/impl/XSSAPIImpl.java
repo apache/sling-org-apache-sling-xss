@@ -180,12 +180,12 @@ public class XSSAPIImpl implements XSSAPI {
             // Percent-encode characters that are not allowed in unquoted
             // HTML attributes: ", ', >, <, ` and space. We don't encode =
             // since this would break links with query parameters.
-            String encodedUrl = url.replaceAll("\"", "%22")
-                    .replaceAll("'", "%27")
-                    .replaceAll(">", "%3E")
-                    .replaceAll("<", "%3C")
-                    .replaceAll("`", "%60")
-                    .replaceAll(" ", "%20");
+            String encodedUrl = url.replace("\"", "%22")
+                    .replace("'", "%27")
+                    .replace(">", "%3E")
+                    .replace("<", "%3C")
+                    .replace("`", "%60")
+                    .replace(" ", "%20");
             try {
                 if (xssFilter.isValidHref(encodedUrl)) {
                     return encodedUrl;

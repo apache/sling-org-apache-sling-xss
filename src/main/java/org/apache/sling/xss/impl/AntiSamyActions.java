@@ -22,7 +22,7 @@ public class AntiSamyActions {
   private AntiSamyActions() {
     throw new IllegalStateException("Utility class");
   }
-  public static final String REMOVE_ATTRIBUTE_ONINVALID = "removeAttribute";
+  public static final String REMOVE_ATTRIBUTE_ON_INVALID = "removeAttribute";
   static final String TRUNCATE = "truncate";
   static final String FILTER = "filter";
   static final String REMOVE = "remove";
