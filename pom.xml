@@ -79,6 +79,7 @@
                             <ignore>org.apache.avalon.*</ignore> 
                             <ignore>org.apache.log.*</ignore> 
                             <ignore>org.owasp.validator.html.*</ignore> 
+                            <ignore>org.w3c.dom.svg.*</ignore> 
                         </ignores>
                     </configuration>
                 </plugin>
