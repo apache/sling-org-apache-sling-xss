@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.apache.sling.xss.impl.PolicyException;
+import org.apache.sling.xss.impl.InvalidConfigException;
 
 public class AntiSamyPolicy {
 
@@ -43,7 +43,7 @@ public class AntiSamyPolicy {
     protected final List<String> requireClosingTags = new ArrayList<>();
     protected List<String> allowedEmptyTags = new ArrayList<>();
 
-    public AntiSamyPolicy(InputStream input) throws PolicyException, XMLStreamException, IOException {
+    public AntiSamyPolicy(InputStream input) throws InvalidConfigException, XMLStreamException, IOException {
         AntiSamyXmlParser xmlParser = new AntiSamyXmlParser();
         MapBuilder mapBuilder = new MapBuilder();
         AntiSamyRules root = xmlParser.createRules(input);

@@ -18,14 +18,14 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-public class PolicyException extends Exception {
+public class InvalidConfigException extends RuntimeException{
     private static final long serialVersionUID = 1L;
 
-    public PolicyException(Exception e) {
+    public InvalidConfigException(Exception e) {
         super(e);
     }
 
-    public PolicyException(String s) {
+    public InvalidConfigException(String s) {
         super(s);
     }
 }

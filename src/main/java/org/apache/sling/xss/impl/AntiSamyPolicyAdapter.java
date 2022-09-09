@@ -27,12 +27,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
 import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.apache.sling.xss.impl.xml.Tag;
+import org.jetbrains.annotations.Nullable;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
@@ -130,7 +129,7 @@ public class AntiSamyPolicyAdapter {
                         if (!literalList.isEmpty() && !patternList.isEmpty()) {
                             // if both, the patterns and the literals are not empty, the value should be checked with them with an OR and not with an AND.
                             policyBuilder.allowAttributes(attribute.getName())
-                                .matching(matchesToPatternsAndLiterals(patternList, true, literalList))
+                                .matching(matchesPatternsOrLiterals(patternList, true, literalList))
                                 .onElements(tag.getValue().getName());
                         }
                         else if (!literalList.isEmpty()) {
@@ -153,7 +152,7 @@ public class AntiSamyPolicyAdapter {
                     break;
 
                 default:
-                    throw new RuntimeException("No tag action found.");
+                    throw new IllegalArgumentException("No tag action found.");
             }
         }
 
@@ -220,9 +219,8 @@ public class AntiSamyPolicyAdapter {
         };
     }
 
-    private static Predicate<String> matchesToPatternsAndLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
+    private static Predicate<String> matchesPatternsOrLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
         return new Predicate<String>() {
-            @Override
             public boolean apply(String s) {
                 // check if the string matches to the pattern
                 for (Pattern pattern : patternList) {
@@ -273,7 +271,7 @@ public class AntiSamyPolicyAdapter {
             letMeIn(guards);
             guards.set(null, new HashMap<>());
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

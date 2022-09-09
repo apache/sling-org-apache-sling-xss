@@ -19,6 +19,7 @@
 package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
+import java.util.Objects;
 
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.owasp.html.DynamicAttributesSanitizerPolicy;
@@ -75,14 +76,10 @@ public class HtmlSanitizer {
         }
     }
 
-    public String scan(String taintedHTML, AntiSamyPolicy policy) throws Exception {
-        if (taintedHTML == null) {
-            throw new Exception("Null html input");
-        }
+    public SanitizedResult scan(String taintedHTML, AntiSamyPolicy policy) {
+        Objects.requireNonNull(taintedHTML, "Null html input");
+        Objects.requireNonNull(policy, "Null policy loaded");
 
-        if (policy == null) {
-            throw new Exception("No policy loaded");
-        }
-        return "safeHTML";
+        return new HtmlSanitizer(policy).scan(taintedHTML);
     }
 }

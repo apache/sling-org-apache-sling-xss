@@ -26,44 +26,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.apache.sling.xss.impl.PolicyException;
+import org.apache.sling.xss.impl.InvalidConfigException;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy.CssPolicy;
 import org.junit.jupiter.api.Test;
 
 class PolicyTest {
 
     @Test
-    void loadDefaultPolicy() throws Exception, PolicyException {
-        InputStream input = AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml");
-        AntiSamyPolicy policy = new AntiSamyPolicy(input);
-        Map<String, Pattern> regexp = policy.getCommonRegularExpressions();
-        List<String> empty = policy.getAllowedEmptyTags();
-        List<String> closingTag = policy.getRequireClosingTags();
-        Map<String, Attribute> global = policy.getGlobalAttributes();
-        Map<String, Attribute> dynamic = policy.getDynamicAttributes();
-        Map<String, Attribute> commonAttr = policy.getCommonAttributes();
-        Map<String, Tag> tagRules = policy.getTagRules();
-        Map<String, Property> cssRules = policy.getCssRules();
-        Map<String, String> directives = policy.getDirectives();
+    void loadDefaultPolicy() throws Exception, InvalidConfigException {
+        try(InputStream input = AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml")) {
+            AntiSamyPolicy policy = new AntiSamyPolicy(input);
+            Map<String, Pattern> regexp = policy.getCommonRegularExpressions();
+            List<String> empty = policy.getAllowedEmptyTags();
+            List<String> closingTag = policy.getRequireClosingTags();
+            Map<String, Attribute> global = policy.getGlobalAttributes();
+            Map<String, Attribute> dynamic = policy.getDynamicAttributes();
+            Map<String, Attribute> commonAttr = policy.getCommonAttributes();
+            Map<String, Tag> tagRules = policy.getTagRules();
+            Map<String, Property> cssRules = policy.getCssRules();
+            Map<String, String> directives = policy.getDirectives();
 
-        assertNotNull(policy);
-        Tag imgTag = policy.getTagRules().get("img");
-        assertNotNull(imgTag, "img tag rules");
-        assertEquals(9, imgTag.getAttributeList().size(), "number of known img tag attributes");
-        assertEquals(41, regexp.size(), "number of known common regexs");
-        assertEquals(19, empty.size(), "number of known allowed emty tags");
-        assertEquals(5, global.size(), "number of known global attributes");
-        assertEquals(1, dynamic.size(), "number of known dynamic attributes");
-        assertEquals(0, closingTag.size(), "number of known closing Tags");
-        assertEquals(46, commonAttr.size(), "number of known common attributes");
-        assertEquals(73, tagRules.size(), "number of known tag rules");
-        assertEquals(118, cssRules.size(), "number of known css rules");
-        assertEquals(12, directives.size(), "number of known directives");
+            assertNotNull(policy);
+            Tag imgTag = policy.getTagRules().get("img");
+            assertNotNull(imgTag, "img tag rules");
+            assertEquals(9, imgTag.getAttributeList().size(), "number of known img tag attributes");
+            assertEquals(41, regexp.size(), "number of known common regexs");
+            assertEquals(19, empty.size(), "number of known allowed emty tags");
+            assertEquals(5, global.size(), "number of known global attributes");
+            assertEquals(1, dynamic.size(), "number of known dynamic attributes");
+            assertEquals(0, closingTag.size(), "number of known closing Tags");
+            assertEquals(46, commonAttr.size(), "number of known common attributes");
+            assertEquals(73, tagRules.size(), "number of known tag rules");
+            assertEquals(118, cssRules.size(), "number of known css rules");
+            assertEquals(12, directives.size(), "number of known directives");
 
-        CssPolicy cssPolicy = policy.getCssPolicy();
+            CssPolicy cssPolicy = policy.getCssPolicy();
 
-        assertEquals(118, cssPolicy.getCssRules().size(), "cssPolicy.cssRules.size");
-        assertTrue(cssPolicy.isValidElementName("base-link"));
-        assertFalse(cssPolicy.isValidElementName("base|link"));
+            assertEquals(118, cssPolicy.getCssRules().size(), "cssPolicy.cssRules.size");
+            assertTrue(cssPolicy.isValidElementName("base-link"));
+            assertFalse(cssPolicy.isValidElementName("base|link"));
+        }
     }
 }

@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.sling.xss.impl.PolicyException;
+import org.apache.sling.xss.impl.InvalidConfigException;
 
 class MapBuilder {
 
@@ -50,7 +50,7 @@ class MapBuilder {
             "basefont",
             "col");
 
-    public void createRulesMap(AntiSamyPolicy policy, AntiSamyRules topLevelElement) throws PolicyException {
+    public void createRulesMap(AntiSamyPolicy policy, AntiSamyRules topLevelElement) throws InvalidConfigException {
         this.policy = policy;
 
         parseCommonRegExps(topLevelElement.getRegexpList());
@@ -121,9 +121,9 @@ class MapBuilder {
     validation
     * for every tag.
     * @param commonAttributes The common attributes
-    * @throws PolicyException
+    * @throws InvalidConfigException
     */
-    private void parseGlobalAttributes(List<Attribute> root) throws PolicyException {
+    private void parseGlobalAttributes(List<Attribute> root) throws InvalidConfigException {
         for (Attribute ele : root) {
             String name = ele.getName();
             Attribute toAdd = policy.commonAttributes.get(name.toLowerCase());
@@ -131,7 +131,7 @@ class MapBuilder {
             if (toAdd != null)
                 policy.globalAttributes.put(name.toLowerCase(), toAdd);
             else
-                throw new PolicyException("Global attribute '" + name
+                throw new InvalidConfigException("Global attribute '" + name
                         + "' was not defined in <common-attributes>");
         }
     }
@@ -144,10 +144,10 @@ class MapBuilder {
     validation
     * for every tag.
     * @param commonAttributes The common attributes
-    * @throws PolicyException
+    * @throws InvalidConfigException
     */
 
-    private void parseDynamicAttributes(List<Attribute> root) throws PolicyException {
+    private void parseDynamicAttributes(List<Attribute> root) throws InvalidConfigException {
         for (Attribute ele : root) {
             String name = ele.getName();
             Attribute toAdd = policy.getCommonAttributes().get(name.toLowerCase());
@@ -156,12 +156,12 @@ class MapBuilder {
                 String attrName = name.toLowerCase().substring(0, name.length() - 1);
                 policy.getDynamicAttributes().put(attrName, toAdd);
             } else
-                throw new PolicyException("Dynamic attribute '" + name
+                throw new InvalidConfigException("Dynamic attribute '" + name
                         + "' was not defined in <common-attributes>");
         }
     }
 
-    private void parseTagRules(List<Tag> root) throws PolicyException {
+    private void parseTagRules(List<Tag> root) throws InvalidConfigException {
         if (root == null)
             return;
 
@@ -178,7 +178,7 @@ class MapBuilder {
     }
 
     private List<Attribute> getTagAttributes(List<Attribute> attributeList, String tagName)
-            throws PolicyException {
+            throws InvalidConfigException {
         List<Attribute> tagAttributes = new ArrayList<>();
 
         for (Attribute attribute : attributeList) {
@@ -201,7 +201,7 @@ class MapBuilder {
                             !onInvalid.isEmpty() ? onInvalid : commonAttribute.getOnInvalid(),
                             !description.isEmpty() ? description : commonAttribute.getDescription());
                 } else {
-                    throw new PolicyException("Attribute '" + attributeName +
+                    throw new InvalidConfigException("Attribute '" + attributeName +
                             "' was referenced as a common attribute in definition of '" + tagName +
                             "', but does not exist in <common-attributes>");
                 }

@@ -44,13 +44,13 @@ public class ValidatingDocumentHandler implements DocumentHandler {
 
     private final CssPolicy cssPolicy;
     private final StringBuilder cleanCss = new StringBuilder();
-    private final boolean inline;
+    private final boolean isInLine;
 
-    private boolean inSelector;
+    private boolean isInSelector;
 
-    public ValidatingDocumentHandler(CssPolicy cssPolicy, boolean inline) {
+    public ValidatingDocumentHandler(CssPolicy cssPolicy, boolean isInLine) {
         this.cssPolicy = cssPolicy;
-        this.inline = inline;
+        this.isInLine = isInLine;
     }
 
     @Override
@@ -63,21 +63,21 @@ public class ValidatingDocumentHandler implements DocumentHandler {
         StringJoiner joiner = new StringJoiner(", ", "", " {\n");
         validSelectors.forEach( joiner::add );
         cleanCss.append(joiner.toString());
-        inSelector = true;
+        isInSelector = true;
     }
 
     @Override
     public void endSelector(SelectorList selectors) throws CSSException {
-        if ( !inSelector )
+        if ( !isInSelector )
             return;
 
         cleanCss.append("}\n");
-        inSelector = false;
+        isInSelector = false;
     }
 
     @Override
     public void property(String name, LexicalUnit value, boolean important) throws CSSException {
-        if (!inSelector && !inline) {
+        if (!isInSelector && !isInLine) {
             return;
         }
 

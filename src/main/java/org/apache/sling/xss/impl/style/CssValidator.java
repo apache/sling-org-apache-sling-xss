@@ -43,12 +43,7 @@ public class CssValidator {
     }
 
     public AttributePolicy newCssAttributePolicy() {
-        return new AttributePolicy() {
-            @Override
-            public String apply(String elementName, String attributeName, String value) {
-                return cssParser.cleanStyleDeclaration(value);
-            }
-        };
+        return (String elementName, String attributeName, String value) -> cssParser.cleanStyleDeclaration(value);
     }
 
     public List<String> getDisallowedTagNames() {

@@ -22,13 +22,13 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ctc.wstx.stax.WstxOutputFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 public class AntiSamyXmlParser {
@@ -44,12 +44,13 @@ public class AntiSamyXmlParser {
         xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
 
         XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(input);
-        XmlMapper mapper = new XmlMapper(xmlInputFactory, new WstxOutputFactory());
+        XmlMapper mapper = new XmlMapper(xmlInputFactory, XMLOutputFactory.newInstance());
         AntiSamyRules rules = mapper.readValue(xmlStreamReader, AntiSamyRules.class);
         if ("true".equals(rules.getDirectivesByName().get(DIRECTIVE_EMBED_STYLE_SHEETS))) {
             logger.warn("Unsupported configuration directive {} is set to true and will be ignored",
                     DIRECTIVE_EMBED_STYLE_SHEETS);
         }
+        xmlStreamReader.close();
         return rules;
     }
 }

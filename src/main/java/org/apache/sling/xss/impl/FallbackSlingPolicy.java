@@ -28,7 +28,7 @@ import org.apache.sling.xss.impl.xml.Tag;
 
 public class FallbackSlingPolicy extends AntiSamyPolicy {
 
-    public FallbackSlingPolicy(InputStream inputStream) throws PolicyException, XMLStreamException, IOException {
+    public FallbackSlingPolicy(InputStream inputStream) throws InvalidConfigException, XMLStreamException, IOException {
 
         super(inputStream);
 

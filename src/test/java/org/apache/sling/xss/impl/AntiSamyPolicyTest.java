@@ -45,7 +45,7 @@ public class AntiSamyPolicyTest {
     private static HtmlSanitizer antiSamy;
 
     @BeforeAll
-    public static void setup() throws PolicyException, XMLStreamException, IOException {
+    public static void setup() throws InvalidConfigException, XMLStreamException, IOException {
         antiSamy = new HtmlSanitizer(new AntiSamyPolicy(AntiSamyPolicyTest.class.getClassLoader().getResourceAsStream(POLICY_FILE)));
     }
 
