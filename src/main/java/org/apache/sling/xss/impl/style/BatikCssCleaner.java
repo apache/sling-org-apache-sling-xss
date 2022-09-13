@@ -56,7 +56,7 @@ public class BatikCssCleaner {
             parser.parseStyleSheet(new InputSource(new StringReader(untrustedCss)));
             return handler.getValidCss();
         } catch (CSSException | IOException e) {
-            logger.debug("Unexpected error while cleaning stylesheet", e);
+            logger.warn("Unexpected error while cleaning stylesheet", e);
             return "";
         }
     }
@@ -75,7 +75,7 @@ public class BatikCssCleaner {
             parser.parseStyleDeclaration(new InputSource(new StringReader(untrustedCss)));
             return handler.getValidCss();
         } catch (CSSException | IOException e) {
-            logger.debug("Unexpected error while cleaning style declaration", e);
+            logger.warn("Unexpected error while cleaning style declaration", e);
             return "";
         }
     }
