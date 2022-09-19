@@ -18,7 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-public class InvalidConfigException extends RuntimeException{
+public class InvalidConfigException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     public InvalidConfigException(Exception e) {
