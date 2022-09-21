@@ -16,26 +16,29 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.xss.impl;
+package org.apache.sling.xss.impl.xml;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import javax.xml.stream.XMLStreamException;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
-import org.apache.sling.xss.impl.xml.Tag;
+public class AllowedEmptyTags {
 
-public class FallbackSlingPolicy extends AntiSamyPolicy {
+    @JacksonXmlElementWrapper(localName = "literal-list")
+    @JacksonXmlProperty(localName = "literal")
+    private List<Literal> allowedEmptyTagsList = Collections.emptyList();
 
-    public FallbackSlingPolicy(InputStream inputStream) throws InvalidConfigException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = tagRules.get("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
+    public List<Literal> getLiteralList() {
+        return allowedEmptyTagsList;
     }
+
+    public List<String> getLiterals() {
+        // reads out the literals and creates a list out of it
+        return allowedEmptyTagsList.stream().map(Literal::getValue)
+                .collect(Collectors.toList());
+    }
+
 }

@@ -34,6 +34,7 @@ import org.apache.sling.testing.mock.sling.junit5.SlingContext;
 import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
 import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.impl.status.XSSStatusService;
+import org.apache.sling.xss.impl.xml.Attribute;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +42,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.osgi.framework.ServiceReference;
-import org.owasp.validator.html.model.Attribute;
 import org.powermock.reflect.Whitebox;
 
 @ExtendWith(SlingContextExtension.class)
@@ -335,6 +335,15 @@ public class XSSAPIImplTest {
     static String[][] dataForFilterHtml() {
         return new String[][] {
                 //         Source                            Expected Result
+
+                // checking if both, the literal and the regex check are executed
+                { "<link media=\"screen\">hello</link>", "<link media=\"screen\" />hello" },
+                { "<link media=\"checkRege10\">hello</link>", "<link media=\"checkRege10\" />hello" },
+
+                { "<div align=\"center\">valid Test</div>", "<div align=\"center\">valid Test</div>" },
+                { "<style media=\"screen\">h1 {color:red;}</style>", "<style media=\"screen\">h1 {\n\tcolor: red;\n}\n</style>" },
+                { "<object id=\"center\" type=\"application/x-shockwave-flash\">valid Test</object>", "<object id=\"center\" type=\"application/x-shockwave-flash\">valid Test</object>" },
+
                 {null, ""},
                 {"", ""},
                 {"simple", "simple"},

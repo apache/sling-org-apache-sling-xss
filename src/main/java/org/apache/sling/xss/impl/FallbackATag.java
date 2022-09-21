@@ -18,29 +18,19 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-import org.owasp.validator.html.model.Attribute;
-import org.owasp.validator.html.model.Tag;
+import org.apache.sling.xss.impl.xml.Attribute;
+import org.apache.sling.xss.impl.xml.Tag;
 
 public class FallbackATag extends Tag {
-
-    static final Attribute FALLBACK_HREF_ATTRIBUTE = new Attribute(
-            "href",
-            Arrays.asList(
-                    XSSFilterImpl.ON_SITE_SIMPLIFIED,
-                    XSSFilterImpl.OFF_SITE_SIMPLIFIED
-            ),
-            Collections.emptyList(),
-            "removeAttribute", ""
-    );
 
     private final Tag wrapped;
 
     public FallbackATag(Tag wrapped) {
-        super("a", new HashMap<>(), "validate");
+        super("a", AntiSamyActions.VALIDATE, new ArrayList<>());
         this.wrapped = wrapped;
     }
 
@@ -60,8 +50,8 @@ public class FallbackATag extends Tag {
     }
 
     @Override
-    public String getRegularExpression() {
-        return wrapped.getRegularExpression();
+    public List<Attribute> getAttributeList() {
+        return wrapped.getAttributeList();
     }
 
     @Override
@@ -70,9 +60,16 @@ public class FallbackATag extends Tag {
     }
 
     @Override
+    public Map<String, Attribute> getAttributeMap() {
+        Map<String, Attribute> map = wrapped.getAttributeMap();
+        map.put("href", XSSFilterImpl.FALLBACK_HREF_ATTRIBUTE);
+        return map;
+    }
+
+    @Override
     public Attribute getAttributeByName(String name) {
         if ("href".equalsIgnoreCase(name)) {
-            return FALLBACK_HREF_ATTRIBUTE;
+            return XSSFilterImpl.FALLBACK_HREF_ATTRIBUTE;
         }
         return wrapped.getAttributeByName(name);
     }

@@ -16,26 +16,22 @@
  ~ specific language governing permissions and limitations
  ~ under the License.
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-package org.apache.sling.xss.impl;
+package org.apache.sling.xss.impl.xml;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
-import javax.xml.stream.XMLStreamException;
+public class Directive {
+    @JacksonXmlProperty(isAttribute = true)
+    private String name;
+    @JacksonXmlProperty(isAttribute = true)
+    private String value;
 
-import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
-import org.apache.sling.xss.impl.xml.Tag;
-
-public class FallbackSlingPolicy extends AntiSamyPolicy {
-
-    public FallbackSlingPolicy(InputStream inputStream) throws InvalidConfigException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = tagRules.get("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
+    public String getName() {
+        return name;
     }
+
+    public String getValue() {
+        return value;
+    }
+
 }

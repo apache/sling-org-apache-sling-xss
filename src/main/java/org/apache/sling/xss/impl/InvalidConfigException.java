@@ -18,24 +18,14 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
+public class InvalidConfigException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
-import javax.xml.stream.XMLStreamException;
+    public InvalidConfigException(Exception e) {
+        super(e);
+    }
 
-import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
-import org.apache.sling.xss.impl.xml.Tag;
-
-public class FallbackSlingPolicy extends AntiSamyPolicy {
-
-    public FallbackSlingPolicy(InputStream inputStream) throws InvalidConfigException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = tagRules.get("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
+    public InvalidConfigException(String s) {
+        super(s);
     }
 }

@@ -21,61 +21,44 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.owasp.validator.html.AntiSamy;
-import org.owasp.validator.html.Policy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 
 /**
  * Class that provides the capability of securing input provided as plain text for HTML output.
  */
 public class PolicyHandler {
 
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
-    private final Policy policy;
-    private Policy fallbackPolicy;
-    private AntiSamy antiSamy;
-    private AntiSamy fallbackAntiSamy;
+    private final AntiSamyPolicy policy;
+    private AntiSamyPolicy fallbackPolicy;
+    private HtmlSanitizer htmlSanitizer;
+    private HtmlSanitizer fallbackHtmlSanitizer;
 
     /**
      * Creates a {@code PolicyHandler} from an {@link InputStream}.
      *
-     * @param policyStream the InputStream from which to read this handler's {@link Policy}
+     * @param policyStream the InputStream from which to read this handler's {@link AntiSamyPolicy}
      */
     public PolicyHandler(InputStream policyStream) throws Exception {
-        // fix for classloader issue with IBM JVM: see bug #31946
-        // (currently: http://bugs.day.com/bugzilla/show_bug.cgi?id=31946)
-        Thread currentThread = Thread.currentThread();
-        ClassLoader cl = currentThread.getContextClassLoader();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            currentThread.setContextClassLoader(this.getClass().getClassLoader());
             IOUtils.copy(policyStream, baos);
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            currentThread.setContextClassLoader(this.getClass().getClassLoader());
-            this.policy = Policy.getInstance(bais);
-            if ( "true".equals(this.policy.getDirective(Policy.EMBED_STYLESHEETS)) ) {
-                logger.warn("The AntiSamy directive {} is set to true. This directive is deprecated and will not be supported in future Sling XSS bundle releases", Policy.EMBED_STYLESHEETS);
-            }
+            this.policy = new AntiSamyPolicy(bais);
             bais.reset();
+            this.htmlSanitizer = new HtmlSanitizer(this.policy);
             this.fallbackPolicy = new FallbackSlingPolicy(bais);
-            this.antiSamy = new AntiSamy(this.policy);
-            this.fallbackAntiSamy = new AntiSamy(this.fallbackPolicy);
-        } finally {
-            currentThread.setContextClassLoader(cl);
+            this.fallbackHtmlSanitizer = new HtmlSanitizer(this.fallbackPolicy);
         }
     }
 
-    public Policy getPolicy() {
+    public AntiSamyPolicy getPolicy() {
         return this.policy;
     }
 
-    public AntiSamy getAntiSamy() {
-        return this.antiSamy;
+    public HtmlSanitizer getHtmlSanitizer() {
+        return this.htmlSanitizer;
     }
 
-    public AntiSamy getFallbackAntiSamy() {
-        return fallbackAntiSamy;
+    public HtmlSanitizer getFallbackHtmlSanitizer() {
+        return fallbackHtmlSanitizer;
     }
 }

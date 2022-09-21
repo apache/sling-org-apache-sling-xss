@@ -16,12 +16,8 @@
  ******************************************************************************/
 package org.apache.sling.xss.impl;
 
-import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.owasp.validator.html.CleanResults;
-import org.owasp.validator.html.PolicyException;
-import org.owasp.validator.html.ScanException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,14 +41,10 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
     @Override
     public boolean check(final PolicyHandler policyHandler, final String str) {
         if (StringUtils.isNotEmpty(str)) {
-            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
             try {
-                Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-                return policyHandler.getAntiSamy().scan(str).getNumberOfErrors() == 0;
+                return getCleanResults(policyHandler, str).getNumberOfErrors() == 0;
             } catch (final Exception se) {
                 logError(se, str);
-            } finally {
-                Thread.currentThread().setContextClassLoader(tccl);
             }
         }
         return false;
@@ -62,21 +54,16 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
      * @see XSSFilterRule#filter(PolicyHandler, java.lang.String)
      */
     @Override
-    public String filter(final PolicyHandler policyHandler, final String str) {
-        if (StringUtils.isNotEmpty(str)) {
+    public String filter(final PolicyHandler policyHandler, final String unsafeString) {
+        if (StringUtils.isNotEmpty(unsafeString)) {
             try {
-                final CleanResults  results = getCleanResults(policyHandler, str);
+                final String results = getCleanResults(policyHandler, unsafeString).getSanitizedString();
                 if (results != null) {
-                    final String cleaned = results.getCleanHTML();
-                    final List<String> errors = results.getErrorMessages();
-                    for (final String error : errors) {
-                        log.info("AntiSamy warning: {}", error);
-                    }
-                    log.debug("Protected (HTML -> HTML):\n{}", cleaned);
-                    return cleaned;
+                    log.debug("Protected (HTML -> HTML):\n{}", results);
+                    return results;
                 }
             } catch (Exception e) {
-                logError(e, str);
+                logError(e, unsafeString);
             }
         }
         return StringUtils.EMPTY;
@@ -90,18 +77,14 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         return true;
     }
 
-    private CleanResults getCleanResults(PolicyHandler handler, String input) throws ScanException, PolicyException {
-        CleanResults results;
-        ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+    private SanitizedResult getCleanResults(PolicyHandler handler, String input) {
+        SanitizedResult results;
         try {
-            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-            results = handler.getAntiSamy().scan(input);
+            results = handler.getHtmlSanitizer().scan(input);
         } catch (StackOverflowError e) {
             log.debug("Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}", input);
-            results = handler.getFallbackAntiSamy().scan(input);
+            results = handler.getFallbackHtmlSanitizer().scan(input);
             log.debug("Second attempt was successful.");
-        } finally {
-            Thread.currentThread().setContextClassLoader(tccl);
         }
         return results;
     }

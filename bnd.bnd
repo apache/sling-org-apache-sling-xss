@@ -1,5 +1,10 @@
 Import-Package: !bsh, \
                 !nu.xom, \
+                !com.google.errorprone.annotations, \
+                !com.google.errorprone.annotations.concurrent, \
+                !javax.annotation, \
+                !org.checkerframework.checker.nullness.qual, \
+                !sun.misc, \
                 !org.apache.bcel.*, \
                 !org.apache.log4j.spi, \
                 !org.apache.log4j.xml, \
@@ -22,23 +27,20 @@ Import-Package: !bsh, \
                 !javax.mail.internet, \
                 !javax.servlet.jsp, \
                 !javax.servlet.jsp.tagext, \
-                !javax.xml.*, \
                 !sun.io, \
                 *
 Private-Package: org.apache.sling.xss.impl, \
                  org.apache.batik.*, \
+                 com.google.common.base, \
+                 com.google.common.collect, \
+                 com.google.common.io, \
+                 com.google.common.base.internal, \
+                 com.google.common.graph, \
+                 com.google.common.hash, \
+                 com.google.common.math, \
+                 com.google.common.primitives, \
                  org.w3c.css.sac, \
-                 org.apache.xalan.*, \
-                 org.apache.xerces.*, \
-                 org.apache.xml.*, \
-                 org.apache.xpath.*, \
-                 org.apache.xml.serialize, \
-                 org.apache.xml.serializer.*, \
-                 org.apache.commons.beanutils.*;-split-package:=merge-first, \
+                 org.apache.commons.beanutils.*, \
                  org.apache.commons.configuration.*, \
                  org.apache.commons.logging.impl, \
-                 org.cyberneko.html.*, \
-                 org.owasp.*, \
-                 java_cup.runtime, \
-                 javax.xml.parsers;-split-package:=merge-first, \
-                 javax.xml.transform;-split-package:=merge-first
+                 org.owasp.*;-split-package:=merge-first

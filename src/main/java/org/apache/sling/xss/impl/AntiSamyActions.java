@@ -18,24 +18,13 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import java.io.IOException;
-import java.io.InputStream;
-
-import javax.xml.stream.XMLStreamException;
-
-import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
-import org.apache.sling.xss.impl.xml.Tag;
-
-public class FallbackSlingPolicy extends AntiSamyPolicy {
-
-    public FallbackSlingPolicy(InputStream inputStream) throws InvalidConfigException, XMLStreamException, IOException {
-
-        super(inputStream);
-
-        Tag original = tagRules.get("a");
-        if (original != null) {
-            Tag wrapped = new FallbackATag(original);
-            tagRules.put("a", wrapped);
-        }
-    }
+public class AntiSamyActions {
+  private AntiSamyActions() {
+    throw new IllegalStateException("Utility class");
+  }
+  public static final String REMOVE_ATTRIBUTE_ON_INVALID = "removeAttribute";
+  static final String TRUNCATE = "truncate";
+  static final String FILTER = "filter";
+  static final String REMOVE = "remove";
+  static final String VALIDATE = "validate";
 }
