@@ -21,6 +21,7 @@ package org.apache.sling.xss.impl.xml;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.apache.sling.xss.impl.InvalidConfigException;
@@ -96,7 +97,7 @@ class MapBuilder {
             List<Regexp> allowedRegexps = getAllowedRegexps(attribute.getRegexpList());
             Attribute newAttribute = new Attribute(attribute.getName(), allowedRegexps, attribute.getLiteralList(),
                     attribute.getOnInvalid(), attribute.getDescription());
-            policy.commonAttributes.put(attribute.getName().toLowerCase(), newAttribute);
+            policy.commonAttributes.put(attribute.getName(), newAttribute);
         }
     }
 
@@ -126,10 +127,10 @@ class MapBuilder {
     private void parseGlobalAttributes(List<Attribute> root) throws InvalidConfigException {
         for (Attribute ele : root) {
             String name = ele.getName();
-            Attribute toAdd = policy.commonAttributes.get(name.toLowerCase());
+            Attribute toAdd = policy.commonAttributes.get(name);
 
             if (toAdd != null)
-                policy.globalAttributes.put(name.toLowerCase(), toAdd);
+                policy.globalAttributes.put(name, toAdd);
             else
                 throw new InvalidConfigException("Global attribute '" + name
                         + "' was not defined in <common-attributes>");
@@ -150,10 +151,10 @@ class MapBuilder {
     private void parseDynamicAttributes(List<Attribute> root) throws InvalidConfigException {
         for (Attribute ele : root) {
             String name = ele.getName();
-            Attribute toAdd = policy.getCommonAttributes().get(name.toLowerCase());
+            Attribute toAdd = policy.getCommonAttributes().get(name);
 
             if (toAdd != null) {
-                String attrName = name.toLowerCase().substring(0, name.length() - 1);
+                String attrName = name.substring(0, name.length() - 1);
                 policy.getDynamicAttributes().put(attrName, toAdd);
             } else
                 throw new InvalidConfigException("Dynamic attribute '" + name
@@ -173,7 +174,7 @@ class MapBuilder {
             List<Attribute> tagAttributes = getTagAttributes(attributeList, name);
             Tag tag = new Tag(name, action, tagAttributes);
 
-            policy.tagRules.put(name.toLowerCase(), tag);
+            policy.tagRules.put(name, tag);
         }
     }
 
@@ -183,7 +184,7 @@ class MapBuilder {
 
         for (Attribute attribute : attributeList) {
             Attribute newAttribute;
-            String attributeName = attribute.getName().toLowerCase();
+            String attributeName = attribute.getName();
             List<Regexp> regexps = attribute.getRegexpList();
             List<Literal> literals = attribute.getLiteralList();
             String onInvalid = attribute.getOnInvalid();
@@ -224,7 +225,7 @@ class MapBuilder {
             Property propertyWithPatterns = new Property(property.getName(), allowedRegexp3, property.getLiteralList(),
                     property.getShorthandList(), property.getDescription(), property.getOnInvalid(),
                     property.getDefaultValue());
-            policy.getCssRules().put(property.getName().toLowerCase(), propertyWithPatterns);
+            policy.getCssRules().put(property.getName(), propertyWithPatterns);
         }
     }
 

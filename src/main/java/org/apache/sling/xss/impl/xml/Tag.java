@@ -39,11 +39,11 @@ public class Tag {
             @JacksonXmlProperty(isAttribute = true, localName = "name") String name,
             @JacksonXmlProperty(isAttribute = true, localName = "action") String action,
             @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "attribute") List<Attribute> attributeList) {
-        this.name = name.toLowerCase();
+        this.name = name.toLowerCase(AntiSamyConfigLocale.REGION);
         this.attributeList = Optional.ofNullable(attributeList)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);
-        this.action = action.toLowerCase();
+        this.action = action.toLowerCase(AntiSamyConfigLocale.REGION);
 
     }
 

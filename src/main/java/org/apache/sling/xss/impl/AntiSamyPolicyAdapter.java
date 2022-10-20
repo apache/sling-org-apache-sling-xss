@@ -236,7 +236,7 @@ public class AntiSamyPolicyAdapter {
             @Override
             public @Nullable String apply(String elementName, String attributeName, String value) {
                 if (!literalList.isEmpty() && !patternList.isEmpty()) {
-                    return matchesPatternsOrLiterals(patternList,ignoreCase, literalList).apply(value) ? value : null;
+                    return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).apply(value) ? value : null;
 
                 } else if (!literalList.isEmpty()) {
                     value = ignoreCase ? value.toLowerCase() : value;

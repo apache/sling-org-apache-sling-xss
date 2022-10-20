@@ -58,7 +58,7 @@ public class Property {
             @JacksonXmlProperty(localName = "onInvalid", isAttribute = true) String onInvalidStr,
             @JacksonXmlProperty(isAttribute = true, localName = "default") String defaultValue) {
 
-        this.name = name;
+        this.name = name.toLowerCase(AntiSamyConfigLocale.REGION);
         this.description = Optional.ofNullable(description).orElse("");
         this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID;
         this.regexpList = Optional.ofNullable(allowedRegexps)
