@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.sling.xss.impl.AntiSamyActions;
+import org.apache.sling.xss.impl.xml.AntiSamyRules.AntiSamyConfigLocale;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;

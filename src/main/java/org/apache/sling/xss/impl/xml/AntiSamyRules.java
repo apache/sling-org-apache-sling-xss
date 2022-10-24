@@ -125,11 +125,12 @@ public class AntiSamyRules {
         return regexpList.stream()
                 .collect(Collectors.toMap(Regexp::getName, Regexp::getPattern));
     }
+    
+    /**
+     * Attribute, Property and Tag names use the English locale, which may differ from the original config
+     */
+    static class AntiSamyConfigLocale {
+        static final Locale REGION = Locale.ENGLISH;
+    }
 }
 
-/**
- * Attribute, Property and Tag names use the English locale, which may differ from the original config
- */
-class AntiSamyConfigLocale {
-    static final Locale REGION = Locale.ENGLISH;
-}
