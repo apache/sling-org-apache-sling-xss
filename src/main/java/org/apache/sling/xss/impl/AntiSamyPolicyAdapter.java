@@ -21,7 +21,6 @@ package org.apache.sling.xss.impl;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,14 +66,23 @@ public class AntiSamyPolicyAdapter {
                 policyBuilder.allowAttributes(attribute.getName()).matching(cssValidator.newCssAttributePolicy())
                         .globally();
             } else {
-                List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                for (String allowedValue : allowedValuesFromAttribute) {
-                    policyBuilder.allowAttributes(attribute.getName()).matching(true, allowedValue).globally();
-                }
+                List<String> literalList = attribute.getLiterals();
+                List<Pattern> patternList = attribute.getPatternList();
 
-                List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                if (!regexsFromAttribute.isEmpty()) {
-                    policyBuilder.allowAttributes(attribute.getName()).matching(matchesToPatterns(regexsFromAttribute))
+                if (!literalList.isEmpty() && !patternList.isEmpty()) {
+                    // if both, the patterns and the literals are not empty, the value should be checked with them with an OR and not with an AND.
+                    policyBuilder.allowAttributes(attribute.getName())
+                        .matching(matchesPatternsOrLiterals(patternList, true, literalList))
+                        .globally();
+                }
+                else if (!literalList.isEmpty()) {
+                    policyBuilder.allowAttributes(attribute.getName())
+                        .matching(true, literalList.toArray(new String[0]))
+                        .globally();
+                }
+                else if (!patternList.isEmpty()) {
+                    policyBuilder.allowAttributes(attribute.getName())
+                            .matching(matchesToPatterns(patternList))
                             .globally();
                 } else {
                     policyBuilder.allowAttributes(attribute.getName()).globally();
@@ -172,16 +180,9 @@ public class AntiSamyPolicyAdapter {
                 }
 
                 List<Pattern> regexsFromAttribute = attribute.getPatternList();
-                for (Pattern regex : regexsFromAttribute) {
-                    dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regex));
-                }
-
                 List<String> allowedValuesFromAttribute = attribute.getLiterals();
-                if (!allowedValuesFromAttribute.isEmpty()) {
-                    dynamicAttributesPolicyMap.put(attribute.getName(),
-                            newDynamicAttributePolicy(true, allowedValuesFromAttribute.toArray(new String[0])));
-                }
 
+                dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regexsFromAttribute, true, allowedValuesFromAttribute));
             }
         }
 
@@ -222,43 +223,28 @@ public class AntiSamyPolicyAdapter {
     private static Predicate<String> matchesPatternsOrLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
         return new Predicate<String>() {
             public boolean apply(String s) {
-                // check if the string matches to the pattern
-                for (Pattern pattern : patternList) {
-                    if (pattern.matcher(s).matches()) {
-                        return true;
-                    }
-                }
-                // if the pattern does not match it goes through the literals
-                for (String string : literalList) {
-                    s = ignoreCase
-                        ? s.toLowerCase()
-                        : s;
-                    if (string.equals(s)) {
-                        return true;
-                    }
-                }
-                // if it neither matches the patterns nor the literals it returns false
-                return false;
+                // check if the string matches to the pattern or one of the literal
+                s = ignoreCase ? s.toLowerCase() : s;
+                return matchesToPatterns(patternList).apply(s) || literalList.contains(s);
             }
         };
     }
 
-    public AttributePolicy newDynamicAttributePolicy(final Pattern pattern) {
+    public AttributePolicy newDynamicAttributePolicy(final List<Pattern> patternList, final boolean ignoreCase, final List<String> literalList) {
         return new AttributePolicy() {
             @Override
             public @Nullable String apply(String elementName, String attributeName, String value) {
-                return pattern.matcher(value).matches() ? value : null;
-            }
-        };
-    }
+                if (!literalList.isEmpty() && !patternList.isEmpty()) {
+                    return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).apply(value) ? value : null;
 
-    public AttributePolicy newDynamicAttributePolicy(boolean ignoreCase, String... allowedValues) {
-        final List<String> allowed = Arrays.asList(allowedValues);
-        return new AttributePolicy() {
-            @Override
-            public @Nullable String apply(String elementName, String attributeName, String uncanonValue) {
-                String value = ignoreCase ? uncanonValue.toLowerCase() : uncanonValue;
-                return allowed.contains(value) ? value : null;
+                } else if (!literalList.isEmpty()) {
+                    value = ignoreCase ? value.toLowerCase() : value;
+                    return literalList.contains(value) ? value : null;
+
+                } else if (!patternList.isEmpty()) {
+                    return matchesToPatterns(patternList).apply(value) ? value : null;
+                }
+                return null;
             }
         };
     }

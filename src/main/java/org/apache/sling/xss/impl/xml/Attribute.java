@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.sling.xss.impl.AntiSamyActions;
+import org.apache.sling.xss.impl.xml.AntiSamyRules.AntiSamyConfigLocale;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -46,7 +47,7 @@ public class Attribute {
             @JacksonXmlProperty(localName = "literal-list") List<Literal> literalList,
             @JacksonXmlProperty(localName = "onInvalid", isAttribute = true) String onInvalid,
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description) {
-        this.name = name;
+        this.name = name.toLowerCase(AntiSamyConfigLocale.REGION);
         this.description = Optional.ofNullable(description).orElse("");
         this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID;
         this.regexpList = Optional.ofNullable(allowedRegexps)

@@ -356,14 +356,13 @@ public class XSSFilterImpl implements XSSFilter {
 
     private void setPolicyHandler(PolicyHandler policyHandler) {
         Tag linkTag = policyHandler.getPolicy().getTagRules().get("a");
-        Attribute hrefAttribute = (linkTag != null) ? linkTag.getAttributeByName("href") : null;
+        hrefAttribute = (linkTag != null) ? linkTag.getAttributeByName("href") : null;
         if (hrefAttribute == null) {
             // Fallback to default configuration
             hrefAttribute = DEFAULT_HREF_ATTRIBUTE;
         }
 
         this.policyHandler = policyHandler;
-        this.hrefAttribute = hrefAttribute;
     }
 
     private class PolicyChangeListener implements ResourceChangeListener, ExternalResourceChangeListener {

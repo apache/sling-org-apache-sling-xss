@@ -18,7 +18,6 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.xml.stream.XMLStreamException;
@@ -52,19 +51,19 @@ public class AntiSamyPolicyTest {
     @ParameterizedTest
     @MethodSource("dataForScriptFiltering")
     public void testScriptFiltering(TestInput testInput) throws Exception {
-         testInput.runCheck();
+         testInput.runCheck(antiSamy);
     }
 
     @ParameterizedTest
     @MethodSource("dataForEventHandlerAttributes")
     public void testEventHandlerAttributes(TestInput testInput) throws Exception {
-       testInput.runCheck();
+       testInput.runCheck(antiSamy);
     }
 
     @ParameterizedTest
     @MethodSource("dataForImageFiltering")
     public void testImageFiltering(TestInput testInput) throws Exception {
-         testInput.runCheck();
+         testInput.runCheck(antiSamy);
     }
 
     @ParameterizedTest
@@ -80,20 +79,20 @@ public class AntiSamyPolicyTest {
     @ParameterizedTest
     @MethodSource("dataForURIFiltering")
     public void testURIFiltering(TestInput testInput) throws Exception {
-         testInput.runCheck();
+         testInput.runCheck(antiSamy);
     }
 
     @ParameterizedTest
     @MethodSource("dataForCSSFiltering")
     public void testCSSFiltering(TestInput testInput) throws Exception {
-         testInput.runCheck();
+         testInput.runCheck(antiSamy);
     }
 
     @ParameterizedTest
     @MethodSource("dataForDataAttributes")
     public void testDataAttributes(TestInput testInput) throws Exception {
          testInput.skipComparingInputWithOutput = false;
-         testInput.runCheck();
+         testInput.runCheck(antiSamy);
     }
 
     /**
@@ -102,7 +101,7 @@ public class AntiSamyPolicyTest {
     @ParameterizedTest
     @MethodSource("dataForIssueSLING8771")
     public void testIssueSLING8771(TestInput testInput) throws Exception {
-         testInput.runCheck();
+         testInput.runCheck(antiSamy);
         }
 
     private void testOutputIsEmpty(String input) throws Exception {
@@ -238,76 +237,5 @@ public class AntiSamyPolicyTest {
                 new TestInput("<figure class=\"image\"><img src=\"/logo.jpg\"><figcaption>Caption Here</figcaption></figure>",
                         "<figcaption", true),
         };
-    }
-
-    private static class TestInput {
-        String input;
-        String expectedPartialOutput;
-        boolean containsExpectedPartialOutput;
-        boolean skipComparingInputWithOutput;
-        Pattern pattern;
-
-
-        public TestInput(String input, String expectedPartialOutput, boolean containsExpectedPartialOutput) {
-            this(input, expectedPartialOutput, containsExpectedPartialOutput, false);
-        }
-
-        public TestInput(String input, String expectedPartialOutput, boolean containsExpectedPartialOutput, boolean skipComparingInputWithOutput) {
-            this.input = input;
-            this.expectedPartialOutput = expectedPartialOutput;
-            this.containsExpectedPartialOutput = containsExpectedPartialOutput;
-            this.skipComparingInputWithOutput = skipComparingInputWithOutput;
-        }
- 
-         public TestInput(String input, Pattern expectedPartialPattern, boolean containsExpectedPartialOutput, boolean skipComparingInputWithOutput) {
-             this.input = input;
-             this.pattern = expectedPartialPattern;
-             this.containsExpectedPartialOutput = containsExpectedPartialOutput;
-             this.skipComparingInputWithOutput = skipComparingInputWithOutput;
-         }
- 
-         void runCheck() throws Exception {
-               String cleanHTML = antiSamy.scan(input).getSanitizedString();
-               if (!skipComparingInputWithOutput) {
-                       if (pattern != null) {
-                               assertTrue(pattern.matcher(input.toLowerCase()).find(), String.format(
-                                               "Test is not properly configured: input '%s' doesn't seem to partialy matcht to following pattern:'%s' (case-insensitive match).",
-                                               input, expectedPartialOutput.toString()));
-                       } else {
-                               assertTrue(input.toLowerCase().contains(expectedPartialOutput.toLowerCase()), String.format(
-                                               "Test is not properly configured: input '%s' doesn't seem to contain '%s' (case-insensitive match).",
-                                               input, expectedPartialOutput));
-                       }
-               }
-               if (containsExpectedPartialOutput) {
-                       if (pattern != null) {
-                               assertTrue(
-                                               pattern.matcher(antiSamy.scan(input).getSanitizedString()).find(),
-                                               String.format("Expected that filtered output '%s' for input '%s' would partialy match to following pattern: '%s'.",
-                                                               cleanHTML,
-                                                               input,
-                                                               expectedPartialOutput));
-                       } else {
-                               assertTrue(
-                                               antiSamy.scan(input).getSanitizedString().contains(expectedPartialOutput),
-                                               String.format("Expected that filtered output '%s' for input '%s' would contain '%s'.",
-                                                               cleanHTML,
-                                                               input,
-                                                               expectedPartialOutput));
-                       }
-               } else {
-                       if (pattern != null) {
-                               assertFalse(pattern.matcher(antiSamy.scan(input).getSanitizedString()).find(),
-                                               String.format("Expected that filtered output '%s' for input '%s', would NOT partialy match to following pattern:: '%s'.",
-                                                               cleanHTML,
-                                                               input, expectedPartialOutput));
-                       } else {
-                               assertFalse(antiSamy.scan(input).getSanitizedString().contains(expectedPartialOutput),
-                                               String.format("Expected that filtered output '%s' for input '%s', would NOT contain '%s'.",
-                                                               cleanHTML,
-                                                               input, expectedPartialOutput));
-                       }
-               }
-       }
     }
 }

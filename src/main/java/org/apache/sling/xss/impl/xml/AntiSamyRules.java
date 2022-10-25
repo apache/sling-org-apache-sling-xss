@@ -20,6 +20,7 @@ package org.apache.sling.xss.impl.xml;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -124,4 +125,12 @@ public class AntiSamyRules {
         return regexpList.stream()
                 .collect(Collectors.toMap(Regexp::getName, Regexp::getPattern));
     }
+    
+    /**
+     * Attribute, Property and Tag names use the English locale, which may differ from the original config
+     */
+    static class AntiSamyConfigLocale {
+        static final Locale REGION = Locale.ENGLISH;
+    }
 }
+

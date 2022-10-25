@@ -25,6 +25,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.sling.xss.impl.xml.AntiSamyRules.AntiSamyConfigLocale;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -39,11 +41,11 @@ public class Tag {
             @JacksonXmlProperty(isAttribute = true, localName = "name") String name,
             @JacksonXmlProperty(isAttribute = true, localName = "action") String action,
             @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "attribute") List<Attribute> attributeList) {
-        this.name = name.toLowerCase();
+        this.name = name.toLowerCase(AntiSamyConfigLocale.REGION);
         this.attributeList = Optional.ofNullable(attributeList)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);
-        this.action = action.toLowerCase();
+        this.action = action.toLowerCase(AntiSamyConfigLocale.REGION);
 
     }
 
