@@ -19,6 +19,7 @@
 package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,8 +28,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.sling.xss.impl.style.CssValidator;
-import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
+import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.Tag;
 import org.jetbrains.annotations.Nullable;
 import org.owasp.html.AttributePolicy;
@@ -222,6 +223,7 @@ public class AntiSamyPolicyAdapter {
 
     private static Predicate<String> matchesPatternsOrLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
         return new Predicate<String>() {
+            @Override
             public boolean apply(String s) {
                 // check if the string matches to the pattern or one of the literal
                 s = ignoreCase ? s.toLowerCase() : s;
@@ -261,13 +263,28 @@ public class AntiSamyPolicyAdapter {
         }
     }
 
-    private void letMeIn(Field field) throws ReflectiveOperationException {
-        if (!field.isAccessible())
-            field.setAccessible(true);
-        if ((field.getModifiers() & Modifier.FINAL) != 0) {
-            Field modifiersField = Field.class.getDeclaredField("modifiers");
+    private void letMeIn(Field inaccessible) throws ReflectiveOperationException {
+        if (!inaccessible.isAccessible())
+            inaccessible.setAccessible(true);
+        if ((inaccessible.getModifiers() & Modifier.FINAL) != 0) {
+            Field modifiersField = null;
+            try { 
+                modifiersField = Field.class.getDeclaredField("modifiers");
+            } catch ( NoSuchFieldException e ) {
+                // fallback for Java 12+
+                Method getDeclaredFields = Class.class.getDeclaredMethod("getDeclaredFields0", boolean.class);
+                getDeclaredFields.setAccessible(true);
+                Field[] fields = (Field[]) getDeclaredFields.invoke(Field.class, false);
+                for ( Field field : fields ) {
+                    if ( "modifiers".equals(field.getName()) ) {
+                        modifiersField = field;
+                    }
+                }
+            }
+            if ( modifiersField == null )
+                throw new IllegalAccessException("Unable to locate modifiers field " + Field.class.getName() + ", aborting setup");
             modifiersField.setAccessible(true);
-            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+            modifiersField.setInt(inaccessible, inaccessible.getModifiers() & ~Modifier.FINAL);
         }
     }
 }
