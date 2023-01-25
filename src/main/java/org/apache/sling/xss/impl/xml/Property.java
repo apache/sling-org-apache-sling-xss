@@ -53,7 +53,7 @@ public class Property {
     @JsonCreator
     public Property(@JacksonXmlProperty(localName = "name", isAttribute = true) String name,
             @JacksonXmlProperty(localName = "regexp") List<Regexp> allowedRegexps,
-            @JacksonXmlProperty(localName = "literal") List<Literal> allowedValue,
+            @JacksonXmlProperty(localName = "literal") List<Literal> literalList,
             @JacksonXmlProperty(localName = "shorthand") List<Shorthand> shortHandRefs,
             @JacksonXmlProperty(localName = "description", isAttribute = true) String description,
             @JacksonXmlProperty(localName = "onInvalid", isAttribute = true) String onInvalidStr,

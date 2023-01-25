@@ -679,6 +679,7 @@ public class XSSAPIImplTest {
             {"-moz-box-sizing"                  , "-moz-box-sizing"},
             {".42%"                             , ".42%"},
             {"#fff"                             , "#fff"},
+            {"right"                            , "right"},
 
             // valid strings
             {"'literal string'"                 , "'literal string'"},

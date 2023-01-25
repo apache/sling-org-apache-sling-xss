@@ -200,6 +200,10 @@ public class AntiSamyPolicyTest {
 
     static TestInput[] dataForCSSFiltering() {
         return new TestInput[]{
+                new TestInput("<p style=\"border-color: transparent\"> Border Color </p>", "border-color: transparent", true),
+                new TestInput("<p style=\"text-align: right\"> Text Align </p>", "text-align: right", true),
+                new TestInput("<p style=\"voice-family: male\"> Voice Family </p>", "voice-family: male", true),
+                new TestInput("<p style=\"background-color: black\"> Background Color </p>", "background-color: black", true),
                 new TestInput("<div style=\"position:absolute\">", "position", false),
                 new TestInput("<style>b { position:absolute }</style>", "position", false),
                 new TestInput("<div style=\"z-index:25\">test</div>", "z-index", false),
