@@ -19,7 +19,6 @@
 package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,8 +26,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.apache.sling.xss.impl.style.CssValidator;
-import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
+import org.apache.sling.xss.impl.xml.Attribute;
 import org.apache.sling.xss.impl.xml.Tag;
 import org.jetbrains.annotations.Nullable;
 import org.owasp.html.AttributePolicy;
@@ -36,6 +35,8 @@ import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 
 import com.google.common.base.Predicate;
+
+import sun.misc.Unsafe;
 
 public class AntiSamyPolicyAdapter {
     private static final String ALLOW_DYNAMIC_ATTRIBUTES = "allowDynamicAttributes";
@@ -222,6 +223,7 @@ public class AntiSamyPolicyAdapter {
 
     private static Predicate<String> matchesPatternsOrLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
         return new Predicate<String>() {
+            @Override
             public boolean apply(String s) {
                 // check if the string matches to the pattern or one of the literal
                 s = ignoreCase ? s.toLowerCase() : s;
@@ -254,20 +256,22 @@ public class AntiSamyPolicyAdapter {
     private void removeAttributeGuards() {
         try {
             Field guards = HtmlPolicyBuilder.class.getDeclaredField("ATTRIBUTE_GUARDS");
-            letMeIn(guards);
-            guards.set(null, new HashMap<>());
+
+            // although it looks distasteful, the 'sun.misc.Unsafe' approach is the only one that
+            // works with Java 8 through 17 .
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            Unsafe unsafe = (Unsafe) f.get(null);
+            
+            // required to be able to get the static field base
+            unsafe.ensureClassInitialized(HtmlPolicyBuilder.class);
+            
+            Object fieldBase = unsafe.staticFieldBase(guards);
+            long fieldOffset = unsafe.staticFieldOffset(guards);
+            unsafe.putObject(fieldBase, fieldOffset, new HashMap<>());
+
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(e);
-        }
-    }
-
-    private void letMeIn(Field field) throws ReflectiveOperationException {
-        if (!field.isAccessible())
-            field.setAccessible(true);
-        if ((field.getModifiers() & Modifier.FINAL) != 0) {
-            Field modifiersField = Field.class.getDeclaredField("modifiers");
-            modifiersField.setAccessible(true);
-            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
         }
     }
 }
