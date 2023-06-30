@@ -148,7 +148,8 @@
                 <configuration>
                     <!-- No javadocs -->
                     <excludePackageNames>
-                        javax.xml.*,
+                        org.owasp.html,
+                        *.impl,
                         *.impl.*
                     </excludePackageNames>
                 </configuration>
