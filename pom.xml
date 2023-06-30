@@ -47,6 +47,7 @@
 
     <properties>
         <project.build.outputTimestamp>1680702193</project.build.outputTimestamp>
+        <sling.java.version>8</sling.java.version>
     </properties>
 
 
@@ -213,6 +214,10 @@
                     <groupId>org.owasp.antisamy</groupId>
                     <artifactId>antisamy</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -332,14 +337,8 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito</artifactId>
-            <version>1.6.5</version>
+            <artifactId>mockito-core</artifactId>
+            <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -377,5 +376,28 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>compile-sun-misc</id>
+            <activation>
+                <!-- syntax according to http://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
+                <jdk>[9,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <release combine.self="override"/>
+                            <source>${sling.java.version}</source>
+                            <target>${sling.java.version}</target>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

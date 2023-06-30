@@ -19,13 +19,14 @@ package org.apache.sling.xss.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.reflect.FieldUtils;
 import org.apache.sling.api.resource.observation.ResourceChangeListener;
 import org.apache.sling.commons.metrics.Counter;
 import org.apache.sling.commons.metrics.MetricsService;
@@ -42,7 +43,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.osgi.framework.ServiceReference;
-import org.powermock.reflect.Whitebox;
 
 @ExtendWith(SlingContextExtension.class)
 public class XSSAPIImplTest {
@@ -130,7 +130,7 @@ public class XSSAPIImplTest {
 
     @ParameterizedTest
     @MethodSource("dataForValidHref")
-    public void testGetValidHrefWithoutHrefConfig(String input, String expected) {
+    public void testGetValidHrefWithoutHrefConfig(String input, String expected) throws ReflectiveOperationException {
         context.load().binaryFile("/configWithoutHref.xml", "/apps/sling/xss/configWithoutHref.xml");
         context.registerInjectActivateService(new XSSFilterImpl(), new HashMap<String, Object>(){{
             put("policyPath", "/apps/sling/xss/configWithoutHref.xml");
@@ -140,9 +140,9 @@ public class XSSAPIImplTest {
         ServiceReference<ResourceChangeListener> xssFilterRCL = context.bundleContext().getServiceReference(ResourceChangeListener.class);
         assertEquals("/apps/sling/xss/configWithoutHref.xml", xssFilterRCL.getProperty(ResourceChangeListener.PATHS));
         // Load AntiSamy configuration without href filter
-        XSSFilterImpl xssFilter = Whitebox.getInternalState(xssAPI, "xssFilter");
+        XSSFilterImpl xssFilter = (XSSFilterImpl) FieldUtils.getField(XSSAPIImpl.class, "xssFilter", true).get(xssAPI);
 
-        Attribute hrefAttribute = Whitebox.getInternalState(xssFilter, "hrefAttribute");
+        Attribute hrefAttribute = (Attribute) FieldUtils.getField(XSSFilterImpl.class, "hrefAttribute", true).get(xssFilter);
         assertEquals(hrefAttribute, XSSFilterImpl.DEFAULT_HREF_ATTRIBUTE);
 
         // Run same tests again to check default configuration
