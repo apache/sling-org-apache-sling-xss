@@ -172,6 +172,33 @@
                     </includes>
                 </configuration>
             </plugin>
+            <!-- Shade 3rdparty libs to avoid classpath conflicts in unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <configuration>
+                    <artifactSet>
+                        <includes>
+                            <include>com.google.guava:*</include>
+                        </includes>
+                    </artifactSet>
+                    <createSourcesJar>true</createSourcesJar>
+                    <relocations>
+                        <relocation>
+                            <pattern>com.google.common</pattern>
+                            <shadedPattern>slingxss.com.google.common</shadedPattern>
+                        </relocation>
+                     </relocations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
