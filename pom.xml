@@ -186,7 +186,7 @@
                     <relocations>
                         <relocation>
                             <pattern>com.google.common</pattern>
-                            <shadedPattern>sling-xss.com.google.common</shadedPattern>
+                            <shadedPattern>slingxss.com.google.common</shadedPattern>
                         </relocation>
                      </relocations>
                 </configuration>
