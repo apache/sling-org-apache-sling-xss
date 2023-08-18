@@ -109,10 +109,6 @@
                                     <groupId>org.owasp.esapi</groupId>
                                     <artifactId>esapi</artifactId>
                                 </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.owasp.encoder</groupId>
-                                    <artifactId>encoder</artifactId>
-                                </artifactItem>
                             </artifactItems>
                         </configuration>
                     </execution>
