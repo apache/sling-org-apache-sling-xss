@@ -21,7 +21,8 @@ Import-Package: !bsh, \
                 !org.apache.xml.resolver.*, \
                 !org.apache.xmlgraphics.java2d.color, \
                 !org.apache.log, \
-                !org.owasp.*, \
+                !org.owasp.esapi.*, \
+                !org.owasp.validator.*, \
                 !org.xml.sax, \
                 !org.xml.sax.*, \
                 !javax.mail.internet, \
@@ -43,4 +44,5 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.apache.commons.beanutils.*, \
                  org.apache.commons.configuration.*, \
                  org.apache.commons.logging.impl, \
-                 org.owasp.*;-split-package:=merge-first
+                 org.owasp.esapi.*;-split-package:=merge-first, \
+                 org.owasp.validator.*
