@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.json.Json;
-import javax.json.JsonReaderFactory;
+import jakarta.json.Json;
+import jakarta.json.JsonReaderFactory;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
