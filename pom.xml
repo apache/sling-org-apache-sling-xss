@@ -42,11 +42,12 @@
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-xss.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-xss.git</developerConnection>
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-xss.git</url>
-      <tag>org.apache.sling.xss-2.3.6</tag>
-  </scm>
+        <tag>org.apache.sling.xss-2.3.6</tag>
+    </scm>
 
     <properties>
         <project.build.outputTimestamp>1688122669</project.build.outputTimestamp>
+        <sling.java.version>8</sling.java.version>
     </properties>
 
 
