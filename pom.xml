@@ -82,6 +82,7 @@
                             <ignore>org.owasp.validator.html.*</ignore> 
                             <ignore>org.w3c.dom.svg.*</ignore> 
                         </ignores>
+                        <annotations>com.google.common.hash.IgnoreJRERequirement</annotations>
                     </configuration>
                 </plugin>
             </plugins>
