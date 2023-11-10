@@ -3,8 +3,10 @@ Import-Package: !bsh, \
                 !com.google.errorprone.annotations, \
                 !com.google.errorprone.annotations.concurrent, \
                 !javax.annotation, \
+                !javax.annotation.meta, \
                 !org.checkerframework.checker.nullness.qual, \
                 !sun.misc, \
+                !android.os, \
                 !org.apache.bcel.*, \
                 !org.apache.log4j.spi, \
                 !org.apache.log4j.xml, \
