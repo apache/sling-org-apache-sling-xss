@@ -47,4 +47,5 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.apache.commons.configuration.*, \
                  org.apache.commons.logging.impl, \
                  org.owasp.esapi.*;-split-package:=merge-first, \
-                 org.owasp.validator.*
+                 org.owasp.validator.*, \
+                 org.owasp.html.*;-split-package:=merge-first
