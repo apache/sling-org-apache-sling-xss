@@ -31,6 +31,7 @@ Import-Package: !bsh, \
                 !javax.servlet.jsp, \
                 !javax.servlet.jsp.tagext, \
                 !sun.io, \
+                org.apache.sling.commons.metrics.*;resolution:=optional, \
                 *
 Private-Package: org.apache.sling.xss.impl, \
                  org.apache.batik.*, \

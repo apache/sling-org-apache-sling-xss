@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +54,9 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
 import org.osgi.service.metatype.annotations.Designate;
 import org.osgi.service.metatype.annotations.ObjectClassDefinition;
@@ -179,13 +183,12 @@ public class XSSFilterImpl implements XSSFilter {
     @Reference
     private ServiceUserMapped serviceUserMapped;
 
-    @Reference
-    private MetricsService metricsService;
+    @Reference(policy=ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL, policyOption = ReferencePolicyOption.GREEDY)
+    private volatile XSSMetricsService metricsService;
 
     @Reference
     private XSSStatusService statusService;
 
-    private Counter invalidHrefs;
     private static final String COUNTER_INVALID_HREFS = "xss.invalid_hrefs";
 
     @Override
@@ -253,7 +256,7 @@ public class XSSFilterImpl implements XSSFilter {
         }
         if (!isValid) {
             statusService.reportInvalidUrl(url);
-            invalidHrefs.increment();
+            Optional.ofNullable(metricsService).ifPresent(service -> service.invalidHref());
         }
         return isValid;
     }
@@ -261,7 +264,6 @@ public class XSSFilterImpl implements XSSFilter {
     @Activate
     @Modified
     protected void activate(ComponentContext componentContext, Configuration configuration) {
-        invalidHrefs = metricsService.counter(COUNTER_INVALID_HREFS);
         // load default handler
         policyPath = configuration.policyPath();
         updatePolicy();
