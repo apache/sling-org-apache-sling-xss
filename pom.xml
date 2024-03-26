@@ -80,7 +80,11 @@
                             <ignore>org.apache.avalon.*</ignore> 
                             <ignore>org.apache.log.*</ignore> 
                             <ignore>org.owasp.validator.html.*</ignore> 
-                            <ignore>org.w3c.dom.svg.*</ignore> 
+                            <ignore>org.w3c.dom.svg.*</ignore>
+                            <!-- Classes with newer method signatures dynamically loaded by the java-html-sanitizer java10 shim -->
+                            <ignore>java.util.Set</ignore>
+                            <ignore>java.util.Map</ignore>
+                            <ignore>java.util.List</ignore>
                         </ignores>
                         <annotations>com.google.common.hash.IgnoreJRERequirement</annotations>
                     </configuration>
