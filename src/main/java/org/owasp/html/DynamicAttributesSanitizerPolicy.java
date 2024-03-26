@@ -19,17 +19,14 @@
 package org.owasp.html;
 
 import java.lang.reflect.InvocationTargetException;
-
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Extends the default policy to support dynamic attributes.
@@ -47,8 +44,8 @@ public class DynamicAttributesSanitizerPolicy extends ElementAndAttributePolicyB
   private int numberOfErrors;
 
   public DynamicAttributesSanitizerPolicy(HtmlStreamEventReceiver out,
-      ImmutableMap<String, ElementAndAttributePolicies> elAndAttrPolicies,
-      ImmutableSet<String> allowedTextContainers,
+      Map<String, ElementAndAttributePolicies> elAndAttrPolicies,
+      Set<String> allowedTextContainers,
       Map<String, AttributePolicy> dynamicAttributesPolicyMap, List<String> onInvalidRemoveTagList) {
     super(out, elAndAttrPolicies, allowedTextContainers);
     this.elementAndAttrPolicies = elAndAttrPolicies;
