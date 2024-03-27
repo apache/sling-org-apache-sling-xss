@@ -43,3 +43,6 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.owasp.validator.*, \
                  org.owasp.shim;-split-package:=merge-first, \
                  org.owasp.html.*;-split-package:=merge-first
+# Override Java 10 requirement detected due to java10 shim 
+# as it is only used at runtime if applicable
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
