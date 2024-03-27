@@ -19,7 +19,9 @@
 package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.owasp.html.DynamicAttributesSanitizerPolicy;
@@ -28,14 +30,11 @@ import org.owasp.html.HtmlStreamEventReceiver;
 import org.owasp.html.HtmlStreamRenderer;
 import org.owasp.html.PolicyFactory;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
 public class HtmlSanitizer {
 
     private AntiSamyPolicyAdapter customPolicy;
-    private ImmutableMap policies;
-    private ImmutableSet<String> textContainers;
+    private Map policies;
+    private Set<String> textContainers;
 
     public HtmlSanitizer(AntiSamyPolicy policy) {
         this.customPolicy = new AntiSamyPolicyAdapter(policy);
@@ -54,23 +53,23 @@ public class HtmlSanitizer {
         return new SanitizedResult(sb.toString(), dynamicPolicy.getNumberOfErrors());
     }
 
-    private ImmutableSet<String> reflectionGetTextContainers(PolicyFactory policyFactory) {
+    private Set<String> reflectionGetTextContainers(PolicyFactory policyFactory) {
         Class<?> c = policyFactory.getClass();
         try {
             Field field = c.getDeclaredField("textContainers");
             field.setAccessible(true);
-            return (ImmutableSet<String>) field.get(policyFactory);
+            return (Set<String>) field.get(policyFactory);
         } catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private ImmutableMap reflectionGetPolicies(PolicyFactory policyFactory) {
+    private Map reflectionGetPolicies(PolicyFactory policyFactory) {
         Class<?> c = policyFactory.getClass();
         try {
             Field field = c.getDeclaredField("policies");
             field.setAccessible(true);
-            return (ImmutableMap) field.get(policyFactory);
+            return (Map) field.get(policyFactory);
         } catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }

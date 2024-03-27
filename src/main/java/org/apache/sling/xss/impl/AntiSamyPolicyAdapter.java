@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import org.apache.sling.xss.impl.style.CssValidator;
@@ -33,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
-
-import com.google.common.base.Predicate;
 
 import sun.misc.Unsafe;
 
@@ -210,7 +209,7 @@ public class AntiSamyPolicyAdapter {
     private static Predicate<String> matchesToPatterns(List<Pattern> patternList) {
         return new Predicate<String>() {
             @Override
-            public boolean apply(String s) {
+            public boolean test(String s) {
                 for (Pattern pattern : patternList) {
                     if (pattern.matcher(s).matches()) {
                         return true;
@@ -224,10 +223,10 @@ public class AntiSamyPolicyAdapter {
     private static Predicate<String> matchesPatternsOrLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
         return new Predicate<String>() {
             @Override
-            public boolean apply(String s) {
+            public boolean test(String s) {
                 // check if the string matches to the pattern or one of the literal
                 s = ignoreCase ? s.toLowerCase() : s;
-                return matchesToPatterns(patternList).apply(s) || literalList.contains(s);
+                return matchesToPatterns(patternList).test(s) || literalList.contains(s);
             }
         };
     }
@@ -237,14 +236,14 @@ public class AntiSamyPolicyAdapter {
             @Override
             public @Nullable String apply(String elementName, String attributeName, String value) {
                 if (!literalList.isEmpty() && !patternList.isEmpty()) {
-                    return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).apply(value) ? value : null;
+                    return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).test(value) ? value : null;
 
                 } else if (!literalList.isEmpty()) {
                     value = ignoreCase ? value.toLowerCase() : value;
                     return literalList.contains(value) ? value : null;
 
                 } else if (!patternList.isEmpty()) {
-                    return matchesToPatterns(patternList).apply(value) ? value : null;
+                    return matchesToPatterns(patternList).test(value) ? value : null;
                 }
                 return null;
             }
