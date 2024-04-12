@@ -35,18 +35,14 @@ Import-Package: !bsh, \
                 *
 Private-Package: org.apache.sling.xss.impl, \
                  org.apache.batik.*, \
-                 com.google.common.base, \
-                 com.google.common.collect, \
-                 com.google.common.io, \
-                 com.google.common.base.internal, \
-                 com.google.common.graph, \
-                 com.google.common.hash, \
-                 com.google.common.math, \
-                 com.google.common.primitives, \
                  org.w3c.css.sac, \
                  org.apache.commons.beanutils.*, \
                  org.apache.commons.configuration.*, \
                  org.apache.commons.logging.impl, \
                  org.owasp.esapi.*;-split-package:=merge-first, \
                  org.owasp.validator.*, \
+                 org.owasp.shim;-split-package:=merge-first, \
                  org.owasp.html.*;-split-package:=merge-first
+# Override Java 10 requirement detected due to java10 shim 
+# as it is only used at runtime if applicable
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
