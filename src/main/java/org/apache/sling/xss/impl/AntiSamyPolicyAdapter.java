@@ -134,23 +134,9 @@ public class AntiSamyPolicyAdapter {
                         List<String> literalList = attribute.getLiterals();
                         List<Pattern> patternList = attribute.getPatternList();
 
-                        if (!literalList.isEmpty() && !patternList.isEmpty()) {
-                            // if both, the patterns and the literals are not empty, the value should be checked with them with an OR and not with an AND.
-                            policyBuilder.allowAttributes(attribute.getName())
+                        policyBuilder.allowAttributes(attribute.getName())
                                 .matching(matchesPatternsOrLiterals(patternList, true, literalList))
                                 .onElements(tag.getValue().getName());
-                        }
-                        else if (!literalList.isEmpty()) {
-                            policyBuilder.allowAttributes(attribute.getName())
-                                .matching(true, literalList.toArray(new String[0]))
-                                .onElements(tag.getValue().getName());
-                            policyBuilder.allowAttributes(attribute.getName()).onElements(tag.getValue().getName());
-                        }
-                        else if (!patternList.isEmpty()) {
-                            policyBuilder.allowAttributes(attribute.getName())
-                                    .matching(matchesToPatterns(patternList))
-                                    .onElements(tag.getValue().getName());
-                        }
                     }
 
                     if (!styleSeen) {
@@ -235,17 +221,7 @@ public class AntiSamyPolicyAdapter {
         return new AttributePolicy() {
             @Override
             public @Nullable String apply(String elementName, String attributeName, String value) {
-                if (!literalList.isEmpty() && !patternList.isEmpty()) {
-                    return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).test(value) ? value : null;
-
-                } else if (!literalList.isEmpty()) {
-                    value = ignoreCase ? value.toLowerCase() : value;
-                    return literalList.contains(value) ? value : null;
-
-                } else if (!patternList.isEmpty()) {
-                    return matchesToPatterns(patternList).test(value) ? value : null;
-                }
-                return null;
+                return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).test(value) ? value : null;
             }
         };
     }
