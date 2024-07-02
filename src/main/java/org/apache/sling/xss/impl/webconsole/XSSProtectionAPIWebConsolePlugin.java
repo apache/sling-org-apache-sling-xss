@@ -18,6 +18,7 @@
  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 package org.apache.sling.xss.impl.webconsole;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -148,7 +149,7 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
             response.setContentType("application/xml");
             response.setHeader("Content-Disposition", "attachment; filename=config.xml");
             XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
-            IOUtils.copy(xssFilterImpl.getActivePolicy().read(), response.getOutputStream());
+            xssFilterImpl.writeActivePolicyConfig(response.getOutputStream());
         } catch (IOException e) {
             LOGGER.error("Unable to stream AntiSamy configuration.", e);
         }
@@ -189,11 +190,10 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
                     printWriter.printf("is loaded from %s.", antiSamyPolicy.getPath());
                 }
                 printWriter.write("<button style='float:right' type='button' id='download-config'>Download</button></p>");
-                String contents = "";
-                try (InputStream configurationStream = antiSamyPolicy.read()) {
-                    contents = IOUtils.toString(configurationStream, StandardCharsets.UTF_8);
-                }
                 printWriter.write("<pre class='prettyprint linenums'>");
+                ByteArrayOutputStream configStream = new ByteArrayOutputStream();
+                xssFilterImpl.writeActivePolicyConfig(configStream);
+                String contents = new String(configStream.toByteArray(), StandardCharsets.UTF_8);
                 printWriter.write(StringEscapeUtils.escapeHtml4(contents));
                 printWriter.write("</pre>");
                 printWriter.write("</div>");
