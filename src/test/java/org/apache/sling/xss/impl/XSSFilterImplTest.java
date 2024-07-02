@@ -20,28 +20,36 @@ package org.apache.sling.xss.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
+import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.external.URIProvider;
 import org.apache.sling.commons.metrics.Counter;
 import org.apache.sling.commons.metrics.MetricsService;
 import org.apache.sling.serviceusermapping.ServiceUserMapped;
+import org.apache.sling.testing.mock.sling.ResourceResolverType;
 import org.apache.sling.testing.mock.sling.junit5.SlingContext;
 import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
 import org.apache.sling.xss.XSSFilter;
 import org.apache.sling.xss.impl.status.XSSStatusService;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.osgi.framework.Constants;
 
 @ExtendWith(SlingContextExtension.class)
 public class XSSFilterImplTest {
@@ -76,9 +84,9 @@ public class XSSFilterImplTest {
         return testData;
     }
 
-    public SlingContext context = new SlingContext();
+    public SlingContext context = new SlingContext(ResourceResolverType.JCR_OAK);
 
-    private XSSFilter xssFilter;
+    private XSSFilterImpl xssFilter;
 
     @AfterEach
     public void tearDown() {
@@ -92,26 +100,39 @@ public class XSSFilterImplTest {
         context.registerService(MetricsService.class, metricsService);
         context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
         context.registerService(new XSSStatusService());
+        xssFilter = context.registerInjectActivateService(new XSSFilterImpl());
     }
 
     @Test
     public void testResourceBasedPolicy() {
-        context.load().binaryFile(this.getClass().getClassLoader().getResourceAsStream(XSSFilterImpl.EMBEDDED_POLICY_PATH),
-                "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH);
-        context.registerInjectActivateService(new XSSFilterImpl());
-        xssFilter = context.getService(XSSFilter.class);
-        XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
-        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
+        String policyPath = "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH;
+        context.load().binaryFile(getPolicyFileAsStream(), policyPath);
+        // re-register in order to pick up the newly uploaded policy
+        xssFilter = context.registerInjectActivateService(new XSSFilterImpl());
+        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilter.getActivePolicy();
         assertFalse(antiSamyPolicy.isEmbedded(), "Expected a Resource based policy.");
-        assertEquals("/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
+        assertEquals(policyPath, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
+    }
+
+    @Test
+    // see SLING-12366 for why this test exists
+    public void testResourceBasedPolicyWithExternalizableBlob() {
+        // note: having a URI provided for the policy-resource causes a JcrExternalizableInputStream
+        // to be returned from resource.adaptTo(InputStream.class)
+        URIProvider uriProvider = new URIProvider() {
+            @Override
+            public @NotNull URI toURI(@NotNull Resource resource, @NotNull URIProvider.Scope scope, @NotNull URIProvider.Operation operation) {
+                return URI.create("https://example.com/blob" + resource.getPath());
+            }
+        };
+        context.registerService(URIProvider.class, uriProvider);
+
+        testResourceBasedPolicy();
     }
 
     @Test
     public void testDefaultEmbeddedPolicy() {
-        context.registerInjectActivateService(new XSSFilterImpl());
-        xssFilter = context.getService(XSSFilter.class);
-        XSSFilterImpl xssFilterImpl = (XSSFilterImpl) xssFilter;
-        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilterImpl.getActivePolicy();
+        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilter.getActivePolicy();
         assertTrue(antiSamyPolicy.isEmbedded(), "Expected the default embedded policy.");
         assertEquals(XSSFilterImpl.EMBEDDED_POLICY_PATH, antiSamyPolicy.getPath(), "This is not the policy we're looking for.");
     }
@@ -119,9 +140,6 @@ public class XSSFilterImplTest {
     @ParameterizedTest
     @MethodSource("dataForCheckMethod")
     public void testCheckMethod(String input, boolean isValid) {
-        context.registerInjectActivateService(new XSSFilterImpl());
-        xssFilter = context.getService(XSSFilter.class);
-        System.out.println(input);
         if (isValid) {
             assertTrue(xssFilter.check(XSSFilter.DEFAULT_CONTEXT, input), "Expected valid input value for: " + input);
         } else {
@@ -132,8 +150,6 @@ public class XSSFilterImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidHref")
     public void isValidHref(String input, boolean isValid) {
-        context.registerInjectActivateService(new XSSFilterImpl());
-        xssFilter = context.getService(XSSFilter.class);
         if (isValid) {
             assertTrue(xssFilter.isValidHref(input), "Expected valid href value for: " + input);
         } else {
@@ -145,9 +161,12 @@ public class XSSFilterImplTest {
     public void testFallbackFiltering() {
         final String longURLContext = "<a href=\"https://sling.apache.org" +
                 "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.\">Click</a>";
-        context.registerInjectActivateService(new XSSFilterImpl());
-        xssFilter = context.getService(XSSFilter.class);
-        assertNotNull(xssFilter);
         assertEquals(longURLContext, xssFilter.filter(longURLContext));
+    }
+
+    private static @NotNull InputStream getPolicyFileAsStream() {
+        return Objects.requireNonNull(
+                XSSFilterImplTest.class.getClassLoader().getResourceAsStream(XSSFilterImpl.EMBEDDED_POLICY_PATH),
+                "The resource " + XSSFilterImpl.EMBEDDED_POLICY_PATH + " is required to exist for testing.");
     }
 }

@@ -17,13 +17,19 @@
 package org.apache.sling.xss.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.reflect.FieldUtils;
@@ -36,12 +42,14 @@ import org.apache.sling.testing.mock.sling.junit5.SlingContextExtension;
 import org.apache.sling.xss.XSSAPI;
 import org.apache.sling.xss.impl.status.XSSStatusService;
 import org.apache.sling.xss.impl.xml.Attribute;
-import org.junit.jupiter.api.AfterEach;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.osgi.framework.Constants;
+import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 
 @ExtendWith(SlingContextExtension.class)
@@ -51,6 +59,8 @@ public class XSSAPIImplTest {
     private static final String RUBBISH_JSON = "[\"rubbish\"]";
     private static final String RUBBISH_XML = "<rubbish/>";
 
+    private final AtomicInteger serviceRanking = new AtomicInteger(100);
+
     public SlingContext context = new SlingContext();
 
     private XSSAPI xssAPI;
@@ -58,61 +68,59 @@ public class XSSAPIImplTest {
     /**
      * Due to how OSGi mocks are currently designed, it's impossible to unregister services. Therefore this method has to be explicitly
      * called by each method that needs the default setup.
-     *
+     * <p>
      * The only exception currently is {@link #testGetValidHrefWithoutHrefConfig()}.
+     *
+     * @return
      */
-    private void setUp() {
-        context.registerInjectActivateService(new XSSFilterImpl());
-        context.registerInjectActivateService(new XSSAPIImpl());
-        xssAPI = context.getService(XSSAPI.class);
+    private @NotNull <T> T activateComponent(T component, Map<String, Object> properties) {
+        // A higher service ranking helps make sure that none of the mock implementations
+        // registered by default take precedence over the services registered here. Such
+        // mock services exist at least for both XSSAPI and XSSFilter.
+        Map<String, Object> props = new HashMap<String, Object>(properties) {{
+            put(Constants.SERVICE_RANKING, serviceRanking.getAndAdd(100));
+        }};
+        return context.registerInjectActivateService(component, props);
     }
 
     @BeforeEach
-    public void before() {
+    public void before() throws Exception{
         MetricsService metricsService = mock(MetricsService.class);
         when(metricsService.counter(anyString())).thenReturn(mock(Counter.class));
         context.registerService(MetricsService.class, metricsService);
         context.registerService(ServiceUserMapped.class, mock(ServiceUserMapped.class));
         context.registerService(new XSSStatusService());
-    }
-
-    @AfterEach
-    public void tearDown() {
-        xssAPI = null;
+        activateComponent(new XSSFilterImpl(), Collections.emptyMap());
+        xssAPI = activateComponent(new XSSAPIImpl(), Collections.emptyMap());
     }
 
     @ParameterizedTest
     @MethodSource("dataForEncodeToHtml")
     public void testEncodeForHTML(String source, String expected) {
-        setUp();
         assertEquals(expected, xssAPI.encodeForHTML(source), "HTML Encoding '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForEncodeToHtmlAttr")
     public void testEncodeForHTMLAttr(String source, String expected) {
-        setUp();
         assertEquals(expected, xssAPI.encodeForHTMLAttr(source), "HTML Encoding '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForEncodeToXml")
     public void testEncodeForXML(String source, String expected) {
-        setUp();
         assertEquals(expected, xssAPI.encodeForXML(source), "XML Encoding '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForEncodeToXmlAttr")
     public void testEncodeForXMLAttr(String source, String expected) {
-        setUp();
         assertEquals(expected, xssAPI.encodeForXMLAttr(source), "XML Encoding '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForFilterHtml")
     public void testFilterHTML(String source, String expected) {
-        setUp();
         assertEquals(expected, xssAPI.filterHTML(source), "Filtering '" + source + "'");
     }
 
@@ -124,24 +132,26 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidHref")
     public void testGetValidHref(String input, String expected) {
-        setUp();
         testHref(input, expected);
     }
 
     @ParameterizedTest
     @MethodSource("dataForValidHref")
-    public void testGetValidHrefWithoutHrefConfig(String input, String expected) throws ReflectiveOperationException {
+    public void testGetValidHrefWithoutHrefConfig(String input, String expected) throws ReflectiveOperationException, InvalidSyntaxException {
         context.load().binaryFile("/configWithoutHref.xml", "/apps/sling/xss/configWithoutHref.xml");
-        context.registerInjectActivateService(new XSSFilterImpl(), new HashMap<String, Object>(){{
+        XSSFilterImpl xssFilterImpl = activateComponent(new XSSFilterImpl(), new HashMap<String, Object>(){{
             put("policyPath", "/apps/sling/xss/configWithoutHref.xml");
         }});
-        context.registerInjectActivateService(new XSSAPIImpl());
-        xssAPI = context.getService(XSSAPI.class);
-        ServiceReference<ResourceChangeListener> xssFilterRCL = context.bundleContext().getServiceReference(ResourceChangeListener.class);
+        XSSAPIImpl xssAPI = activateComponent(new XSSAPIImpl(), Collections.emptyMap());
+        Collection<ServiceReference<ResourceChangeListener>> xssFilterRCLs = context.bundleContext().getServiceReferences(
+                ResourceChangeListener.class,
+                String.format("(%s=%s)",ResourceChangeListener.PATHS, "/apps/sling/xss/configWithoutHref.xml"));
+        assertFalse(xssFilterRCLs.isEmpty(), "Expected at least one ResourceChangeListener with the correct path to be registered");
+        ServiceReference<ResourceChangeListener> xssFilterRCL = xssFilterRCLs.iterator().next();
         assertEquals("/apps/sling/xss/configWithoutHref.xml", xssFilterRCL.getProperty(ResourceChangeListener.PATHS));
         // Load AntiSamy configuration without href filter
         XSSFilterImpl xssFilter = (XSSFilterImpl) FieldUtils.getField(XSSAPIImpl.class, "xssFilter", true).get(xssAPI);
-
+        assertSame(xssFilterImpl, xssFilter);
         Attribute hrefAttribute = (Attribute) FieldUtils.getField(XSSFilterImpl.class, "hrefAttribute", true).get(xssFilter);
         assertEquals(hrefAttribute, XSSFilterImpl.DEFAULT_HREF_ATTRIBUTE);
 
@@ -152,8 +162,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidInteger")
     public void testGetValidInteger(String source, String expectedAsString) {
-        setUp();
-
         Integer expected = (expectedAsString != null) ? Integer.parseInt(expectedAsString) : null;
         assertEquals(expected, xssAPI.getValidInteger(source, 123), "Validating integer '" + source + "'");
     }
@@ -161,8 +169,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidLong")
     public void testGetValidLong(String source, String expectedAsString) {
-        setUp();
-
         Long expected = (expectedAsString != null) ? Long.parseLong(expectedAsString) : null;
         assertEquals(expected, xssAPI.getValidLong(source, 123), "Validating long '" + source + "'");
     }
@@ -170,8 +176,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidDouble")
     public void testGetValidDouble(String source, String expectedAsString) {
-        setUp();
-
         Double expected = (expectedAsString != null) ? Double.parseDouble(expectedAsString) : null;
         assertEquals(expected, xssAPI.getValidDouble(source, 123), "Validating double '" + source + "'");
     }
@@ -179,32 +183,24 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidDimension")
     public void testGetValidDimension(String source, String expected) {
-        setUp();
-
         assertEquals(expected, xssAPI.getValidDimension(source, "123"), "Validating dimension '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForValidJSString")
     public void testEncodeForJSString(String source, String expected) {
-        setUp();
-
         assertEquals(expected, xssAPI.encodeForJSString(source), "Encoding '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForValidJSToken")
     public void testGetValidJSToken(String source, String expected) {
-        setUp();
-
         assertEquals(expected, xssAPI.getValidJSToken(source, RUBBISH), "Validating Javascript token '" + source + "'");
     }
 
     @ParameterizedTest
     @MethodSource("dataForCSSString")
     public void testEncodeForCSSString(String source, String expected) {
-        setUp();
-
         String result = xssAPI.encodeForCSSString(source);
         assertEquals(expected, result, "Encoding '" + source + "'");
     }
@@ -212,8 +208,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidStyleToken")
     public void testGetValidStyleToken(String source, String expected) {
-        setUp();
-
         String result = xssAPI.getValidStyleToken(source, RUBBISH);
         if (result == null || !result.equals(expected)) {
             fail("Validating style token '" + source + "', expecting '" + expected + "', but got '" + result + "'");
@@ -223,8 +217,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidCSSColor")
     public void testGetValidCSSColor(String source, String expected) {
-        setUp();
-
         String result = xssAPI.getValidCSSColor(source, RUBBISH);
         if (result == null || !result.equals(expected)) {
             fail("Validating CSS Color '" + source + "', expecting '" + expected + "', but got '" + result + "'");
@@ -234,8 +226,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidMultilineComment")
     public void testGetValidMultiLineComment(String source, String expected) {
-        setUp();
-
         String result = xssAPI.getValidMultiLineComment(source, RUBBISH);
         if (!result.equals(expected)) {
             fail("Validating multiline comment '" + source + "', expecting '" + expected + "', but got '" + result + "'");
@@ -245,8 +235,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidMultilineJSON")
     public void testGetValidJSON(String source, String expected) {
-        setUp();
-
         String result = xssAPI.getValidJSON(source, RUBBISH_JSON);
         if (!result.equals(expected)) {
             fail("Validating JSON '" + source + "', expecting '" + expected + "', but got '" + result + "'");
@@ -256,8 +244,6 @@ public class XSSAPIImplTest {
     @ParameterizedTest
     @MethodSource("dataForValidXML")
     public void testGetValidXML(String source, String expected) {
-        setUp();
-
         String result = xssAPI.getValidXML(source, RUBBISH_XML);
         if (!result.equals(expected)) {
             fail("Validating XML '" + source + "', expecting '" + expected + "', but got '" + result + "'");
