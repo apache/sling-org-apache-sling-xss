@@ -85,6 +85,7 @@ public class Attribute {
         return getLiteralList().stream()
                 .map(Literal::getValue)
                 .map(String::toLowerCase)
+                .distinct()
                 .collect(Collectors.toList());
     }
 
