@@ -84,7 +84,7 @@ public class XSSFilterImplTest {
         return testData;
     }
 
-    public SlingContext context = new SlingContext(ResourceResolverType.JCR_OAK);
+    public SlingContext context = new SlingContext(ResourceResolverType.JCR_MOCK);
 
     private XSSFilterImpl xssFilter;
 
