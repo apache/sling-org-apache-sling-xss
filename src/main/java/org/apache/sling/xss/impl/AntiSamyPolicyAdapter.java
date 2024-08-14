@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -158,7 +159,7 @@ public class AntiSamyPolicyAdapter {
         Map<String, Attribute> dynamicAttributes = new HashMap<>();
 
         // checks if the dynamic attributes are allowed
-        if (policy.getDirectives().get(ALLOW_DYNAMIC_ATTRIBUTES).equals("true")) {
+        if (Objects.equals(policy.getDirectives().get(ALLOW_DYNAMIC_ATTRIBUTES), "true")) {
             dynamicAttributes.putAll(policy.getDynamicAttributes());
             for (Attribute attribute : dynamicAttributes.values()) {
                 if (attribute.getOnInvalid().equals(REMOVE_TAG_ON_INVALID_ACTION)) {
@@ -237,10 +238,10 @@ public class AntiSamyPolicyAdapter {
             Field f = Unsafe.class.getDeclaredField("theUnsafe");
             f.setAccessible(true);
             Unsafe unsafe = (Unsafe) f.get(null);
-            
+
             // required to be able to get the static field base
             unsafe.ensureClassInitialized(HtmlPolicyBuilder.class);
-            
+
             Object fieldBase = unsafe.staticFieldBase(guards);
             long fieldOffset = unsafe.staticFieldOffset(guards);
             unsafe.putObject(fieldBase, fieldOffset, new HashMap<>());

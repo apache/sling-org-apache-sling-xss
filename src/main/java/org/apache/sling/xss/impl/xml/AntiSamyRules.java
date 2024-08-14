@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -77,11 +78,11 @@ public class AntiSamyRules {
     }
 
     public DynamicTagAttributes getDynamicTagAttribute() {
-        return dynamicTagAttribute;
+        return Optional.ofNullable(dynamicTagAttribute).orElseGet(DynamicTagAttributes::new);
     }
 
     public GlobalTagAttributes getGlobalTagAttributes() {
-        return globalTagAttributes;
+        return Optional.ofNullable(globalTagAttributes).orElseGet(GlobalTagAttributes::new);
     }
 
     public String getNoNamespaceSchemaLocation() {
@@ -125,7 +126,7 @@ public class AntiSamyRules {
         return regexpList.stream()
                 .collect(Collectors.toMap(Regexp::getName, Regexp::getPattern));
     }
-    
+
     /**
      * Attribute, Property and Tag names use the English locale, which may differ from the original config
      */

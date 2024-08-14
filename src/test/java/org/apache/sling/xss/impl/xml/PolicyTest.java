@@ -22,19 +22,33 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.apache.sling.xss.impl.InvalidConfigException;
+import org.apache.sling.xss.impl.HtmlSanitizer;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy.CssPolicy;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.converter.ArgumentConversionException;
+import org.junit.jupiter.params.converter.ConvertWith;
+import org.junit.jupiter.params.converter.TypedArgumentConverter;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class PolicyTest {
 
     @Test
-    void loadDefaultPolicy() throws Exception, InvalidConfigException {
-        try(InputStream input = AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml")) {
+    void loadDefaultPolicy() throws Exception {
+        try (InputStream input = AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml")) {
             AntiSamyPolicy policy = new AntiSamyPolicy(input);
             Map<String, Pattern> regexp = policy.getCommonRegularExpressions();
             List<String> empty = policy.getAllowedEmptyTags();
@@ -65,6 +79,44 @@ class PolicyTest {
             assertEquals(118, cssPolicy.getCssRules().size(), "cssPolicy.cssRules.size");
             assertTrue(cssPolicy.isValidElementName("base-link"));
             assertFalse(cssPolicy.isValidElementName("base|link"));
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "configWithoutDifferentCaseDuplicateLiterals.xml",
+            "configWithoutHref.xml",
+            "configWithAdditionalGlobalAndDynamicConditions.xml"
+    })
+    void loadPolicyFile(@Resource Path configFile) throws Exception {
+        try (InputStream input = Files.newInputStream(configFile)) {
+            AntiSamyPolicy policy = new AntiSamyPolicy(input);
+            assertNotNull(policy);
+            HtmlSanitizer htmlSanitizer = new HtmlSanitizer(policy);
+            assertNotNull(htmlSanitizer);
+        }
+    }
+
+    @Target({ElementType.PARAMETER})
+    @Retention(RetentionPolicy.RUNTIME)
+    @ConvertWith(LoadResource.class)
+    @interface Resource {}
+
+    private static class LoadResource extends TypedArgumentConverter<String, Path> {
+
+        LoadResource() {
+            super(String.class, Path.class);
+        }
+
+        @Override
+        protected Path convert(String relPath) throws ArgumentConversionException {
+            URL url = LoadResource.class.getClassLoader().getResource(relPath);
+            assertNotNull(url, "resource not found: " + relPath);
+            try {
+                return Paths.get(url.toURI());
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
