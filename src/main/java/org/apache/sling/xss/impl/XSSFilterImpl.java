@@ -384,10 +384,6 @@ public class XSSFilterImpl implements XSSFilter {
                 logger.info("Installed policy from {}.", pathName);
                 return new AntiSamyPolicy(policyHandler, policyPath);
             } catch (Exception e) {
-                Throwable[] suppressed = e.getSuppressed();
-                for (Throwable t : suppressed) {
-                    logger.error("Unable to load policy from {}.", pathName, t);
-                }
                 logger.error("Unable to load policy from {}.", pathName, e);
                 return null;
             }
