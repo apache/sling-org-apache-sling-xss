@@ -305,13 +305,13 @@ public class XSSFilterImpl implements XSSFilter {
     synchronized void updateActivePolicy() {
         final AntiSamyPolicy originalActivePolicy = this.activePolicy;
         this.activePolicy = withPolicyResource(AntiSamyPolicy::create);
-        if (activePolicy == originalActivePolicy) {
-            // the content was not installed but the service is active; let's use the embedded file for the default handler
+        // the originalActivePolicy can only be null during the first activation
+        if (activePolicy == null && originalActivePolicy == null) {
+            // the content-based policy file is not (yet) available, fall back to the embedded policy
             this.activePolicy = AntiSamyPolicy.createEmbedded();
-        }
-        if (activePolicy == originalActivePolicy) {
-            activePolicy = null;
-            throw new IllegalStateException("Cannot load a policy handler.");
+            if (activePolicy == null) {
+                throw new IllegalStateException("Cannot load a policy handler.");
+            }
         }
         updatePolicyHandler(activePolicy.getPolicyHandler());
     }
