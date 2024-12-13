@@ -47,7 +47,6 @@
 
     <properties>
         <project.build.outputTimestamp>1723642752</project.build.outputTimestamp>
-        <sling.java.version>8</sling.java.version>
     </properties>
 
 
@@ -66,27 +65,6 @@
                             <exclude>src/main/resources/ESAPI.properties</exclude>
                             <exclude>src/main/resources/validation.properties</exclude>
                         </excludes>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <configuration>
-                        <!-- ignore class files referenced from classes copied over to target/classes by bnd-maven-plugin -->
-                        <ignores>
-                            <ignore>org.apache.xml.*</ignore>
-                            <ignore>org.apache.commons.*</ignore>
-                            <ignore>javax.servlet.jsp.*</ignore>
-                            <ignore>org.apache.avalon.*</ignore>
-                            <ignore>org.apache.log.*</ignore>
-                            <ignore>org.owasp.validator.html.*</ignore>
-                            <ignore>org.w3c.dom.svg.*</ignore>
-                            <!-- Classes with newer method signatures dynamically loaded by the java-html-sanitizer java10 shim -->
-                            <ignore>java.util.Set</ignore>
-                            <ignore>java.util.Map</ignore>
-                            <ignore>java.util.List</ignore>
-                        </ignores>
-                        <annotations>com.google.common.hash.IgnoreJRERequirement</annotations>
                     </configuration>
                 </plugin>
             </plugins>
@@ -321,7 +299,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.13.0</version>
+            <version>2.14.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -396,28 +374,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>compile-sun-misc</id>
-            <activation>
-                <!-- syntax according to http://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
-                <jdk>[9,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <release combine.self="override" />
-                            <source>${sling.java.version}</source>
-                            <target>${sling.java.version}</target>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
 </project>
