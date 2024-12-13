@@ -67,23 +67,6 @@
                         </excludes>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>animal-sniffer-maven-plugin</artifactId>
-                    <configuration>
-                        <!-- ignore class files referenced from classes copied over to target/classes by bnd-maven-plugin -->
-                        <ignores>
-                            <ignore>org.apache.xml.*</ignore>
-                            <ignore>org.apache.commons.*</ignore>
-                            <ignore>javax.servlet.jsp.*</ignore>
-                            <ignore>org.apache.avalon.*</ignore>
-                            <ignore>org.apache.log.*</ignore>
-                            <ignore>org.owasp.validator.html.*</ignore>
-                            <ignore>org.w3c.dom.svg.*</ignore>
-                        </ignores>
-                        <annotations>com.google.common.hash.IgnoreJRERequirement</annotations>
-                    </configuration>
-                </plugin>
             </plugins>
         </pluginManagement>
 
