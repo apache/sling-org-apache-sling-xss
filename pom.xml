@@ -47,7 +47,6 @@
 
     <properties>
         <project.build.outputTimestamp>1723642752</project.build.outputTimestamp>
-        <sling.java.version>8</sling.java.version>
     </properties>
 
 
@@ -81,10 +80,6 @@
                             <ignore>org.apache.log.*</ignore>
                             <ignore>org.owasp.validator.html.*</ignore>
                             <ignore>org.w3c.dom.svg.*</ignore>
-                            <!-- Classes with newer method signatures dynamically loaded by the java-html-sanitizer java10 shim -->
-                            <ignore>java.util.Set</ignore>
-                            <ignore>java.util.Map</ignore>
-                            <ignore>java.util.List</ignore>
                         </ignores>
                         <annotations>com.google.common.hash.IgnoreJRERequirement</annotations>
                     </configuration>
@@ -400,10 +395,6 @@
     <profiles>
         <profile>
             <id>compile-sun-misc</id>
-            <activation>
-                <!-- syntax according to http://maven.apache.org/enforcer/enforcer-rules/versionRanges.html -->
-                <jdk>[9,)</jdk>
-            </activation>
             <build>
                 <plugins>
                     <plugin>
