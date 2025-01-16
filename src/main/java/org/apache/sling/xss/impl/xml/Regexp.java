@@ -21,14 +21,12 @@ package org.apache.sling.xss.impl.xml;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 public class Regexp {
     private String name;
     private String value;
 
-    @JsonIgnore
     private Pattern pattern;
 
     @JsonCreator
@@ -37,6 +35,11 @@ public class Regexp {
 
         this.name = name;
         this.value = regexp;
+
+        if (regexp != null) {
+            this.pattern = Pattern.compile(regexp);
+        }
+
     }
 
     public String getName() {
@@ -48,9 +51,6 @@ public class Regexp {
     }
 
     public Pattern getPattern() {
-        if (pattern == null) {
-            pattern = Pattern.compile(value);
-        }
         return pattern;
     }
 
