@@ -27,12 +27,19 @@ public class Regexp {
     private String name;
     private String value;
 
+    private Pattern pattern;
+
     @JsonCreator
     public Regexp(@JacksonXmlProperty(localName = "name", isAttribute = true) String name,
             @JacksonXmlProperty(localName = "value", isAttribute = true) String regexp) {
 
         this.name = name;
         this.value = regexp;
+
+        if (regexp != null) {
+            this.pattern = Pattern.compile(regexp);
+        }
+
     }
 
     public String getName() {
@@ -44,7 +51,7 @@ public class Regexp {
     }
 
     public Pattern getPattern() {
-        return Pattern.compile(value);
+        return pattern;
     }
 
     @Override

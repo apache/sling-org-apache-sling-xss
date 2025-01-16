@@ -20,6 +20,7 @@ package org.apache.sling.xss.impl.xml;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -41,6 +42,9 @@ public class Attribute {
     private final List<Regexp> regexpList;
     private final List<Literal> literalList;
 
+    private final List<Pattern> patternList;
+    private final List<String> literals;
+
     @JsonCreator
     public Attribute(@JacksonXmlProperty(localName = "name", isAttribute = true) @NotNull String name,
             @JacksonXmlProperty(localName = "regexp-list") List<Regexp> allowedRegexps,
@@ -50,12 +54,23 @@ public class Attribute {
         this.name = name.toLowerCase(AntiSamyConfigLocale.REGION);
         this.description = Optional.ofNullable(description).orElse("");
         this.onInvalid = onInvalid != null && onInvalid.length() > 0 ? onInvalid : AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID;
+
         this.regexpList = Optional.ofNullable(allowedRegexps)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);
+        this.patternList = this.regexpList.stream()
+                .map(Regexp::getPattern)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         this.literalList = Optional.ofNullable(literalList)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);
+        this.literals = this.literalList.stream()
+                .map(Literal::getValue)
+                .map(String::toLowerCase)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -82,11 +97,7 @@ public class Attribute {
 
     @NotNull
     public List<String> getLiterals() {
-        return getLiteralList().stream()
-                .map(Literal::getValue)
-                .map(String::toLowerCase)
-                .distinct()
-                .collect(Collectors.toList());
+        return this.literals;
     }
 
     @NotNull
@@ -96,9 +107,7 @@ public class Attribute {
 
     @NotNull
     public List<Pattern> getPatternList() {
-        return getRegexpList().stream()
-                .map(Regexp::getPattern)
-                .collect(Collectors.toList());
+        return this.patternList;
     }
 
     @NotNull
