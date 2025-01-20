@@ -71,7 +71,8 @@ class PolicyTest {
             assertEquals(0, closingTag.size(), "number of known closing Tags");
             assertEquals(46, commonAttr.size(), "number of known common attributes");
 
-            // SLING-12622 -- getPattern() must not return null even if no regexp is specified
+            // SLING-12622 -- make sure that referencing an existing regexp via its name
+            // works and getPattern() will never return null for it.
             Attribute hrefAttr = commonAttr.get("href");
             Regexp onsiteUrl = hrefAttr.getRegexpList().get(0);
             assertEquals("onsiteURL",onsiteUrl.getName());
