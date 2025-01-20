@@ -16,6 +16,7 @@ Import-Package: !bsh, \
                 !org.apache.commons.collections.*, \
                 !org.apache.commons.digester.*, \
                 !org.apache.commons.jexl2, \
+                !org.apache.commons.fileupload.*, \
                 !org.apache.commons.jxpath.*, \
                 !org.apache.commons.lang.*, \
                 !org.apache.commons.vfs2.*, \
