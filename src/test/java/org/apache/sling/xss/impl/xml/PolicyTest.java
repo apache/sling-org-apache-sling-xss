@@ -70,12 +70,19 @@ class PolicyTest {
             assertEquals(1, dynamic.size(), "number of known dynamic attributes");
             assertEquals(0, closingTag.size(), "number of known closing Tags");
             assertEquals(46, commonAttr.size(), "number of known common attributes");
+
+            // SLING-12622 -- make sure that referencing an existing regexp via its name
+            // works and getPattern() will never return null for it.
+            Attribute hrefAttr = commonAttr.get("href");
+            Regexp onsiteUrl = hrefAttr.getRegexpList().get(0);
+            assertEquals("onsiteURL",onsiteUrl.getName());
+            assertNotNull(onsiteUrl.getPattern());
+
             assertEquals(73, tagRules.size(), "number of known tag rules");
             assertEquals(118, cssRules.size(), "number of known css rules");
             assertEquals(12, directives.size(), "number of known directives");
 
             CssPolicy cssPolicy = policy.getCssPolicy();
-
             assertEquals(118, cssPolicy.getCssRules().size(), "cssPolicy.cssRules.size");
             assertTrue(cssPolicy.isValidElementName("base-link"));
             assertFalse(cssPolicy.isValidElementName("base|link"));
