@@ -1,21 +1,22 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one or
- * more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to you under the
- * Apache License, Version 2.0 (the "License"); you may not use
- * this file except in compliance with the License. You may obtain
- * a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0 Unless required by
- * applicable law or agreed to in writing, software distributed
- * under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
- ******************************************************************************/
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl;
-
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -57,7 +58,8 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
     public String filter(final PolicyHandler policyHandler, final String unsafeString) {
         if (StringUtils.isNotEmpty(unsafeString)) {
             try {
-                final String results = getCleanResults(policyHandler, unsafeString).getSanitizedString();
+                final String results =
+                        getCleanResults(policyHandler, unsafeString).getSanitizedString();
                 if (results != null) {
                     log.debug("Protected (HTML -> HTML):\n{}", results);
                     return results;
@@ -82,7 +84,9 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
         try {
             results = handler.getHtmlSanitizer().scan(input);
         } catch (StackOverflowError e) {
-            log.debug("Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}", input);
+            log.debug(
+                    "Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}",
+                    input);
             results = handler.getFallbackHtmlSanitizer().scan(input);
             log.debug("Second attempt was successful.");
         }

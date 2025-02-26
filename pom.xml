@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ~ Licensed to the Apache Software Foundation (ASF) under one or
   ~ more contributor license agreements. See the NOTICE file
@@ -34,126 +34,19 @@
     <version>2.4.7-SNAPSHOT</version>
 
     <name>Apache Sling XSS Protection API</name>
-    <description>
-        Apache Sling XSS Protection Bundle providing XSS protection based on the OWASP AntiSamy and OWASP Java Encoder libraries.
-    </description>
+    <description>Apache Sling XSS Protection Bundle providing XSS protection based on the OWASP AntiSamy and OWASP Java Encoder libraries.</description>
 
     <scm>
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-xss.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-xss.git</developerConnection>
-        <url>https://github.com/apache/sling-org-apache-sling-xss.git</url>
         <tag>HEAD</tag>
+        <url>https://github.com/apache/sling-org-apache-sling-xss.git</url>
     </scm>
 
     <properties>
         <sling.java.version>11</sling.java.version>
         <project.build.outputTimestamp>1737453857</project.build.outputTimestamp>
     </properties>
-
-
-    <!-- ======================================================================= -->
-    <!-- B U I L D                                                               -->
-    <!-- ======================================================================= -->
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <!-- Extend RAT configuration from parent pom -->
-                    <groupId>org.apache.rat</groupId>
-                    <artifactId>apache-rat-plugin</artifactId>
-                    <configuration>
-                        <excludes combine.children="append">
-                            <exclude>src/main/resources/ESAPI.properties</exclude>
-                            <exclude>src/main/resources/validation.properties</exclude>
-                        </excludes>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.sling</groupId>
-                <artifactId>sling-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/dependencies-classes</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.owasp.esapi</groupId>
-                                    <artifactId>esapi</artifactId>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <!-- here the phase you need -->
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${project.build.directory}/dependencies-classes</directory>
-                                    <excludes>
-                                        <exclude>**/MANIFEST.MF</exclude>
-                                    </excludes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <!-- No javadocs -->
-                    <excludePackageNames>
-                        org.owasp.html,
-                        *.impl,
-                        *.impl.*
-                    </excludePackageNames>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemProperties>
-                        <java.util.logging.config.file>src/test/resources/logging.properties</java.util.logging.config.file>
-                    </systemProperties>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <configuration>
-                    <includes>
-                        <include>org/apache/sling/xss/**</include>
-                    </includes>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 
     <!-- ======================================================================= -->
     <!-- D E P E N D E N C I E S                                                 -->
@@ -180,8 +73,8 @@
         <dependency>
             <groupId>org.owasp.encoder</groupId>
             <artifactId>encoder</artifactId>
-            <scope>provided</scope>
             <version>1.2.3</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.owasp.esapi</groupId>
@@ -275,10 +168,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-          <groupId>org.apache.sling</groupId>
-          <artifactId>org.apache.sling.serviceusermapper</artifactId>
-          <version>1.4.6</version>
-          <scope>provided</scope>
+            <groupId>org.apache.sling</groupId>
+            <artifactId>org.apache.sling.serviceusermapper</artifactId>
+            <version>1.4.6</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jetbrains</groupId>
@@ -375,4 +268,106 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <!-- ======================================================================= -->
+    <!-- B U I L D                                                               -->
+    <!-- ======================================================================= -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <!-- Extend RAT configuration from parent pom -->
+                    <groupId>org.apache.rat</groupId>
+                    <artifactId>apache-rat-plugin</artifactId>
+                    <configuration>
+                        <excludes combine.children="append">
+                            <exclude>src/main/resources/ESAPI.properties</exclude>
+                            <exclude>src/main/resources/validation.properties</exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.sling</groupId>
+                <artifactId>sling-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack</id>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dependencies-classes</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.owasp.esapi</groupId>
+                                    <artifactId>esapi</artifactId>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <!-- here the phase you need -->
+                        <phase>prepare-package</phase>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}/dependencies-classes</directory>
+                                    <excludes>
+                                        <exclude>**/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <!-- No javadocs -->
+                    <excludePackageNames>org.owasp.html,
+                        *.impl,
+                        *.impl.*</excludePackageNames>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <java.util.logging.config.file>src/test/resources/logging.properties</java.util.logging.config.file>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>org/apache/sling/xss/**</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

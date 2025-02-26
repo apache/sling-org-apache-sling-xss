@@ -1,25 +1,22 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one or
- * more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to you under the
- * Apache License, Version 2.0 (the "License"); you may not use
- * this file except in compliance with the License. You may obtain
- * a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0 Unless required by
- * applicable law or agreed to in writing, software distributed
- * under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
- ******************************************************************************/
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl.xml;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.InputStream;
 import java.lang.annotation.ElementType;
@@ -44,11 +41,17 @@ import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.converter.TypedArgumentConverter;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class PolicyTest {
 
     @Test
     void loadDefaultPolicy() throws Exception {
-        try (InputStream input = AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml")) {
+        try (InputStream input =
+                AntiSamyPolicy.class.getClassLoader().getResourceAsStream("SLING-INF/content/config.xml")) {
             AntiSamyPolicy policy = new AntiSamyPolicy(input);
             Map<String, Pattern> regexp = policy.getCommonRegularExpressions();
             List<String> empty = policy.getAllowedEmptyTags();
@@ -75,7 +78,7 @@ class PolicyTest {
             // works and getPattern() will never return null for it.
             Attribute hrefAttr = commonAttr.get("href");
             Regexp onsiteUrl = hrefAttr.getRegexpList().get(0);
-            assertEquals("onsiteURL",onsiteUrl.getName());
+            assertEquals("onsiteURL", onsiteUrl.getName());
             assertNotNull(onsiteUrl.getPattern());
 
             assertEquals(73, tagRules.size(), "number of known tag rules");
@@ -90,11 +93,12 @@ class PolicyTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-            "configWithoutDifferentCaseDuplicateLiterals.xml",
-            "configWithoutHref.xml",
-            "configWithAdditionalGlobalAndDynamicConditions.xml"
-    })
+    @ValueSource(
+            strings = {
+                "configWithoutDifferentCaseDuplicateLiterals.xml",
+                "configWithoutHref.xml",
+                "configWithAdditionalGlobalAndDynamicConditions.xml"
+            })
     void loadPolicyFile(@Resource Path configFile) throws Exception {
         try (InputStream input = Files.newInputStream(configFile)) {
             AntiSamyPolicy policy = new AntiSamyPolicy(input);

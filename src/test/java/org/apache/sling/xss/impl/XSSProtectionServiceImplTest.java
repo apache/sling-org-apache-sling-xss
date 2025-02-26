@@ -1,26 +1,28 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one or
- * more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to you under the
- * Apache License, Version 2.0 (the "License"); you may not use
- * this file except in compliance with the License. You may obtain
- * a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0 Unless required by
- * applicable law or agreed to in writing, software distributed
- * under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
- ******************************************************************************/
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl;
-
-import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.sling.xss.ProtectionContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 /** Test the XSSProtectionServiceImpl with various strings.
  *
@@ -51,7 +53,7 @@ public class XSSProtectionServiceImplTest {
 
     private void assertXssProtection(String input, String expected) throws Exception {
         final String output = xssFilter.filter(ProtectionContext.PLAIN_HTML_CONTENT, input);
-        if(!expected.equals(output)) {
+        if (!expected.equals(output)) {
             fail("For input [" + input + "], expected [" + expected + "] but got [" + output + "]");
         }
     }
@@ -72,7 +74,8 @@ public class XSSProtectionServiceImplTest {
 
     @Test
     public void testWithAccents() throws Exception {
-        assertNoChange("Accents here \u00e9 \u00e0 \u00e8 \u00f6 \u00e4 \u00fc \u00e2 \u00ea \u00ee \u00f4 \u00fb and done");
+        assertNoChange(
+                "Accents here \u00e9 \u00e0 \u00e8 \u00f6 \u00e4 \u00fc \u00e2 \u00ea \u00ee \u00f4 \u00fb and done");
     }
 
     @Test
@@ -82,13 +85,13 @@ public class XSSProtectionServiceImplTest {
 
     @Test
     public void testJapaneseStringOne() throws Exception {
-        assertNoChange("Japanese mark:  \u3001\u3002\uff1f\uff01\uffe5\u30fb\uff20\uff03\uff04\uff05\uff3e\uff06\uff0a\uff08\uff09\u300c\u300d etc.");
+        assertNoChange(
+                "Japanese mark:  \u3001\u3002\uff1f\uff01\uffe5\u30fb\uff20\uff03\uff04\uff05\uff3e\uff06\uff0a\uff08\uff09\u300c\u300d etc.");
     }
 
     @Test
     public void testJapaneseStringTwo() throws Exception {
         assertNoChange(
-                "\u30e9\u30c9\u30af\u30ea\u30d5\u3001\u30de\u30e9\u30bd\u30f3\u4e94\u8f2a\u4ee3\u8868\u306b1\u4e07m\u51fa\u5834\u306b\u3082\u542b\u307f"
-        );
+                "\u30e9\u30c9\u30af\u30ea\u30d5\u3001\u30de\u30e9\u30bd\u30f3\u4e94\u8f2a\u4ee3\u8868\u306b1\u4e07m\u51fa\u5834\u306b\u3082\u542b\u307f");
     }
 }
