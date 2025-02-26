@@ -1,19 +1,21 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one or
- * more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to you under the
- * Apache License, Version 2.0 (the "License"); you may not use
- * this file except in compliance with the License. You may obtain
- * a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0 Unless required by
- * applicable law or agreed to in writing, software distributed
- * under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
- ******************************************************************************/
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl;
 
 import java.io.IOException;
@@ -72,25 +74,18 @@ import org.slf4j.LoggerFactory;
  * This class implements the <code>XSSFilter</code> using the Antisamy XSS protection library found at
  * <a href="http://code.google.com/p/owaspantisamy/">http://code.google.com/p/owaspantisamy/</a>.
  */
-@Component(
-        service = {XSSFilter.class}
-)
+@Component(service = {XSSFilter.class})
 @Designate(ocd = XSSFilterImpl.Configuration.class)
 public class XSSFilterImpl implements XSSFilter {
 
-    @ObjectClassDefinition(
-            name = "Apache Sling XSS Filter",
-            description = "XSS filtering utility based on AntiSamy."
-    )
+    @ObjectClassDefinition(name = "Apache Sling XSS Filter", description = "XSS filtering utility based on AntiSamy.")
     @interface Configuration {
 
         @AttributeDefinition(
                 name = "AntiSamy Policy Path",
-                description = "The path to the AntiSamy policy file (absolute or relative to the configured search paths)."
-
-        )
+                description =
+                        "The path to the AntiSamy policy file (absolute or relative to the configured search paths).")
         String policyPath() default XSSFilterImpl.DEFAULT_POLICY_PATH;
-
     }
 
     private static final Logger logger = LoggerFactory.getLogger(XSSFilterImpl.class);
@@ -100,51 +95,55 @@ public class XSSFilterImpl implements XSSFilter {
     public static final String PCT_ENCODED = "%" + HEX_DIGIT + HEX_DIGIT;
     public static final String UNRESERVED_CHARACTERS = ALPHA + "|[\\p{N}-._~]";
     public static final String SUB_DELIMS = "[!$&'()*+,;=]";
-    public static final String REG_NAME = "(?:(?:" + UNRESERVED_CHARACTERS + ")*|(?:" + PCT_ENCODED + ")*|" + "(?:" + SUB_DELIMS + ")*)";
+    public static final String REG_NAME =
+            "(?:(?:" + UNRESERVED_CHARACTERS + ")*|(?:" + PCT_ENCODED + ")*|" + "(?:" + SUB_DELIMS + ")*)";
     public static final String PCHAR = UNRESERVED_CHARACTERS + "|" + PCT_ENCODED + "|" + SUB_DELIMS + "|:|@";
-    public static final String DEC_OCTET = "(?:\\p{N}|[\\x31-\\x39]\\p{N}|1\\p{N}{2}|2[\\x30-\\x34]\\p{N}|25[\\x30-\\x35])";
+    public static final String DEC_OCTET =
+            "(?:\\p{N}|[\\x31-\\x39]\\p{N}|1\\p{N}{2}|2[\\x30-\\x34]\\p{N}|25[\\x30-\\x35])";
     public static final String H16 = HEX_DIGIT + "{1,4}";
     public static final String IPv4_ADDRESS = DEC_OCTET + "\\." + DEC_OCTET + "\\." + DEC_OCTET + "\\." + DEC_OCTET;
     public static final String LS32 = "(?:" + H16 + ":" + H16 + ")|" + IPv4_ADDRESS;
-    public static final String IPv6_ADDRESS = "(?:(?:(?:" + H16 + ":){6}(?:" + LS32 + "))|" +
-            "(?:::(?:" + H16 + ":){5}(?:" + LS32 + "))|" +
-            "(?:(?:" + H16 + "){0,1}::(?:" + H16 + ":){4}(?:" + LS32 + "))|" +
-            "(?:(?:(?:" + H16 + ":){0,1}" + H16 + ")?::(?:" + H16 + ":){3}(?:" + LS32 + "))|" +
-            "(?:(?:(?:" + H16 + ":){0,2}" + H16 + ")?::(?:" + H16 + ":){2}(?:" + LS32 + "))|" +
-            "(?:(?:(?:" + H16 + ":){0,3}" + H16 + ")?::(?:" + H16 + ":){1}(?:" + LS32 + "))|" +
-            "(?:(?:(?:" + H16 + ":){0,4}" + H16 + ")?::(?:" + LS32 + "))|" +
-            "(?:(?:(?:" + H16 + ":){0,5}" + H16 + ")?::(?:" + H16 + "))|" +
-            "(?:(?:(?:" + H16 + ":){0,6}" + H16 + ")?::))";
+    public static final String IPv6_ADDRESS = "(?:(?:(?:" + H16 + ":){6}(?:" + LS32 + "))|" + "(?:::(?:"
+            + H16 + ":){5}(?:" + LS32 + "))|" + "(?:(?:"
+            + H16 + "){0,1}::(?:" + H16 + ":){4}(?:" + LS32 + "))|" + "(?:(?:(?:"
+            + H16 + ":){0,1}" + H16 + ")?::(?:" + H16 + ":){3}(?:" + LS32 + "))|" + "(?:(?:(?:"
+            + H16 + ":){0,2}" + H16 + ")?::(?:" + H16 + ":){2}(?:" + LS32 + "))|" + "(?:(?:(?:"
+            + H16 + ":){0,3}" + H16 + ")?::(?:" + H16 + ":){1}(?:" + LS32 + "))|" + "(?:(?:(?:"
+            + H16 + ":){0,4}" + H16 + ")?::(?:" + LS32 + "))|" + "(?:(?:(?:"
+            + H16 + ":){0,5}" + H16 + ")?::(?:" + H16 + "))|" + "(?:(?:(?:"
+            + H16 + ":){0,6}" + H16 + ")?::))";
     public static final String IP_LITERAL = "\\[" + IPv6_ADDRESS + "]";
     public static final String PORT = "\\p{Digit}+";
     public static final String HOST = "(?:" + IP_LITERAL + "|" + IPv4_ADDRESS + "|" + REG_NAME + ")";
-    public static final String USER_INFO = "(?:(?:" + UNRESERVED_CHARACTERS + ")|(?:" + PCT_ENCODED + ")|(?:" + SUB_DELIMS + "))*";
+    public static final String USER_INFO =
+            "(?:(?:" + UNRESERVED_CHARACTERS + ")|(?:" + PCT_ENCODED + ")|(?:" + SUB_DELIMS + "))*";
     public static final String AUTHORITY = "(?:" + USER_INFO + "@)?" + HOST + "(?::" + PORT + ")?";
     public static final String SCHEME_PATTERN = "(?!\\s*javascript)\\p{L}[\\p{L}\\p{N}+.\\-]*";
     public static final String FRAGMENT = "(?:" + PCHAR + "|/|\\?)*";
     public static final String QUERY = "(?:" + PCHAR + "|/|\\?)*";
     public static final String SEGMENT_NZ = "(?:" + PCHAR + ")+";
-    public static final String SEGMENT_NZ_NC = "(?:" + UNRESERVED_CHARACTERS + "|" + PCT_ENCODED + "|" + SUB_DELIMS + "|@)+";
+    public static final String SEGMENT_NZ_NC =
+            "(?:" + UNRESERVED_CHARACTERS + "|" + PCT_ENCODED + "|" + SUB_DELIMS + "|@)+";
     public static final String PATH_ABEMPTY = "(?:/|(/" + SEGMENT_NZ + "/?)*)";
     public static final String PATH_ABSOLUTE = "/(?:" + SEGMENT_NZ + PATH_ABEMPTY + ")?";
     public static final String PATH_NOSCHEME = SEGMENT_NZ_NC + "(?:/|(/" + SEGMENT_NZ + ")*)";
     public static final String PATH_ROOTLESS = SEGMENT_NZ + "(?:/|(/" + SEGMENT_NZ + ")*)";
     public static final String PATH_EMPTY = "(?:^$)";
-    public static final String RELATIVE_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY +  ")|" +
-            "(?:" + PATH_ABSOLUTE + ")|" +
-            "(?:" + PATH_ROOTLESS + "))";
-    public static final String HIER_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY + ")|" +
-            "(?:" + PATH_ABSOLUTE + ")|" +
-            "(?:" + PATH_NOSCHEME + ")|" +
-            PATH_EMPTY + ")";
+    public static final String RELATIVE_PART =
+            "(?:(?://" + AUTHORITY + PATH_ABEMPTY + ")|" + "(?:" + PATH_ABSOLUTE + ")|" + "(?:" + PATH_ROOTLESS + "))";
+    public static final String HIER_PART = "(?:(?://" + AUTHORITY + PATH_ABEMPTY + ")|" + "(?:"
+            + PATH_ABSOLUTE + ")|" + "(?:"
+            + PATH_NOSCHEME + ")|" + PATH_EMPTY
+            + ")";
 
-    public static final String RELATIVE_REF = "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "?(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
+    public static final String RELATIVE_REF =
+            "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "?(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
     public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
 
-    static final Pattern ON_SITE_SIMPLIFIED = Pattern.compile("([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" +
-            "(\\w)+)");
-    static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)" +
-            "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
+    static final Pattern ON_SITE_SIMPLIFIED =
+            Pattern.compile("([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" + "(\\w)+)");
+    static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)"
+            + "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
 
     static final Attribute FALLBACK_HREF_ATTRIBUTE = new Attribute(
             "href",
@@ -152,22 +151,22 @@ public class XSSFilterImpl implements XSSFilter {
                     new Regexp("on-site-simplified", ON_SITE_SIMPLIFIED.toString()),
                     new Regexp("off-site-simplified", OFF_SITE_SIMPLIFIED.toString())),
             Collections.emptyList(),
-            AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID, null);
+            AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID,
+            null);
 
     /*
-      NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
-      commons-text, which is not an OSGi bundle
-     */
+     NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
+     commons-text, which is not an OSGi bundle
+    */
     private static final NumericEntityUnescaper UNICODE_UNESCAPER = new NumericEntityUnescaper();
 
     // Default href configuration copied from the config.xml supplied with AntiSamy
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
             "href",
-            Arrays.asList(
-                    new Regexp("relative-ref", RELATIVE_REF),
-                    new Regexp("uri", URI)),
+            Arrays.asList(new Regexp("relative-ref", RELATIVE_REF), new Regexp("uri", URI)),
             null,
-            AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID, null);
+            AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID,
+            null);
 
     static final String DEFAULT_POLICY_PATH = "sling/xss/config.xml";
     static final String EMBEDDED_POLICY_PATH = "SLING-INF/content/config.xml";
@@ -187,7 +186,10 @@ public class XSSFilterImpl implements XSSFilter {
     @Reference
     private ServiceUserMapped serviceUserMapped;
 
-    @Reference(policy=ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL, policyOption = ReferencePolicyOption.GREEDY)
+    @Reference(
+            policy = ReferencePolicy.DYNAMIC,
+            cardinality = ReferenceCardinality.OPTIONAL,
+            policyOption = ReferencePolicyOption.GREEDY)
     private volatile XSSMetricsService metricsService;
 
     @Reference
@@ -260,7 +262,9 @@ public class XSSFilterImpl implements XSSFilter {
             try {
                 isValid = hrefAttribute.matchesAllowedExpression(urlLowerCase);
             } catch (StackOverflowError e) {
-                logger.debug("Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.", url);
+                logger.debug(
+                        "Detected a StackOverflowError when validating url {} with configured regexes. Trying fallback.",
+                        url);
                 try {
                     isValid = FALLBACK_HREF_ATTRIBUTE.containsAllowedValue(urlLowerCase);
                     if (!isValid) {
@@ -288,9 +292,10 @@ public class XSSFilterImpl implements XSSFilter {
             serviceRegistration.unregister();
         }
         Dictionary<String, Object> rclProperties = new Hashtable<>();
-        rclProperties.put(ResourceChangeListener.CHANGES, new String[]{"ADDED", "CHANGED", "REMOVED"});
+        rclProperties.put(ResourceChangeListener.CHANGES, new String[] {"ADDED", "CHANGED", "REMOVED"});
         rclProperties.put(ResourceChangeListener.PATHS, policyPath);
-        serviceRegistration = componentContext.getBundleContext()
+        serviceRegistration = componentContext
+                .getBundleContext()
                 .registerService(ResourceChangeListener.class, new PolicyChangeListener(), rclProperties);
         logger.info("Registered a resource change listener for file {}.", policyPath);
     }
@@ -355,7 +360,10 @@ public class XSSFilterImpl implements XSSFilter {
         public void onChange(@NotNull List<ResourceChange> resourceChanges) {
             for (ResourceChange change : resourceChanges) {
                 if (change.getPath().endsWith(policyPath)) {
-                    logger.info("Detected policy file change ({}) at {}. Updating policy handler.", change.getType().name(), change.getPath());
+                    logger.info(
+                            "Detected policy file change ({}) at {}. Updating policy handler.",
+                            change.getType().name(),
+                            change.getPath());
                     updateActivePolicy();
                 }
             }
@@ -377,7 +385,8 @@ public class XSSFilterImpl implements XSSFilter {
             return createAntiSamyPolicy(null, AntiSamyPolicy::streamEmbedded);
         }
 
-        private static AntiSamyPolicy createAntiSamyPolicy(@Nullable String policyPath, @NotNull Supplier<InputStream> policySupplier) {
+        private static AntiSamyPolicy createAntiSamyPolicy(
+                @Nullable String policyPath, @NotNull Supplier<InputStream> policySupplier) {
             String pathName = policyPath == null ? "embedded policy file" : policyPath;
             try (InputStream policyStream = policySupplier.get()) {
                 PolicyHandler policyHandler = new PolicyHandler(policyStream);

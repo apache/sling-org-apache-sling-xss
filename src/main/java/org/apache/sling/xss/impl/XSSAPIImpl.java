@@ -1,20 +1,25 @@
-/*******************************************************************************
- * Licensed to the Apache Software Foundation (ASF) under one or
- * more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to you under the
- * Apache License, Version 2.0 (the "License"); you may not use
- * this file except in compliance with the License. You may obtain
- * a copy of the License at
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0 Unless required by
- * applicable law or agreed to in writing, software distributed
- * under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions
- * and limitations under the License.
- ******************************************************************************/
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -24,9 +29,6 @@ import java.util.regex.Pattern;
 
 import jakarta.json.Json;
 import jakarta.json.JsonReaderFactory;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sling.xss.ProtectionContext;
 import org.apache.sling.xss.XSSAPI;
@@ -45,11 +47,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
-@Component(service = XSSAPI.class,
-           property = {
-                Constants.SERVICE_VENDOR + "=The Apache Software Foundation"
-           })
-
+@Component(
+        service = XSSAPI.class,
+        property = {Constants.SERVICE_VENDOR + "=The Apache Software Foundation"})
 public class XSSAPIImpl implements XSSAPI {
 
     private final Logger LOGGER = LoggerFactory.getLogger(XSSAPIImpl.class);
@@ -67,19 +67,19 @@ public class XSSAPIImpl implements XSSAPI {
 
     @Activate
     protected void activate() {
-            factory = SAXParserFactory.newInstance();
-            factory.setValidating(false);
-            factory.setNamespaceAware(true);
-            try {
-                factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-                factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-                factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            } catch (Exception e) {
-                LOGGER.error("SAX parser configuration error: " + e.getMessage(), e);
-            }
-            Map<String, Object> config = new HashMap<>();
-            config.put("org.apache.johnzon.supports-comments", true);
-            jsonReaderFactory = Json.createReaderFactory(config);
+        factory = SAXParserFactory.newInstance();
+        factory.setValidating(false);
+        factory.setNamespaceAware(true);
+        try {
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        } catch (Exception e) {
+            LOGGER.error("SAX parser configuration error: " + e.getMessage(), e);
+        }
+        Map<String, Object> config = new HashMap<>();
+        config.put("org.apache.johnzon.supports-comments", true);
+        jsonReaderFactory = Json.createReaderFactory(config);
     }
 
     @Deactivate
@@ -117,7 +117,8 @@ public class XSSAPIImpl implements XSSAPI {
     public Long getValidLong(String source, long defaultValue) {
         if (source != null && source.length() > 0) {
             try {
-                LongValidationRule ivr = new LongValidationRule( "number", ESAPI.encoder(), -9000000000000000000L, 9000000000000000000L );
+                LongValidationRule ivr =
+                        new LongValidationRule("number", ESAPI.encoder(), -9000000000000000000L, 9000000000000000000L);
                 ivr.setAllowNull(false);
                 return ivr.getValid("XSS", source);
             } catch (Exception e) {
@@ -159,7 +160,9 @@ public class XSSAPIImpl implements XSSAPI {
             }
 
             try {
-                return validator.getValidInteger("XSS", dimension, -10000, 10000, false).toString();
+                return validator
+                        .getValidInteger("XSS", dimension, -10000, 10000, false)
+                        .toString();
             } catch (Exception e) {
                 LOGGER.warn("Unable to get a valid dimension from the input.", e);
                 LOGGER.debug("Dimension input: {}", dimension);
@@ -227,13 +230,15 @@ public class XSSAPIImpl implements XSSAPI {
     /** http://www.w3.org/TR/css-syntax-3/#ident-token-diagram */
     private static final String IDENTIFIER = "-?[a-z_" + NON_ASCII + "][\\w_\\-" + NON_ASCII + "]*";
     /** http://www.w3.org/TR/css-syntax-3/#string-token-diagram */
-    private static final String STRING = "\"(?:(?!javascript\\s?:)[^\"^\\\\^\\n]|(?:\\\\\"))*\"|'(?:(?!javascript\\s?:)[^'^\\\\^\\n]|(?:\\\\'))*'";
+    private static final String STRING =
+            "\"(?:(?!javascript\\s?:)[^\"^\\\\^\\n]|(?:\\\\\"))*\"|'(?:(?!javascript\\s?:)[^'^\\\\^\\n]|(?:\\\\'))*'";
     /** http://www.w3.org/TR/css-syntax-3/#dimension-token-diagram */
     private static final String DIMENSION = NUMBER + IDENTIFIER;
     /** http://www.w3.org/TR/css-syntax-3/#percentage-token-diagram */
     private static final String PERCENT = NUMBER + "%";
     /** http://www.w3.org/TR/css-syntax-3/#function-token-diagram */
-    private static final String FUNCTION = IDENTIFIER + "\\((?:(?:" + NUMBER + ")|(?:" + IDENTIFIER + ")|(?:[\\s]*)|(?:,))*\\)";
+    private static final String FUNCTION =
+            IDENTIFIER + "\\((?:(?:" + NUMBER + ")|(?:" + IDENTIFIER + ")|(?:[\\s]*)|(?:,))*\\)";
     /** http://www.w3.org/TR/css-syntax-3/#url-unquoted-diagram */
     private static final String URL_UNQUOTED = "[^\"^'^\\(^\\)^[" + NON_ASCII + "]]*";
     /** http://www.w3.org/TR/css-syntax-3/#url-token-diagram */
@@ -259,7 +264,7 @@ public class XSSAPIImpl implements XSSAPI {
         }
 
         return defaultValue;
-   }
+    }
 
     /**
      * @see org.apache.sling.xss.XSSAPI#getValidCSSColor(String, String)
@@ -313,7 +318,11 @@ public class XSSAPIImpl implements XSSAPI {
         if (curlyIx >= 0 && (curlyIx < straightIx || straightIx < 0)) {
             try {
                 StringWriter output = new StringWriter();
-                Json.createGenerator(output).write(jsonReaderFactory.createReader(new StringReader(json)).readObject()).close();
+                Json.createGenerator(output)
+                        .write(jsonReaderFactory
+                                .createReader(new StringReader(json))
+                                .readObject())
+                        .close();
                 return output.getBuffer().toString();
             } catch (Exception e) {
                 LOGGER.warn("Unable to get valid JSON from the input.", e);
@@ -322,7 +331,11 @@ public class XSSAPIImpl implements XSSAPI {
         } else {
             try {
                 StringWriter output = new StringWriter();
-                Json.createGenerator(output).write(jsonReaderFactory.createReader(new StringReader(json)).readArray()).close();
+                Json.createGenerator(output)
+                        .write(jsonReaderFactory
+                                .createReader(new StringReader(json))
+                                .readArray())
+                        .close();
                 return output.getBuffer().toString();
             } catch (Exception e) {
                 LOGGER.warn("Unable to get valid JSON from the input.", e);

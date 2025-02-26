@@ -1,21 +1,21 @@
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- ~ Licensed to the Apache Software Foundation (ASF) under one
- ~ or more contributor license agreements.  See the NOTICE file
- ~ distributed with this work for additional information
- ~ regarding copyright ownership.  The ASF licenses this file
- ~ to you under the Apache License, Version 2.0 (the
- ~ "License"); you may not use this file except in compliance
- ~ with the License.  You may obtain a copy of the License at
- ~
- ~   http://www.apache.org/licenses/LICENSE-2.0
- ~
- ~ Unless required by applicable law or agreed to in writing,
- ~ software distributed under the License is distributed on an
- ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- ~ KIND, either express or implied.  See the License for the
- ~ specific language governing permissions and limitations
- ~ under the License.
- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl.xml;
 
 import java.util.Collections;
@@ -25,11 +25,10 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.sling.xss.impl.xml.AntiSamyRules.AntiSamyConfigLocale;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import org.apache.sling.xss.impl.xml.AntiSamyRules.AntiSamyConfigLocale;
 
 public class Tag {
     private String name;
@@ -40,13 +39,13 @@ public class Tag {
     public Tag(
             @JacksonXmlProperty(isAttribute = true, localName = "name") String name,
             @JacksonXmlProperty(isAttribute = true, localName = "action") String action,
-            @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "attribute") List<Attribute> attributeList) {
+            @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "attribute")
+                    List<Attribute> attributeList) {
         this.name = name.toLowerCase(AntiSamyConfigLocale.REGION);
         this.attributeList = Optional.ofNullable(attributeList)
                 .map(Collections::unmodifiableList)
                 .orElseGet(Collections::emptyList);
         this.action = action.toLowerCase(AntiSamyConfigLocale.REGION);
-
     }
 
     public String getAction() {
@@ -76,8 +75,7 @@ public class Tag {
     }
 
     public Map<String, Attribute> getAttributeMap() {
-        return attributeList.stream()
-                .collect(Collectors.toMap(Attribute::getName, Function.identity()));
+        return attributeList.stream().collect(Collectors.toMap(Attribute::getName, Function.identity()));
     }
 
     public Attribute getAttributeByName(String name) {

@@ -1,21 +1,21 @@
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- ~ Licensed to the Apache Software Foundation (ASF) under one
- ~ or more contributor license agreements.  See the NOTICE file
- ~ distributed with this work for additional information
- ~ regarding copyright ownership.  The ASF licenses this file
- ~ to you under the Apache License, Version 2.0 (the
- ~ "License"); you may not use this file except in compliance
- ~ with the License.  You may obtain a copy of the License at
- ~
- ~   http://www.apache.org/licenses/LICENSE-2.0
- ~
- ~ Unless required by applicable law or agreed to in writing,
- ~ software distributed under the License is distributed on an
- ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- ~ KIND, either express or implied.  See the License for the
- ~ specific language governing permissions and limitations
- ~ under the License.
- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.apache.sling.xss.impl;
 
 import java.lang.reflect.Field;
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
-
 import sun.misc.Unsafe;
 
 public class AntiSamyPolicyAdapter {
@@ -64,25 +63,29 @@ public class AntiSamyPolicyAdapter {
 
             if (CssValidator.STYLE_ATTRIBUTE_NAME.equals(attribute.getName())) {
                 // we match style tags separately
-                policyBuilder.allowAttributes(attribute.getName()).matching(cssValidator.newCssAttributePolicy())
+                policyBuilder
+                        .allowAttributes(attribute.getName())
+                        .matching(cssValidator.newCssAttributePolicy())
                         .globally();
             } else {
                 List<String> literalList = attribute.getLiterals();
                 List<Pattern> patternList = attribute.getPatternList();
 
                 if (!literalList.isEmpty() && !patternList.isEmpty()) {
-                    // if both, the patterns and the literals are not empty, the value should be checked with them with an OR and not with an AND.
-                    policyBuilder.allowAttributes(attribute.getName())
-                        .matching(matchesPatternsOrLiterals(patternList, true, literalList))
-                        .globally();
-                }
-                else if (!literalList.isEmpty()) {
-                    policyBuilder.allowAttributes(attribute.getName())
-                        .matching(true, literalList.toArray(new String[0]))
-                        .globally();
-                }
-                else if (!patternList.isEmpty()) {
-                    policyBuilder.allowAttributes(attribute.getName())
+                    // if both, the patterns and the literals are not empty, the value should be checked with them with
+                    // an OR and not with an AND.
+                    policyBuilder
+                            .allowAttributes(attribute.getName())
+                            .matching(matchesPatternsOrLiterals(patternList, true, literalList))
+                            .globally();
+                } else if (!literalList.isEmpty()) {
+                    policyBuilder
+                            .allowAttributes(attribute.getName())
+                            .matching(true, literalList.toArray(new String[0]))
+                            .globally();
+                } else if (!patternList.isEmpty()) {
+                    policyBuilder
+                            .allowAttributes(attribute.getName())
                             .matching(matchesToPatterns(patternList))
                             .globally();
                 } else {
@@ -103,16 +106,16 @@ public class AntiSamyPolicyAdapter {
 
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
-                // Tag.action
+                    // Tag.action
                 case AntiSamyActions.TRUNCATE:
                     policyBuilder.allowElements(tag.getValue().getName());
                     break;
 
-                // filter: remove tags, but keep content,
+                    // filter: remove tags, but keep content,
                 case AntiSamyActions.FILTER:
                     break;
 
-                // remove: remove tag and contents
+                    // remove: remove tag and contents
                 case AntiSamyActions.REMOVE:
                     policyBuilder.disallowElements(tag.getValue().getName());
                     break;
@@ -135,14 +138,17 @@ public class AntiSamyPolicyAdapter {
                         List<String> literalList = attribute.getLiterals();
                         List<Pattern> patternList = attribute.getPatternList();
 
-                        policyBuilder.allowAttributes(attribute.getName())
+                        policyBuilder
+                                .allowAttributes(attribute.getName())
                                 .matching(matchesPatternsOrLiterals(patternList, true, literalList))
                                 .onElements(tag.getValue().getName());
                     }
 
                     if (!styleSeen) {
-                        policyBuilder.allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
-                                .matching(cssValidator.newCssAttributePolicy()).onElements(tag.getValue().getName());
+                        policyBuilder
+                                .allowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
+                                .matching(cssValidator.newCssAttributePolicy())
+                                .onElements(tag.getValue().getName());
                     }
                     break;
 
@@ -152,7 +158,8 @@ public class AntiSamyPolicyAdapter {
         }
 
         // disallow style tag on specific elements
-        policyBuilder.disallowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
+        policyBuilder
+                .disallowAttributes(CssValidator.STYLE_ATTRIBUTE_NAME)
                 .onElements(cssValidator.getDisallowedTagNames().toArray(new String[0]));
 
         // ---------- dynamic attributes ------------
@@ -169,12 +176,13 @@ public class AntiSamyPolicyAdapter {
                 List<Pattern> regexsFromAttribute = attribute.getPatternList();
                 List<String> allowedValuesFromAttribute = attribute.getLiterals();
 
-                dynamicAttributesPolicyMap.put(attribute.getName(), newDynamicAttributePolicy(regexsFromAttribute, true, allowedValuesFromAttribute));
+                dynamicAttributesPolicyMap.put(
+                        attribute.getName(),
+                        newDynamicAttributePolicy(regexsFromAttribute, true, allowedValuesFromAttribute));
             }
         }
 
         policyFactory = policyBuilder.allowTextIn(CssValidator.STYLE_TAG_NAME).toFactory();
-
     }
 
     public PolicyFactory getHtmlCleanerPolicyFactory() {
@@ -207,7 +215,8 @@ public class AntiSamyPolicyAdapter {
         };
     }
 
-    private static Predicate<String> matchesPatternsOrLiterals(List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
+    private static Predicate<String> matchesPatternsOrLiterals(
+            List<Pattern> patternList, boolean ignoreCase, List<String> literalList) {
         return new Predicate<String>() {
             @Override
             public boolean test(String s) {
@@ -218,11 +227,15 @@ public class AntiSamyPolicyAdapter {
         };
     }
 
-    public AttributePolicy newDynamicAttributePolicy(final List<Pattern> patternList, final boolean ignoreCase, final List<String> literalList) {
+    public AttributePolicy newDynamicAttributePolicy(
+            final List<Pattern> patternList, final boolean ignoreCase, final List<String> literalList) {
         return new AttributePolicy() {
             @Override
             public @Nullable String apply(String elementName, String attributeName, String value) {
-                return matchesPatternsOrLiterals(patternList, ignoreCase, literalList).test(value) ? value : null;
+                return matchesPatternsOrLiterals(patternList, ignoreCase, literalList)
+                                .test(value)
+                        ? value
+                        : null;
             }
         };
     }
