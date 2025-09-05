@@ -18,7 +18,10 @@
  */
 package org.apache.sling.xss.impl;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -247,13 +250,20 @@ public class AntiSamyPolicyAdapter {
             Field guards = HtmlPolicyBuilder.class.getDeclaredField("ATTRIBUTE_GUARDS");
 
             // although it looks distasteful, the 'sun.misc.Unsafe' approach is the only one that
-            // works with Java 8 through 17 .
+            // works with Java 8 through 21
             Field f = Unsafe.class.getDeclaredField("theUnsafe");
             f.setAccessible(true);
             Unsafe unsafe = (Unsafe) f.get(null);
 
             // required to be able to get the static field base
-            unsafe.ensureClassInitialized(HtmlPolicyBuilder.class);
+            try {
+                unsafe.ensureClassInitialized(HtmlPolicyBuilder.class);
+            } catch (NoSuchMethodError uoe) {
+                // fallback for Java 22+, see https://bugs.openjdk.org/browse/JDK-8316160
+                Lookup lookup = MethodHandles.lookup();
+                Method ensureInitialized = Lookup.class.getDeclaredMethod("ensureInitialized", Class.class);
+                ensureInitialized.invoke(lookup, HtmlPolicyBuilder.class);
+            }
 
             Object fieldBase = unsafe.staticFieldBase(guards);
             long fieldOffset = unsafe.staticFieldOffset(guards);
