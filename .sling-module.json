@@ -1,8 +1,5 @@
 {
   "jenkins": {
-    "jdks": [17, 21, 25],
-    "operatingSystems": [
-      "linux"
-    ]
+    "jdks": [17, 21]
   }
 }
