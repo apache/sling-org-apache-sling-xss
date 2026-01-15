@@ -109,16 +109,16 @@ public class AntiSamyPolicyAdapter {
 
             String tagAction = tag.getValue().getAction();
             switch (tagAction) {
-                    // Tag.action
+                // Tag.action
                 case AntiSamyActions.TRUNCATE:
                     policyBuilder.allowElements(tag.getValue().getName());
                     break;
 
-                    // filter: remove tags, but keep content,
+                // filter: remove tags, but keep content,
                 case AntiSamyActions.FILTER:
                     break;
 
-                    // remove: remove tag and contents
+                // remove: remove tag and contents
                 case AntiSamyActions.REMOVE:
                     policyBuilder.disallowElements(tag.getValue().getName());
                     break;
