@@ -115,6 +115,10 @@
                     <groupId>xml-apis</groupId>
                     <artifactId>xml-apis-ext</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
