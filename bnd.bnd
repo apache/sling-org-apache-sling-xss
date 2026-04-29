@@ -8,8 +8,6 @@ Import-Package: !bsh, \
                 !sun.misc, \
                 !android.os, \
                 !org.apache.bcel.*, \
-                !org.apache.log4j.spi, \
-                !org.apache.log4j.xml, \
                 !org.w3c.dom, \
                 !org.w3c.dom.*, \
                 !org.apache.avalon.framework.logger, \
@@ -23,7 +21,6 @@ Import-Package: !bsh, \
                 !org.apache.tools.ant.taskdefs, \
                 !org.apache.xml.resolver.*, \
                 !org.apache.xmlgraphics.java2d.color, \
-                !org.apache.log, \
                 !org.owasp.esapi.*, \
                 !org.owasp.validator.*, \
                 !org.xml.sax, \
@@ -39,7 +36,6 @@ Private-Package: org.apache.sling.xss.impl, \
                  org.w3c.css.sac, \
                  org.apache.commons.beanutils.*, \
                  org.apache.commons.configuration.*, \
-                 org.apache.commons.logging.impl, \
                  org.owasp.esapi.*;-split-package:=merge-first, \
                  org.owasp.validator.*, \
                  org.owasp.shim;-split-package:=merge-first, \
