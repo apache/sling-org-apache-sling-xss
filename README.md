@@ -11,4 +11,62 @@ The Apache Sling XSS Bundle provides two services for escaping and filtering XSS
 1. org.apache.sling.xss.XSSAPI
 2. org.apache.sling.xss.XSSFilter
 
-Please check the JavaDoc of each service to find out what methods they provide.
+See the JavaDoc of each service for the complete API surface.
+
+## Runtime and implementation notes
+
+- Requires Java 11+ (the project is also built in CI with newer JDKs, including Java 25).
+- Uses OSGi R7 Declarative Services.
+- Uses OWASP Java Encoder and a custom AntiSamy XML policy parser.
+- Uses `owasp-java-html-sanitizer` for HTML sanitization.
+- Embeds ESAPI, Batik CSS, and HTML sanitizer packages as private bundle packages to avoid OSGi import conflicts.
+- Excludes legacy/conflicting transitive logging dependencies such as `commons-logging` and does not depend on Log4j 1.x.
+
+## Build and test
+
+```bash
+# Build and package (skip tests)
+mvn clean package -DskipTests
+
+# Full build with tests
+mvn clean verify
+
+# Run all tests
+mvn test
+
+# Run a single test class
+mvn test -Dtest=XSSAPIImplTest
+
+# Run a single test method
+mvn test -Dtest=XSSAPIImplTest#testGetValidHref
+
+# Check / apply formatting
+mvn spotless:check
+mvn spotless:apply
+
+# OSGi baseline check
+mvn verify -Pbaseline
+```
+
+## Repository layout
+
+```text
+src/
+  main/
+    appended-resources/
+    java/
+      org/apache/sling/xss/          # Public API
+      org/apache/sling/xss/impl/     # OSGi service implementations
+      org/apache/sling/xss/impl/xml/ # AntiSamy XML policy parser
+      org/apache/sling/xss/impl/style/
+      org/apache/sling/xss/impl/status/
+      org/apache/sling/xss/impl/webconsole/
+      org/owasp/html/                # Sanitizer extensions
+    resources/
+      ESAPI.properties
+      validation.properties
+      SLING-INF/
+  test/
+    java/
+    resources/
+```
