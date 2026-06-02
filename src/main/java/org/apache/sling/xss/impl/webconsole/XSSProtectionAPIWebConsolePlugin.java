@@ -114,15 +114,16 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
         } else {
             try {
                 PrintWriter printWriter = response.getWriter();
-                printWriter.printf(LINK_TAG, consoleRoot + RES_URI_XSS_CSS);
-                printWriter.printf(SCRIPT_TAG, consoleRoot + RES_URI_XSS_JS);
+                String escapedConsoleRoot = StringEscapeUtils.escapeHtml4(consoleRoot);
+                printWriter.printf(LINK_TAG, escapedConsoleRoot + RES_URI_XSS_CSS);
+                printWriter.printf(SCRIPT_TAG, escapedConsoleRoot + RES_URI_XSS_JS);
                 printWriter.println("<div id='xss-tabs'>");
                 printWriter.println("<ul>");
                 printWriter.println("<li id='blocked-tab'><a href='#blocked'><span>Status</span></a></li>");
                 if (xssFilter != null) {
                     printWriter.println(String.format(
                             "<li id='config-tab'><a href='%s'><span>Active Configuration</span></a></li>",
-                            consoleRoot + URI_CONFIG_XHR));
+                            escapedConsoleRoot + URI_CONFIG_XHR));
                 }
                 printWriter.println("</ul>");
                 printWriter.println("<div id='blocked'>");
@@ -182,10 +183,11 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
         if (antiSamyPolicy != null) {
             try {
                 PrintWriter printWriter = response.getWriter();
-                printWriter.printf(SCRIPT_TAG, consoleRoot + RES_URI_CONFIG_JS);
+                String escapedConsoleRoot = StringEscapeUtils.escapeHtml4(consoleRoot);
+                printWriter.printf(SCRIPT_TAG, escapedConsoleRoot + RES_URI_CONFIG_JS);
                 printWriter.write("<div id='config'>");
-                printWriter.printf(LINK_TAG, consoleRoot + RES_URI_PRETTIFY_CSS);
-                printWriter.printf(SCRIPT_TAG, consoleRoot + RES_URI_PRETTIFY_JS);
+                printWriter.printf(LINK_TAG, escapedConsoleRoot + RES_URI_PRETTIFY_CSS);
+                printWriter.printf(SCRIPT_TAG, escapedConsoleRoot + RES_URI_PRETTIFY_JS);
                 printWriter.write("<p class='statline ui-state-highlight'>The current AntiSamy configuration ");
                 if (antiSamyPolicy.isEmbedded()) {
                     printWriter.write("is the default one embedded in the org.apache.sling.xss bundle.");
