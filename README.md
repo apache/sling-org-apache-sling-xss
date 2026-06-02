@@ -20,6 +20,7 @@ See the JavaDoc of each service for the complete API surface.
 - Uses OWASP Java Encoder and a custom AntiSamy XML policy parser.
 - Uses `owasp-java-html-sanitizer` for HTML sanitization.
 - Embeds ESAPI, Batik CSS, and HTML sanitizer packages as private bundle packages to avoid OSGi import conflicts.
+- Includes optional invalid-href metrics integration via Sling Commons Metrics.
 - Excludes legacy/conflicting transitive logging dependencies such as `commons-logging` and does not depend on Log4j 1.x.
 
 ## Build and test
@@ -40,12 +41,18 @@ mvn test -Dtest=XSSAPIImplTest
 # Run a single test method
 mvn test -Dtest=XSSAPIImplTest#testGetValidHref
 
+# Run policy parser / sanitizer regression tests
+mvn test -Dtest=AntiSamyPolicyWithAdditionalGlobalAndDynamicConditionsTest
+
 # Check / apply formatting
 mvn spotless:check
 mvn spotless:apply
 
 # OSGi baseline check
 mvn verify -Pbaseline
+
+# Generate coverage report
+mvn verify jacoco:report
 ```
 
 ## Repository layout
@@ -54,19 +61,23 @@ mvn verify -Pbaseline
 src/
   main/
     appended-resources/
+      META-INF/
     java/
       org/apache/sling/xss/          # Public API
       org/apache/sling/xss/impl/     # OSGi service implementations
       org/apache/sling/xss/impl/xml/ # AntiSamy XML policy parser
-      org/apache/sling/xss/impl/style/
-      org/apache/sling/xss/impl/status/
-      org/apache/sling/xss/impl/webconsole/
+      org/apache/sling/xss/impl/style/      # CSS validation via Batik
+      org/apache/sling/xss/impl/status/     # Runtime status service
+      org/apache/sling/xss/impl/webconsole/ # Web console plugin
       org/owasp/html/                # Sanitizer extensions
     resources/
       ESAPI.properties
       validation.properties
       SLING-INF/
+      webconsole/
   test/
     java/
-    resources/
+      org/apache/sling/xss/impl/     # XSS API/filter/sanitizer tests
+      org/apache/sling/xss/impl/xml/ # XML policy parser tests
+    resources/                       # AntiSamy XML fixtures and test logging config
 ```
