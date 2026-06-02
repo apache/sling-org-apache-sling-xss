@@ -102,3 +102,10 @@ pom.xml
 - `ESAPI.properties` and `validation.properties` lack Apache license headers by design; they are RAT-excluded in `pom.xml`.
 - `AntiSamyPolicyAdapter` intentionally uses `sun.misc.Unsafe` plus a Java 22+ fallback path to clear html-sanitizer attribute guards across JDK versions; avoid refactoring this blindly.
 - OSGi baseline comparison runs against the last released artifact. A binary-incompatible change without a version bump will fail `mvn verify -Pbaseline`.
+
+# Security
+
+<!-- sling-security-default:start -->
+The threat model for this project is https://github.com/apache/sling/blob/master/docs/threat-model.md .
+<!-- sling-security-default:end -->
+
