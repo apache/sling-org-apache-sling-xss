@@ -59,9 +59,9 @@ src/
       SLING-INF/                     # Sling resource definitions
       webconsole/                    # Web console static assets
   test/
-    java/org/apache/sling/xss/impl/ # JUnit 5 tests for XSS API/filter/sanitizer behavior
+    java/org/apache/sling/xss/impl/ # JUnit 5 tests for XSS API/filter/sanitizer/status behavior
     java/org/apache/sling/xss/impl/xml/ # XML policy parser tests
-    resources/                       # AntiSamy XML config fixtures used by tests
+    resources/                       # AntiSamy XML fixtures + test logging config
 bnd.bnd                              # OSGi bundle manifest overrides (private package embedding)
 pom.xml
 ```
@@ -75,6 +75,7 @@ pom.xml
 - ESAPI, Batik, and owasp-html-sanitizer are embedded via `bnd.bnd` private packages — do not add OSGi `Import-Package` for them.
 - Invalid href metrics are emitted via `XSSMetricsService` and `org.apache.sling.commons.metrics` when a `MetricsService` is available (optional dynamic DS reference).
 - In the web console plugin, always HTML-escape request-derived values (for example `consoleRoot`) before interpolating into markup (`StringEscapeUtils.escapeHtml4`).
+- Keep optional metrics wiring optional at runtime (`resolution:=optional` in `bnd.bnd` for Sling metrics packages).
 - Formatting is enforced by Spotless (inherited from `sling-bundle-parent`). Run `mvn spotless:apply` before committing.
 - 4-space indentation, no wildcard imports in non-generated code.
 - License header required on every source file (enforced by Apache RAT).
@@ -88,10 +89,10 @@ pom.xml
 
 # Testing Guidelines
 
-- Framework: JUnit 5 (`junit-jupiter` 5.8.2) + Mockito 4 + Sling Mock (`sling-mock.junit5`).
+- Framework: JUnit 5 (`junit-jupiter` 5.8.2) + Mockito 4.11 + Sling Mock (`sling-mock.junit5` 3.0.0).
 - Test files live in `src/test/java/org/apache/sling/xss/impl/`.
 - XML parser tests live in `src/test/java/org/apache/sling/xss/impl/xml/`.
-- AntiSamy XML policy fixtures live in `src/test/resources/` (e.g., `configWithoutHref.xml`, `configWithAdditionalGlobalAndDynamicConditions.xml`, `configWithoutDifferentCaseDuplicateLiterals.xml`).
+- AntiSamy XML policy fixtures live in `src/test/resources/` (e.g., `configWithoutHref.xml`, `configWithAdditionalGlobalAndDynamicConditions.xml`, `configWithoutDifferentCaseDuplicateLiterals.xml`) and test logging config is in `src/test/resources/logging.properties`.
 - JaCoCo coverage is scoped to `org/apache/sling/xss/**` only (excludes embedded third-party classes).
 - Run coverage: `mvn verify` then open `target/site/jacoco/index.html`.
 
@@ -99,6 +100,7 @@ pom.xml
 
 - ESAPI classes are embedded (unpacked from the ESAPI jar during `prepare-package`). Changes to the ESAPI version may require updating `bnd.bnd` private-package exclusions.
 - `commons-logging`, `commons-collections`, `commons-lang`, and `xml-apis` are explicitly excluded from ESAPI/Batik transitive deps to avoid OSGi conflicts — do not re-introduce them.
+- The runtime intentionally avoids Log4j 1.x; keep transitive logging dependencies constrained to SLF4J-compatible paths.
 - The `sling-org-apache-sling-xss` artifact itself is excluded from `sling-mock.junit5` in test scope to prevent stale OSGi metadata from older releases interfering with tests.
 - `ESAPI.properties` and `validation.properties` lack Apache license headers by design; they are RAT-excluded in `pom.xml`.
 - `AntiSamyPolicyAdapter` intentionally uses `sun.misc.Unsafe` plus a Java 22+ fallback path to clear html-sanitizer attribute guards across JDK versions; avoid refactoring this blindly.
