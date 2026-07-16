@@ -21,6 +21,7 @@ See the JavaDoc of each service for the complete API surface.
 - Uses `owasp-java-html-sanitizer` for HTML sanitization.
 - Embeds ESAPI, Batik CSS, and HTML sanitizer packages as private bundle packages to avoid OSGi import conflicts.
 - Includes optional invalid-href metrics integration via Sling Commons Metrics.
+- Web console rendering escapes request-derived values (for example `consoleRoot`) before interpolation to prevent XSS in the plugin UI.
 - Excludes legacy/conflicting transitive logging dependencies such as `commons-logging` and does not depend on Log4j 1.x.
 
 ## Build and test
