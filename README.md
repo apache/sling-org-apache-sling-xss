@@ -6,23 +6,27 @@
 
 This module is part of the [Apache Sling](https://sling.apache.org) project.
 
-The Apache Sling XSS Bundle provides two services for escaping and filtering XSS-prone user submitted content:
+The Apache Sling XSS Bundle provides two services for escaping and filtering XSS-prone user-submitted content:
 
 1. org.apache.sling.xss.XSSAPI
 2. org.apache.sling.xss.XSSFilter
 
-See the JavaDoc of each service for the complete API surface.
+It also exposes `ProtectionContext` for context-aware escaping behavior.
+
+See the JavaDoc for the complete API surface.
 
 ## Runtime and implementation notes
 
 - Requires Java 11+ (the project is also built in CI with newer JDKs, including Java 25).
 - Uses OSGi R7 Declarative Services.
-- Uses OWASP Java Encoder and a custom AntiSamy XML policy parser.
+- Uses OWASP Java Encoder and a custom Jackson-based AntiSamy XML policy parser.
 - Uses `owasp-java-html-sanitizer` for HTML sanitization.
 - Embeds ESAPI, Batik CSS, and HTML sanitizer packages as private bundle packages to avoid OSGi import conflicts.
 - Includes optional invalid-href metrics integration via Sling Commons Metrics.
+- Keeps Sling metrics package imports optional at runtime.
 - Web console rendering escapes request-derived values (for example `consoleRoot`) before interpolation to prevent XSS in the plugin UI.
 - Excludes legacy/conflicting transitive logging dependencies such as `commons-logging` and does not depend on Log4j 1.x.
+- Uses a JDK-version-aware sanitizer adapter path to support both legacy and newer JDK behavior.
 
 ## Build and test
 
@@ -59,16 +63,20 @@ mvn verify jacoco:report
 ## Repository layout
 
 ```text
+bnd.bnd                               # OSGi bundle manifest overrides (private package embedding)
+pom.xml
 src/
   main/
     appended-resources/
       META-INF/
+        LICENSE
+        NOTICE
     java/
       org/apache/sling/xss/          # Public API
       org/apache/sling/xss/impl/     # OSGi service implementations
       org/apache/sling/xss/impl/xml/ # AntiSamy XML policy parser
       org/apache/sling/xss/impl/style/      # CSS validation via Batik
-      org/apache/sling/xss/impl/status/     # Runtime status service
+      org/apache/sling/xss/impl/status/     # Web console status service
       org/apache/sling/xss/impl/webconsole/ # Web console plugin
       org/owasp/html/                # Sanitizer extensions
     resources/
