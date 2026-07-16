@@ -74,6 +74,7 @@ pom.xml
 - Public API (`org.apache.sling.xss`) is versioned via `@Version` in `package-info.java`; increment according to OSGi semantic versioning when changing interfaces.
 - ESAPI, Batik, and owasp-html-sanitizer are embedded via `bnd.bnd` private packages — do not add OSGi `Import-Package` for them.
 - Invalid href metrics are emitted via `XSSMetricsService` and `org.apache.sling.commons.metrics` when a `MetricsService` is available (optional dynamic DS reference).
+- In the web console plugin, always HTML-escape request-derived values (for example `consoleRoot`) before interpolating into markup (`StringEscapeUtils.escapeHtml4`).
 - Formatting is enforced by Spotless (inherited from `sling-bundle-parent`). Run `mvn spotless:apply` before committing.
 - 4-space indentation, no wildcard imports in non-generated code.
 - License header required on every source file (enforced by Apache RAT).
@@ -108,4 +109,3 @@ pom.xml
 <!-- sling-security-default:start -->
 The threat model for this project is https://github.com/apache/sling/blob/master/docs/threat-model.md .
 <!-- sling-security-default:end -->
-
