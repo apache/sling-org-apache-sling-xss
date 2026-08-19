@@ -119,6 +119,7 @@ public class XSSFilterImpl implements XSSFilter {
             "(?:(?:" + UNRESERVED_CHARACTERS + ")|(?:" + PCT_ENCODED + ")|(?:" + SUB_DELIMS + "))*";
     public static final String AUTHORITY = "(?:" + USER_INFO + "@)?" + HOST + "(?::" + PORT + ")?";
     public static final String SCHEME_PATTERN = "(?!\\s*javascript)\\p{L}[\\p{L}\\p{N}+.\\-]*";
+    private static final String JAVASCRIPT_SCHEME = "javascript:";
     public static final String FRAGMENT = "(?:" + PCHAR + "|/|\\?)*";
     public static final String QUERY = "(?:" + PCHAR + "|/|\\?)*";
     public static final String SEGMENT_NZ = "(?:" + PCHAR + ")+";
@@ -195,8 +196,6 @@ public class XSSFilterImpl implements XSSFilter {
     @Reference
     private XSSStatusService statusService;
 
-    private static final String COUNTER_INVALID_HREFS = "xss.invalid_hrefs";
-
     @Override
     public boolean check(final ProtectionContext context, final String src) {
         final XSSFilterRule ctx = this.getFilterRule(context);
@@ -227,6 +226,10 @@ public class XSSFilterImpl implements XSSFilter {
         }
         try {
             String decodedURL = URLDecoder.decode(url, StandardCharsets.UTF_8.name());
+            if (hasJavaScriptSchemeAfterBrowserParsing(decodedURL)) {
+                reportInvalidUrl(url);
+                return false;
+            }
             String unicodeUnescapedUrl = UNICODE_UNESCAPER.translate(decodedURL);
             String urlToValidate;
             if (unicodeUnescapedUrl.equals(decodedURL)) {
@@ -254,6 +257,117 @@ public class XSSFilterImpl implements XSSFilter {
         });
     }
 
+    private static boolean hasJavaScriptSchemeAfterBrowserParsing(@NotNull String url) {
+        String canonicalUrl = canonicalizeForBrowserSchemeParsing(url);
+        return StringUtils.startsWithIgnoreCase(canonicalUrl, JAVASCRIPT_SCHEME);
+    }
+
+    private static String canonicalizeForBrowserSchemeParsing(@NotNull String url) {
+        String htmlAttributeValue = decodeHtmlCharacterReferencesOnce(url);
+        String strippedUrl = stripLeadingAndTrailingC0ControlOrSpace(htmlAttributeValue);
+        return removeAsciiTabOrNewline(strippedUrl);
+    }
+
+    private static String decodeHtmlCharacterReferencesOnce(@NotNull String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (character == '&') {
+                int nextIndex = decodeHtmlCharacterReferenceAt(value, index, result);
+                if (nextIndex > index) {
+                    index = nextIndex - 1;
+                    continue;
+                }
+            }
+            result.append(character);
+        }
+        return result.toString();
+    }
+
+    private static int decodeHtmlCharacterReferenceAt(@NotNull String value, int start, @NotNull StringBuilder result) {
+        if (value.startsWith("&Tab;", start)) {
+            result.append('\t');
+            return start + 5;
+        }
+        if (value.startsWith("&NewLine;", start)) {
+            result.append('\n');
+            return start + 9;
+        }
+        if (value.startsWith("&colon;", start)) {
+            result.append(':');
+            return start + 7;
+        }
+        if (start + 2 < value.length() && value.charAt(start + 1) == '#') {
+            return decodeNumericCharacterReferenceAt(value, start, result);
+        }
+        return -1;
+    }
+
+    private static int decodeNumericCharacterReferenceAt(
+            @NotNull String value, int start, @NotNull StringBuilder result) {
+        int index = start + 2;
+        int radix = 10;
+        if (index < value.length() && (value.charAt(index) == 'x' || value.charAt(index) == 'X')) {
+            radix = 16;
+            index++;
+        }
+
+        int digitsStart = index;
+        while (index < value.length() && Character.digit(value.charAt(index), radix) != -1) {
+            index++;
+        }
+        if (index == digitsStart) {
+            return -1;
+        }
+
+        int codePoint;
+        try {
+            codePoint = Integer.parseUnsignedInt(value.substring(digitsStart, index), radix);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+        if (!Character.isValidCodePoint(codePoint)) {
+            return -1;
+        }
+
+        if (index < value.length() && value.charAt(index) == ';') {
+            index++;
+        }
+        result.appendCodePoint(codePoint);
+        return index;
+    }
+
+    private static String stripLeadingAndTrailingC0ControlOrSpace(@NotNull String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end && isC0ControlOrSpace(value.charAt(start))) {
+            start++;
+        }
+        while (end > start && isC0ControlOrSpace(value.charAt(end - 1))) {
+            end--;
+        }
+        return value.substring(start, end);
+    }
+
+    private static String removeAsciiTabOrNewline(@NotNull String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (!isAsciiTabOrNewline(character)) {
+                result.append(character);
+            }
+        }
+        return result.toString();
+    }
+
+    private static boolean isC0ControlOrSpace(char character) {
+        return character <= ' ';
+    }
+
+    private static boolean isAsciiTabOrNewline(char character) {
+        return character == '\t' || character == '\n' || character == '\r';
+    }
+
     private boolean runHrefValidation(@NotNull String url) {
         // Same logic as in org.owasp.validator.html.scan.MagicSAXFilter.startElement()
         String urlLowerCase = url.toLowerCase();
@@ -276,10 +390,14 @@ public class XSSFilterImpl implements XSSFilter {
             }
         }
         if (!isValid) {
-            statusService.reportInvalidUrl(url);
-            Optional.ofNullable(metricsService).ifPresent(service -> service.invalidHref());
+            reportInvalidUrl(url);
         }
         return isValid;
+    }
+
+    private void reportInvalidUrl(@NotNull String url) {
+        statusService.reportInvalidUrl(url);
+        Optional.ofNullable(metricsService).ifPresent(service -> service.invalidHref());
     }
 
     @Activate

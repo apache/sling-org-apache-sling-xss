@@ -435,6 +435,21 @@ public class XSSAPIImplTest {
             {"my/jcr:content/this path has spaces", "my/jcr:content/this%20path%20has%20spaces"},
             {"\" onClick=ugly", "%22%20onClick=ugly"},
             {"javascript:ugly", ""},
+            {"java&Tab;script:void(document.body.dataset.executed=1)", ""},
+            {"java&NewLine;script:void(document.body.dataset.executed=1)", ""},
+            {"java&#9;script:void(document.body.dataset.executed=1)", ""},
+            {"java&#x0A;script:void(document.body.dataset.executed=1)", ""},
+            {"java&Tab;script&colon;void(document.body.dataset.executed=1)", ""},
+            {"java\rscript:void(document.body.dataset.executed=1)", ""},
+            {"\u0001javascript:void(document.body.dataset.executed=1)", ""},
+            {
+                "java&amp;Tab;script:void(document.body.dataset.executed=1)",
+                "java&amp;Tab;script:void(document.body.dataset.executed=1)"
+            },
+            {
+                "java&#38;Tab;script:void(document.body.dataset.executed=1)",
+                "java&#38;Tab;script:void(document.body.dataset.executed=1)"
+            },
             {"http://localhost:4502", "http://localhost:4502"},
             {"http://localhost:4502/test", "http://localhost:4502/test"},
             {"http://localhost:4502/jcr:content/test", "http://localhost:4502/jcr:content/test"},

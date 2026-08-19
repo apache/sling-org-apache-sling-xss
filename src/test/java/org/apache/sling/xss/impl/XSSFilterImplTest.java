@@ -55,6 +55,15 @@ public class XSSFilterImplTest {
     static List<Object[]> dataForValidHref() {
         List<Object[]> testData = new ArrayList<>();
         testData.add(new Object[] {"javascript:alert(1)", false});
+        testData.add(new Object[] {"java&Tab;script:void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"java&NewLine;script:void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"java&#9;script:void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"java&#x0A;script:void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"java&Tab;script&colon;void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"java\rscript:void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"\u0001javascript:void(document.body.dataset.executed=1)", false});
+        testData.add(new Object[] {"java&amp;Tab;script:void(document.body.dataset.executed=1)", true});
+        testData.add(new Object[] {"java&#38;Tab;script:void(document.body.dataset.executed=1)", true});
         testData.add(new Object[] {"", true});
         testData.add(new Object[] {
             "%26%23x6a%3b%26%23x61%3b%26%23x76%3b%26%23x61%3b%26%23x73%3b%26%23x63%3b%26%23x72%3b%26%23x69%3b%26%23x70%3b%26%23x74%3b%26%23x3a%3balert%281%29",
