@@ -95,6 +95,9 @@ public class XSSFilterImplTest {
         return testData;
     }
 
+    private static final String FALLBACK_TRIGGERING_CONTENT =
+            "<a href=\"https://sling.apache.org" + "/a".repeat(1300) + ".\">Click</a>";
+
     public SlingContext context = new SlingContext(ResourceResolverType.JCR_MOCK);
 
     private XSSFilterImpl xssFilter;
@@ -176,10 +179,43 @@ public class XSSFilterImplTest {
     }
 
     @Test
+    public void testFallbackHrefRegexesDoNotBacktrackPolynomially() {
+        // quadratic variant: scheme prefix, long run of characters shared by the overlapping
+        // quantified character classes, then a character outside all of them
+        String quadratic = "http://" + "a".repeat(100000) + "^";
+        // cubic variant: mailto scheme, letters, then a long run of spaces (matched by both the
+        // middle character class and the trailing whitespace quantifier), then a non-matching char
+        String cubic = "mailto:" + "a".repeat(20000) + " ".repeat(40000) + "^";
+        for (String input : new String[] {quadratic, cubic}) {
+            long start = System.nanoTime();
+            assertFalse(XSSFilterImpl.OFF_SITE_SIMPLIFIED.matcher(input).matches());
+            long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
+            // linear matching finishes in a few milliseconds; polynomial backtracking needs
+            // minutes to hours for inputs of this size
+            assertTrue(
+                    elapsedMillis < 5000,
+                    "Expected linear-time rejection of a " + input.length() + " character URL, but matching took "
+                            + elapsedMillis + "ms.");
+        }
+    }
+
+    @Test
     public void testFallbackFiltering() {
-        final String longURLContext = "<a href=\"https://sling.apache.org"
-                + "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.\">Click</a>";
-        assertEquals(longURLContext, xssFilter.filter(longURLContext));
+        assertEquals(FALLBACK_TRIGGERING_CONTENT, xssFilter.filter(FALLBACK_TRIGGERING_CONTENT));
+    }
+
+    @Test
+    public void testFallbackFilteringDoesNotAllowJavascriptHrefs() {
+        // the first anchor makes the primary sanitizer scan abort with a StackOverflowError, so the
+        // whole input (including the second and third anchors) is re-scanned with the fallback
+        // policy; the simplified fallback href patterns must not keep a javascript: URL alive
+        final String input = FALLBACK_TRIGGERING_CONTENT
+                + "<a href=\"javascript:alert(document.domain)\">plain</a>"
+                + "<a href=\"JaVaScRiPt:alert(document.domain)\">mixed case</a>";
+        final String filtered = xssFilter.filter(input);
+        assertFalse(
+                filtered.toLowerCase(java.util.Locale.ROOT).contains("javascript"),
+                "Expected the fallback sanitizer to remove javascript: hrefs, but got: " + filtered);
     }
 
     private static @NotNull InputStream getPolicyFileAsStream() {

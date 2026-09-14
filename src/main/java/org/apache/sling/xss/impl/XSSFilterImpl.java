@@ -141,10 +141,25 @@ public class XSSFilterImpl implements XSSFilter {
             "(?!\\s*javascript(?::|&colon;))" + RELATIVE_PART + "?(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
     public static final String URI = SCHEME_PATTERN + ":" + HIER_PART + "(?:\\?" + QUERY + ")?(?:#" + FRAGMENT + ")?";
 
-    static final Pattern ON_SITE_SIMPLIFIED =
-            Pattern.compile("([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" + "(\\w)+)");
-    static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*((ht|f)tp(s?)://|mailto:)"
-            + "[\\p{L}\\p{N}]+[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*(\\s)*");
+    /*
+     * The simplified patterns are only used when the primary RFC 3986-shaped regexes abort with a
+     * StackOverflowError on pathological input (see runHrefValidation and FallbackATag). A degraded
+     * fallback must never be more permissive than the primary path for scheme safety, so the same
+     * javascript-scheme guard used by RELATIVE_REF is applied here as well. The guard is
+     * case-insensitive as defense in depth for consumers that do not lower-case the value first.
+     */
+    static final Pattern ON_SITE_SIMPLIFIED = Pattern.compile("(?!\\s*(?i:javascript)(?::|&colon;))"
+            + "([\\p{L}\\p{N}\\\\\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*|\\#" + "(\\w)+)");
+    /*
+     * The quantifiers below are possessive (`*+` / `++`) on purpose: the three quantified parts overlap
+     * ([\p{L}\p{N}] is a subset of the following character class, which in turn overlaps the trailing
+     * (\s)* on space characters), so with regular greedy quantifiers a non-matching input such as
+     * "http://" + "a".repeat(n) + "^" triggers polynomial backtracking (O(n^2) and worse). Because each
+     * quantifier iteration consumes exactly one character from a character class, making them possessive
+     * does not change the accepted language - it only removes the backtracking, keeping matching linear.
+     */
+    static final Pattern OFF_SITE_SIMPLIFIED = Pattern.compile("(\\s)*+((ht|f)tp(s?)://|mailto:)"
+            + "[\\p{L}\\p{N}]++[\\p{L}\\p{N}\\p{Zs}\\.\\#@\\$%\\+&amp;;:\\-_~,\\?=/!\\*\\(\\)]*+(\\s)*+");
 
     static final Attribute FALLBACK_HREF_ATTRIBUTE = new Attribute(
             "href",

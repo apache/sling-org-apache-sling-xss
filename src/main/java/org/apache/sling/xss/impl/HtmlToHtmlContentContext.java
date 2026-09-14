@@ -87,8 +87,18 @@ public class HtmlToHtmlContentContext implements XSSFilterRule {
             log.debug(
                     "Will perform a second attempt at filtering the following input due to a StackOverflowError:\n{}",
                     input);
-            results = handler.getFallbackHtmlSanitizer().scan(input);
-            log.debug("Second attempt was successful.");
+            try {
+                results = handler.getFallbackHtmlSanitizer().scan(input);
+                log.debug("Second attempt was successful.");
+            } catch (StackOverflowError inner) {
+                // fail closed instead of letting the Error escape into application code; a
+                // SanitizedResult with an error makes filter() return an empty string and
+                // check() return false
+                log.warn(
+                        "Second filtering attempt failed with a StackOverflowError as well; rejecting the input (fail-closed).");
+                log.debug("Provided input: {}", input);
+                results = new SanitizedResult(StringUtils.EMPTY, 1);
+            }
         }
         return results;
     }

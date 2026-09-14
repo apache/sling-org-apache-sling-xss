@@ -25,6 +25,9 @@ import javax.xml.stream.XMLStreamReader;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.slf4j.Logger;
@@ -33,6 +36,12 @@ import org.slf4j.LoggerFactory;
 public class AntiSamyXmlParser {
 
     private static final String DIRECTIVE_EMBED_STYLE_SHEETS = "embedStyleSheets";
+
+    /**
+     * The directives this implementation actually enforces; {@code embedStyleSheets} is handled
+     * separately (only its safe {@code false} value is supported).
+     */
+    private static final List<String> ENFORCED_DIRECTIVES = Arrays.asList("allowDynamicAttributes", "maxInputSize");
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -49,6 +58,14 @@ public class AntiSamyXmlParser {
             logger.warn(
                     "Unsupported configuration directive {} is set to true and will be ignored",
                     DIRECTIVE_EMBED_STYLE_SHEETS);
+        }
+        List<String> ignoredDirectives = rules.getDirectivesByName().keySet().stream()
+                .filter(name -> !ENFORCED_DIRECTIVES.contains(name) && !DIRECTIVE_EMBED_STYLE_SHEETS.equals(name))
+                .collect(Collectors.toList());
+        if (!ignoredDirectives.isEmpty()) {
+            logger.warn(
+                    "The configuration directives {} are not enforced by this implementation and will be ignored",
+                    ignoredDirectives);
         }
         xmlStreamReader.close();
         return rules;
