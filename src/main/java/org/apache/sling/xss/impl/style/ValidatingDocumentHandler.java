@@ -47,6 +47,7 @@ public class ValidatingDocumentHandler implements DocumentHandler {
     private final boolean isInLine;
 
     private boolean isInSelector;
+    private boolean droppedContent;
 
     public ValidatingDocumentHandler(CssPolicy cssPolicy, boolean isInLine) {
         this.cssPolicy = cssPolicy;
@@ -57,6 +58,9 @@ public class ValidatingDocumentHandler implements DocumentHandler {
     public void startSelector(SelectorList selectors) throws CSSException {
 
         List<String> validSelectors = validateSelectors(selectors);
+        if (validSelectors.size() < selectors.getLength()) {
+            droppedContent = true;
+        }
         if (validSelectors.isEmpty()) return;
 
         StringJoiner joiner = new StringJoiner(", ", "", " {\n");
@@ -76,6 +80,7 @@ public class ValidatingDocumentHandler implements DocumentHandler {
     @Override
     public void property(String name, LexicalUnit value, boolean important) throws CSSException {
         if (!isInSelector && !isInLine) {
+            droppedContent = true;
             return;
         }
 
@@ -154,7 +159,10 @@ public class ValidatingDocumentHandler implements DocumentHandler {
             String stringValue = lexicalValueToString(value);
             value = value.getNextLexicalUnit();
             boolean isValid = validateProperty(name, stringValue);
-            if (!isValid) continue;
+            if (!isValid) {
+                droppedContent = true;
+                continue;
+            }
             validPropertyValues.add(stringValue);
         }
         return validPropertyValues;
@@ -162,6 +170,17 @@ public class ValidatingDocumentHandler implements DocumentHandler {
 
     public String getValidCss() {
         return cleanCss.toString();
+    }
+
+    /**
+     * Returns {@code true} when this handler dropped CSS content while producing the cleaned output -
+     * disallowed selectors, disallowed property values, {@code @import} rules or other at-rules. Formatting
+     * changes coming from re-serialising the parsed CSS are not reported as drops.
+     *
+     * @return {@code true} if content was dropped, {@code false} otherwise
+     */
+    public boolean hasDroppedContent() {
+        return droppedContent;
     }
 
     private boolean validateProperty(String name, String lexicalValueToString) {
@@ -263,7 +282,9 @@ public class ValidatingDocumentHandler implements DocumentHandler {
 
     @Override
     public void importStyle(String uri, SACMediaList media, String defaultNamespaceURI) throws CSSException {
-        // embedded stylesheets are not supported
+        // embedded stylesheets are not supported; record the drop so that the input is not
+        // reported as violation-free
+        droppedContent = true;
     }
 
     @Override
@@ -283,8 +304,9 @@ public class ValidatingDocumentHandler implements DocumentHandler {
 
     @Override
     public void ignorableAtRule(String atRule) throws CSSException {
-        // nothing to do
-
+        // at-rules are not part of the cleaned output; record the drop so that the input is not
+        // reported as violation-free
+        droppedContent = true;
     }
 
     @Override

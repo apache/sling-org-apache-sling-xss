@@ -26,9 +26,11 @@ import org.owasp.html.HtmlStreamEventReceiver;
 class StyleTagProcessor implements HtmlStreamEventProcessor {
 
     private final BatikCssCleaner cssCleaner;
+    private final Runnable onDroppedContent;
 
-    StyleTagProcessor(BatikCssCleaner cssCleaner) {
+    StyleTagProcessor(BatikCssCleaner cssCleaner, Runnable onDroppedContent) {
         this.cssCleaner = cssCleaner;
+        this.onDroppedContent = onDroppedContent;
     }
 
     @Override
@@ -70,7 +72,13 @@ class StyleTagProcessor implements HtmlStreamEventProcessor {
         @Override
         public void text(String taintedCss) {
             if (inStyleTag) {
-                wrapped.text(cssCleaner.cleanStylesheet(taintedCss));
+                CleanedCss cleanedCss = cssCleaner.cleanStylesheet(taintedCss);
+                if (cleanedCss.hasDroppedContent()) {
+                    // report the violation so that XSSFilter#check does not report input as clean
+                    // when filtering would strip parts of it
+                    onDroppedContent.run();
+                }
+                wrapped.text(cleanedCss.getCss());
             } else {
                 wrapped.text(taintedCss);
             }
