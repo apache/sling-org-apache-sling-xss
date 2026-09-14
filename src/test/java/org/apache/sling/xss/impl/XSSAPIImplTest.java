@@ -292,6 +292,47 @@ public class XSSAPIImplTest {
         }
     }
 
+    @Test
+    public void testGetValidJSONDeepNestingDoesNotStackOverflow() {
+        // the underlying JSON provider parses objects/arrays recursively with no built-in nesting-depth
+        // limit, so a deeply nested document used to trigger an uncaught StackOverflowError instead of
+        // falling back to the default value like any other malformed input
+        String deeplyNested = "[".repeat(5000) + "1" + "]".repeat(5000);
+        assertTimeoutPreemptively(
+                Duration.ofSeconds(5),
+                () -> assertEquals(RUBBISH_JSON, xssAPI.getValidJSON(deeplyNested, RUBBISH_JSON)));
+    }
+
+    @Test
+    public void testGetValidJSONNestingWithinStringIsNotFalselyRejected() {
+        // bracket characters inside a string value are not structural nesting and must not count
+        // towards the depth limit
+        String value = "[".repeat(5000) + "]".repeat(5000);
+        String json = "{\"a\":\"" + value + "\"}";
+        String expected = "{\"a\":\"" + value + "\"}";
+        assertEquals(expected, xssAPI.getValidJSON(json, RUBBISH_JSON));
+    }
+
+    @Test
+    public void testGetValidJSONEscapedQuoteInStringIsNotFalselyRejected() {
+        // an escaped quote inside a string value must not be mistaken for the string's closing quote -
+        // otherwise the brackets that follow it would be (wrongly) treated as structural nesting and
+        // trip the depth limit
+        String bracketRun = "[".repeat(5000) + "]".repeat(5000);
+        String json = "{\"a\":\"\\\"" + bracketRun + "\"}";
+        String result = xssAPI.getValidJSON(json, RUBBISH_JSON);
+        assertFalse(
+                RUBBISH_JSON.equals(result), "Expected the JSON to be parsed instead of falling back to the default");
+    }
+
+    @Test
+    public void testGetValidJSONMixedBracketTypesShareOneDepthCounter() {
+        // '{' and '[' must both feed the same depth counter - alternating them must trip the depth
+        // limit just as reliably as repeating a single bracket type
+        String mixedNested = "{[".repeat(600);
+        assertEquals(RUBBISH_JSON, xssAPI.getValidJSON(mixedNested, RUBBISH_JSON));
+    }
+
     @ParameterizedTest
     @MethodSource("dataForValidXML")
     public void testGetValidXML(String source, String expected) {
@@ -883,9 +924,14 @@ public class XSSAPIImplTest {
             {"<t t=\"t>test</t>", RUBBISH_XML},
             {"<t><w>xyz</w></t>", "<t><w>xyz</w></t>"},
             {"<t><w>xyz</t></w>", RUBBISH_XML},
+            // DOCTYPE declarations are rejected: DTDs enable internal entity expansion attacks
+            // (billion laughs) and are not needed for a validity check on untrusted XML
+            {"<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>", RUBBISH_XML},
             {
-                "<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>",
-                "<?xml version=\"1.0\"?><!DOCTYPE test SYSTEM \"http://nonExistentHost:1234/\"><test/>"
+                "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\">"
+                        + "<!ENTITY lol2 \"&lol;&lol;&lol;&lol;&lol;\">"
+                        + "<!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;\">]><lolz>&lol3;</lolz>",
+                RUBBISH_XML
             }
         };
     }

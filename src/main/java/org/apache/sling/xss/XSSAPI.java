@@ -157,7 +157,8 @@ public interface XSSAPI {
     /**
      * Validate an XML string
      *
-     * @param xml           the XML string to validate
+     * @param xml           the XML string to validate; if it contains a doctype statement, it will be considered
+     *  as invalid and the {@code defaultXml} value is returned.
      * @param defaultXml    the default value to use if {@code xml} is {@code null} or not valid
      * @return a valid XML string
      */

@@ -82,6 +82,7 @@ public class XSSAPIImpl implements XSSAPI {
         factory.setValidating(false);
         factory.setNamespaceAware(true);
         try {
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
@@ -340,6 +341,17 @@ public class XSSAPIImpl implements XSSAPI {
     }
 
     /**
+     * Maximum object/array nesting depth accepted by {@link #getValidJSON(String, String)}.
+     * <p>
+     * The underlying JSON provider (Johnzon, via the {@code jakarta.json} API) parses nested
+     * objects/arrays recursively and has no built-in nesting-depth limit, so a deeply nested document
+     * (e.g. {@code "[[[[...]]]]"}) triggers an uncaught {@link StackOverflowError} instead of a
+     * catchable parsing exception. {@link #exceedsMaxJsonNestingDepth(String, int)} rejects such input
+     * before it reaches the parser.
+     */
+    private static final int MAX_JSON_NESTING_DEPTH = 1000;
+
+    /**
      * @see org.apache.sling.xss.XSSAPI#getValidJSON(String, String)
      */
     @Override
@@ -350,6 +362,10 @@ public class XSSAPIImpl implements XSSAPI {
         json = json.trim();
         if ("".equals(json)) {
             return "";
+        }
+        if (exceedsMaxJsonNestingDepth(json, MAX_JSON_NESTING_DEPTH)) {
+            LOGGER.warn("Rejecting JSON input that exceeds the maximum nesting depth of {}.", MAX_JSON_NESTING_DEPTH);
+            return getValidJSON(defaultJson, "");
         }
         int curlyIx = json.indexOf("{");
         int straightIx = json.indexOf("[");
@@ -413,6 +429,56 @@ public class XSSAPIImpl implements XSSAPI {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Returns {@code true} if {@code json} contains an object/array nesting level deeper than
+     * {@code maxDepth}. Only structural {@code {}}/{@code []} characters outside of string literals are
+     * counted (backslash-escaped quotes are tracked so a string is not exited early), so a string value
+     * that merely contains bracket characters cannot trigger a false positive. This is a cheap,
+     * non-validating scan meant only to bound recursion depth before the input reaches the JSON parser;
+     * it does not otherwise check that {@code json} is well-formed.
+     *
+     * @param json the serialized JSON document to scan
+     * @param maxDepth the maximum accepted nesting depth
+     * @return {@code true} if the nesting depth exceeds {@code maxDepth}
+     */
+    private static boolean exceedsMaxJsonNestingDepth(@NotNull String json, int maxDepth) {
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
+                continue;
+            }
+            switch (c) {
+                case '"':
+                    inString = true;
+                    break;
+                case '{':
+                case '[':
+                    depth++;
+                    if (depth > maxDepth) {
+                        return true;
+                    }
+                    break;
+                case '}':
+                case ']':
+                    depth--;
+                    break;
+                default:
+                    break;
+            }
+        }
+        return false;
     }
 
     /**
