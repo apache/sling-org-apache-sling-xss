@@ -82,8 +82,18 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
     private static final String RES_URI_XSS_JS = RES_ROOT + "/xss.js";
     private static final String RES_URI_BLOCKED_JS = RES_ROOT + "/blocked.js";
     private static final String RES_URI_CONFIG_JS = RES_ROOT + "/config.js";
-    public static final String SCRIPT_TAG = "<script src='%s'></script>\n";
-    public static final String LINK_TAG = "<link rel='stylesheet' type='text/css' href='%s'>";
+    /*
+       request-derived values are interpolated into these attributes after StringEscapeUtils.escapeHtml4,
+       which encodes double quotes but NOT single quotes - the attributes must therefore be double-quoted
+    */
+    public static final String SCRIPT_TAG = "<script src=\"%s\"></script>\n";
+    public static final String LINK_TAG = "<link rel='stylesheet' type='text/css' href=\"%s\">";
+
+    /*
+       request attribute through which the Felix Web Console exposes its root path; referenced by name so
+       that this plugin keeps no wiring to the Felix Web Console APIs (see the comment on the constants above)
+    */
+    private static final String ATTR_APP_ROOT = "felix.webconsole.appRoot";
 
     @Reference(target = "(component.name=org.apache.sling.xss.impl.XSSFilterImpl)")
     private XSSFilter xssFilter;
@@ -99,8 +109,7 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         String pluginResource = request.getPathInfo();
-        String consoleRoot =
-                request.getRequestURI().substring(0, request.getRequestURI().indexOf(pluginResource));
+        String consoleRoot = getConsoleRoot(request);
         if (CSS_RESOURCES.contains(pluginResource)) {
             streamResource(response, FilenameUtils.getName(pluginResource), "text/css");
         } else if (JS_RESOURCES.contains(pluginResource)) {
@@ -122,7 +131,7 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
                 printWriter.println("<li id='blocked-tab'><a href='#blocked'><span>Status</span></a></li>");
                 if (xssFilter != null) {
                     printWriter.println(String.format(
-                            "<li id='config-tab'><a href='%s'><span>Active Configuration</span></a></li>",
+                            "<li id='config-tab'><a href=\"%s\"><span>Active Configuration</span></a></li>",
                             escapedConsoleRoot + URI_CONFIG_XHR));
                 }
                 printWriter.println("</ul>");
@@ -144,6 +153,22 @@ public class XSSProtectionAPIWebConsolePlugin extends HttpServlet {
                 LOGGER.error("Unable to generate scaffold for the webconsole plugin output.", e);
             }
         }
+    }
+
+    /**
+     * Returns the web console root path. The value is taken from the {@code felix.webconsole.appRoot} request
+     * attribute when the Felix Web Console provides it, with a fallback to the container-provided context and
+     * servlet paths.
+     *
+     * @param request the request
+     * @return the web console root path
+     */
+    private static String getConsoleRoot(HttpServletRequest request) {
+        Object appRoot = request.getAttribute(ATTR_APP_ROOT);
+        if (appRoot instanceof String) {
+            return (String) appRoot;
+        }
+        return request.getContextPath() + request.getServletPath();
     }
 
     private void streamAntiSamyConfiguration(HttpServletResponse response) {

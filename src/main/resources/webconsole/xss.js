@@ -25,15 +25,18 @@ $(document).ready(function () {
                 success: function (data) {
                     if (data && data.hrefs) {
                         if (data.hrefs.length > 0) {
-                            var rows = '';
+                            var tbody = $('#invalid-urls-rows');
+                            tbody.empty();
                             for (var i = 0; i < data.hrefs.length; i++) {
                                 var cssClass = (i % 2) === 0 ? 'even' : 'odd';
-                                rows += `<tr class="${cssClass} ui-state-default">
-                                            <td>${data.hrefs[i].href}</td>
-                                            <td>${data.hrefs[i].times}</td>
-                                        </tr>`;
+                                // the blocked hrefs are attacker-controlled: build the cells with
+                                // text() (text nodes) instead of interpolating them into markup,
+                                // so recorded payloads cannot execute in the console origin
+                                tbody.append($('<tr></tr>')
+                                        .addClass(cssClass + ' ui-state-default')
+                                        .append($('<td></td>').text(data.hrefs[i].href))
+                                        .append($('<td></td>').text(String(data.hrefs[i].times))));
                             }
-                            $('#invalid-urls-rows').html(rows);
                             var table = $('#invalid-urls');
                             table.trigger('update');
                             var sorting = [[1, 1]];
