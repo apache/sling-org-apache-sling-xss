@@ -433,11 +433,14 @@ public class XSSAPIImpl implements XSSAPI {
 
     /**
      * Returns {@code true} if {@code json} contains an object/array nesting level deeper than
-     * {@code maxDepth}. Only structural {@code {}}/{@code []} characters outside of string literals are
-     * counted (backslash-escaped quotes are tracked so a string is not exited early), so a string value
-     * that merely contains bracket characters cannot trigger a false positive. This is a cheap,
-     * non-validating scan meant only to bound recursion depth before the input reaches the JSON parser;
-     * it does not otherwise check that {@code json} is well-formed.
+     * {@code maxDepth}. Only structural {@code {}}/{@code []} characters outside of string literals and
+     * {@code //}/{@code /* *}{@code /} comments are counted (backslash-escaped quotes are tracked so a
+     * string is not exited early), so a string value or comment that merely contains bracket characters
+     * cannot trigger a false positive or mask real nesting - the {@code jsonReaderFactory} used by
+     * {@link #getValidJSON(String, String)} is configured with {@code org.apache.johnzon.supports-comments},
+     * so comments must be skipped here the same way the parser skips them. This is a cheap, non-validating
+     * scan meant only to bound recursion depth before the input reaches the JSON parser; it does not
+     * otherwise check that {@code json} is well-formed.
      *
      * @param json the serialized JSON document to scan
      * @param maxDepth the maximum accepted nesting depth
@@ -447,8 +450,23 @@ public class XSSAPIImpl implements XSSAPI {
         int depth = 0;
         boolean inString = false;
         boolean escaped = false;
+        boolean inLineComment = false;
+        boolean inBlockComment = false;
         for (int i = 0; i < json.length(); i++) {
             char c = json.charAt(i);
+            if (inLineComment) {
+                if (c == '\n') {
+                    inLineComment = false;
+                }
+                continue;
+            }
+            if (inBlockComment) {
+                if (c == '*' && i + 1 < json.length() && json.charAt(i + 1) == '/') {
+                    inBlockComment = false;
+                    i++;
+                }
+                continue;
+            }
             if (inString) {
                 if (escaped) {
                     escaped = false;
@@ -462,6 +480,15 @@ public class XSSAPIImpl implements XSSAPI {
             switch (c) {
                 case '"':
                     inString = true;
+                    break;
+                case '/':
+                    if (i + 1 < json.length() && json.charAt(i + 1) == '/') {
+                        inLineComment = true;
+                        i++;
+                    } else if (i + 1 < json.length() && json.charAt(i + 1) == '*') {
+                        inBlockComment = true;
+                        i++;
+                    }
                     break;
                 case '{':
                 case '[':

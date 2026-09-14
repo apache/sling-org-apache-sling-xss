@@ -304,6 +304,14 @@ public class XSSAPIImplTest {
     }
 
     @Test
+    public void testGetValidJSONDeepNestingAfterCommentDoesNotStackOverflow() {
+        String deeplyNested = "/*" + "]".repeat(5000) + "*/" + "[".repeat(5000) + "1" + "]".repeat(5000);
+        assertTimeoutPreemptively(
+                Duration.ofSeconds(5),
+                () -> assertEquals(RUBBISH_JSON, xssAPI.getValidJSON(deeplyNested, RUBBISH_JSON)));
+    }
+
+    @Test
     public void testGetValidJSONNestingWithinStringIsNotFalselyRejected() {
         // bracket characters inside a string value are not structural nesting and must not count
         // towards the depth limit
