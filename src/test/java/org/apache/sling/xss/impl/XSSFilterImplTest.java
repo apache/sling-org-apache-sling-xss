@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.external.URIProvider;
 import org.apache.sling.commons.metrics.Counter;
@@ -157,6 +158,29 @@ public class XSSFilterImplTest {
         context.registerService(URIProvider.class, uriProvider);
 
         testResourceBasedPolicy();
+    }
+
+    @Test
+    public void testPolicyRemovalFallsBackToEmbeddedPolicy() throws PersistenceException {
+        String policyPath = "/libs/" + XSSFilterImpl.DEFAULT_POLICY_PATH;
+        context.load().binaryFile(getPolicyFileAsStream(), policyPath);
+        // re-register in order to pick up the newly uploaded policy
+        xssFilter = context.registerInjectActivateService(new XSSFilterImpl());
+        assertFalse(xssFilter.getActivePolicy().isEmbedded(), "Expected a Resource based policy.");
+
+        Resource policyResource = context.resourceResolver().getResource(policyPath);
+        context.resourceResolver().delete(policyResource);
+        context.resourceResolver().commit();
+
+        // simulate the resource change event delivered when the policy resource is removed; this
+        // must never leave the filter without a working policy
+        xssFilter.updateActivePolicy();
+
+        XSSFilterImpl.AntiSamyPolicy antiSamyPolicy = xssFilter.getActivePolicy();
+        assertTrue(antiSamyPolicy.isEmbedded(), "Expected a fallback to the embedded policy.");
+        assertTrue(
+                xssFilter.check(XSSFilter.DEFAULT_CONTEXT, "<p>some text</p>"),
+                "Expected the filter to keep working after the policy resource was removed.");
     }
 
     @Test
