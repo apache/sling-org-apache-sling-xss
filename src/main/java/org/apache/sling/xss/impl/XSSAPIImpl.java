@@ -61,6 +61,17 @@ public class XSSAPIImpl implements XSSAPI {
 
     private static final Pattern PATTERN_AUTO_DIMENSION = Pattern.compile("['\"]?auto['\"]?");
 
+    /**
+     * Character sequences that must never appear in a multi-line comment that is embedded inside a
+     * {@code <script>} or {@code <style>} element (the context documented for
+     * {@link org.apache.sling.xss.XSSAPI#getValidMultiLineComment(String, String)}): besides the
+     * comment-end token itself, HTML raw-text parsing ends such an element at the first
+     * case-insensitive {@code </script} / {@code </style} regardless of the JavaScript/CSS comment
+     * state, and {@code <!--} / {@code -->} shift the tokenizer's script-data escape state.
+     */
+    private static final Pattern PATTERN_MULTI_LINE_COMMENT_BREAKOUT =
+            Pattern.compile("\\*/|</script|</style|<!--|-->", Pattern.CASE_INSENSITIVE);
+
     private SAXParserFactory factory;
 
     private volatile JsonReaderFactory jsonReaderFactory;
@@ -223,22 +234,48 @@ public class XSSAPIImpl implements XSSAPI {
     }
 
     private static final String NON_ASCII = "\\x00\\x08\\x0B\\x0C\\x0E-\\x1F";
-    /** http://www.w3.org/TR/css-syntax-3/#number-token-diagram */
-    private static final String NUMBER = "[+-]?[\\d]*[\\.]?[\\d]*(?:[e][+-]?\\d+)?";
+    /**
+     * http://www.w3.org/TR/css-syntax-3/#number-token-diagram
+     * <p>
+     * Must not be able to match the empty string and uses possessive quantifiers so that a
+     * backtracking regex engine can never re-split a digit run between its sub-expressions: this
+     * production is repeated inside {@link #FUNCTION}, and a nullable, ambiguous expression inside
+     * a repetition is the classic exponential-backtracking (ReDoS) shape.
+     */
+    private static final String NUMBER = "[+-]?+(?:\\d++(?:\\.\\d*+)?+|\\.\\d++)(?:e[+-]?+\\d++)?+";
     /** http://www.w3.org/TR/css-syntax-3/#hex-digit-diagram */
     private static final String HEX_DIGITS = "#[0-9a-f]*";
     /** http://www.w3.org/TR/css-syntax-3/#ident-token-diagram */
     private static final String IDENTIFIER = "-?[a-z_" + NON_ASCII + "][\\w_\\-" + NON_ASCII + "]*";
-    /** http://www.w3.org/TR/css-syntax-3/#string-token-diagram */
+    /**
+     * http://www.w3.org/TR/css-syntax-3/#string-token-diagram
+     * <p>
+     * Deliberately stricter than the CSS grammar: quote characters of either kind (raw or
+     * backslash-escaped), backslashes and the markup characters {@code <} and {@code >} are not
+     * allowed inside the string at all. A validated style token may be emitted into a single- or
+     * double-quoted {@code style} attribute or into a {@code <style>} element, and HTML parsing
+     * ignores CSS escaping: a single-quoted CSS string containing a raw {@code "} (e.g. the token
+     * {@code '" onmouseover="alert(1) '}) would otherwise close a double-quoted attribute, and
+     * {@code </style>} inside a string would end the style element. The javascript-scheme guard
+     * tolerates arbitrary embedded whitespace instead of at most one character.
+     */
     private static final String STRING =
-            "\"(?:(?!javascript\\s?:)[^\"^\\\\^\\n]|(?:\\\\\"))*\"|'(?:(?!javascript\\s?:)[^'^\\\\^\\n]|(?:\\\\'))*'";
+            "\"(?:(?!javascript\\s*:)[^\"'^\\\\\\n<>])*\"|'(?:(?!javascript\\s*:)[^\"'^\\\\\\n<>])*'";
     /** http://www.w3.org/TR/css-syntax-3/#dimension-token-diagram */
     private static final String DIMENSION = NUMBER + IDENTIFIER;
     /** http://www.w3.org/TR/css-syntax-3/#percentage-token-diagram */
     private static final String PERCENT = NUMBER + "%";
-    /** http://www.w3.org/TR/css-syntax-3/#function-token-diagram */
+    /**
+     * http://www.w3.org/TR/css-syntax-3/#function-token-diagram
+     * <p>
+     * Every iteration of the argument loop consumes at least one character and the quantifiers are
+     * possessive, so matching cost stays linear even for inputs that never close the parenthesis.
+     * The previous formulation nested nullable, ambiguous alternatives inside an unbounded
+     * repetition, which let an unterminated token like {@code "z(" + "1" * 45} pin the CPU with
+     * exponential backtracking.
+     */
     private static final String FUNCTION =
-            IDENTIFIER + "\\((?:(?:" + NUMBER + ")|(?:" + IDENTIFIER + ")|(?:[\\s]*)|(?:,))*\\)";
+            IDENTIFIER + "\\((?:[\\s,]*+(?:(?:" + NUMBER + ")|(?:" + IDENTIFIER + ")))*+[\\s,]*+\\)";
     /** http://www.w3.org/TR/css-syntax-3/#url-unquoted-diagram */
     private static final String URL_UNQUOTED = "[^\"^'^\\(^\\)^[" + NON_ASCII + "]]*";
     /** http://www.w3.org/TR/css-syntax-3/#url-token-diagram */
@@ -295,7 +332,8 @@ public class XSSAPIImpl implements XSSAPI {
      */
     @Override
     public String getValidMultiLineComment(String comment, String defaultComment) {
-        if (comment != null && !comment.contains("*/")) {
+        if (comment != null
+                && !PATTERN_MULTI_LINE_COMMENT_BREAKOUT.matcher(comment).find()) {
             return comment;
         }
         return defaultComment;
@@ -323,7 +361,7 @@ public class XSSAPIImpl implements XSSAPI {
                                 .createReader(new StringReader(json))
                                 .readObject())
                         .close();
-                return output.getBuffer().toString();
+                return escapeJsonForHtmlContext(output.getBuffer().toString());
             } catch (Exception e) {
                 LOGGER.warn("Unable to get valid JSON from the input.", e);
                 LOGGER.debug("JSON input:\n{}", json);
@@ -336,13 +374,45 @@ public class XSSAPIImpl implements XSSAPI {
                                 .createReader(new StringReader(json))
                                 .readArray())
                         .close();
-                return output.getBuffer().toString();
+                return escapeJsonForHtmlContext(output.getBuffer().toString());
             } catch (Exception e) {
                 LOGGER.warn("Unable to get valid JSON from the input.", e);
                 LOGGER.debug("JSON input:\n{}", json);
             }
         }
         return getValidJSON(defaultJson, "");
+    }
+
+    /**
+     * Escapes the characters that can break out of an HTML {@code <script>} element or an inline
+     * event handler when serialized JSON is inlined during HTML composition: {@code <} (which would
+     * otherwise allow {@code </script>} or {@code <!--} sequences inside string values) and the
+     * JavaScript line terminators U+2028/U+2029. In serialized JSON these characters can only occur
+     * inside string values, and each replacement is a JSON escape sequence for the same character,
+     * so the returned string represents exactly the same JSON value.
+     *
+     * @param json a serialized JSON document
+     * @return the equivalent JSON document, safe to inline in HTML script contexts
+     */
+    private static String escapeJsonForHtmlContext(@NotNull String json) {
+        StringBuilder sb = new StringBuilder(json.length());
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            switch (c) {
+                case '<':
+                    sb.append("\\u003C");
+                    break;
+                case '\u2028':
+                    sb.append("\\u2028");
+                    break;
+                case '\u2029':
+                    sb.append("\\u2029");
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     /**

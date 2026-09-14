@@ -71,6 +71,11 @@ public class XSSFilterImplTest {
         });
         testData.add(
                 new Object[] {"&#x6a;&#x61;&#x76;&#x61;&#x73;&#x63;&#x72;&#x69;&#x70;&#x74;&#x3a;alert(1)", false});
+        // HTML5-only named character references (unknown to unescapeHtml4) and numeric references
+        // without a terminating semicolon are still decoded by browsers before URL parsing
+        testData.add(new Object[] {"java&Tab;script:alert(1)", false});
+        testData.add(new Object[] {"java&NewLine;script&colon;alert(1)", false});
+        testData.add(new Object[] {"&#106avascript:alert(1)", false});
         testData.add(new Object[] {"%-12", false});
         testData.add(new Object[] {"/promotion/25%/", false});
         testData.add(new Object[] {"#", true});
@@ -216,6 +221,76 @@ public class XSSFilterImplTest {
         assertFalse(
                 filtered.toLowerCase(java.util.Locale.ROOT).contains("javascript"),
                 "Expected the fallback sanitizer to remove javascript: hrefs, but got: " + filtered);
+    }
+
+    @Test
+    public void testUnicodeUnescaperDecodesHtml5NamedEntitiesNotOnlyTabNewlineAndColon() {
+        // spot-check a few of the HTML5-only named references beyond &Tab;/&NewLine;/&colon; that are
+        // exercised by the javascript-scheme-bypass tests, to guard against the entity table silently
+        // losing entries or mapping to the wrong character
+        assertEquals("a(b)c/d?e", XSSFilterImpl.UNICODE_UNESCAPER.translate("a&lpar;b&rpar;c&sol;d&quest;e"));
+        assertEquals("[x]", XSSFilterImpl.UNICODE_UNESCAPER.translate("&lsqb;x&rsqb;"));
+    }
+
+    @Test
+    public void testUnicodeUnescaperNamedEntitiesAreCaseSensitive() {
+        // HTML5 named references are case-sensitive; "&tab;" (lower-case) is not a valid reference and
+        // must be left untouched, unlike "&Tab;"
+        assertEquals("&tab;", XSSFilterImpl.UNICODE_UNESCAPER.translate("&tab;"));
+        assertEquals("\t", XSSFilterImpl.UNICODE_UNESCAPER.translate("&Tab;"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperDecimalReferenceWithoutSemicolon() {
+        assertEquals("javascript", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#106avascript"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperDecimalReferenceWithSemicolon() {
+        assertEquals("javascript", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#106;avascript"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperHexReferenceWithoutSemicolon() {
+        assertEquals("Junk", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#x4Aunk"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperHexReferenceWithSemicolon() {
+        assertEquals("Junk", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#x4A;unk"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperHexReferenceConsumesTrailingHexLetters() {
+        // unlike decimal references, a hex reference without a terminating semicolon keeps consuming
+        // digits as long as they are valid hex digits - including letters a-f/A-F - so "&#x6Aa;bc" is
+        // parsed as the single hex value 0x6AA, not as 0x6A followed by the literal text "a;bc"
+        String expected = new String(Character.toChars(0x6AA)) + "bc";
+        assertEquals(expected, XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#x6Aa;bc"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperOutOfRangeCodePointDecodesToReplacementCharacter() {
+        // browsers decode a numeric reference above the maximum Unicode code point to U+FFFD rather
+        // than rejecting it
+        assertEquals("�", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#2000000;"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperOverflowingDigitsDecodeToReplacementCharacter() {
+        // a digit sequence too large to fit in an int must not throw NumberFormatException out of the
+        // translator; it is treated the same as an out-of-range code point
+        assertEquals("�", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#99999999999999;"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperIncompleteHexReferenceIsLeftLiteral() {
+        assertEquals("&#x", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#x"));
+    }
+
+    @Test
+    public void testNumericEntityUnescaperReferenceWithoutDigitsIsLeftLiteral() {
+        assertEquals("&#abc", XSSFilterImpl.NUMERIC_ENTITY_UNESCAPER.translate("&#abc"));
     }
 
     private static @NotNull InputStream getPolicyFileAsStream() {

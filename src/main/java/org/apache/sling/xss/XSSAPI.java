@@ -129,7 +129,10 @@ public interface XSSAPI {
 
     /**
      * Validate multi-line comment to be used inside a &lt;script&gt;...&lt;/script&gt; or &lt;style&gt;...&lt;/style&gt; block. Multi-line
-     * comment end block is disallowed.
+     * comment end block is disallowed, as are character sequences that would close the surrounding raw-text element or
+     * change the HTML tokenizer's script-data state (case-insensitive {@code &lt;/script}, {@code &lt;/style},
+     * {@code &lt;!--} and {@code --&gt;}), since HTML parsing ends a script or style element at the first closing tag
+     * regardless of the JavaScript/CSS comment state.
      *
      * @param comment           the comment to be used
      * @param defaultComment    a default value to use if the comment is {@code null} or not valid.
@@ -139,6 +142,11 @@ public interface XSSAPI {
 
     /**
      * Validate a JSON string
+     *
+     * <p>The returned string is re-serialized so that it stays inert when inlined into an HTML
+     * {@code <script>} element: the characters {@code <}, U+2028 and U+2029 are emitted as JSON
+     * unicode escape sequences ({@code \u003C}, {@code \u2028}, {@code \u2029}),
+     * which represent the same JSON value.</p>
      *
      * @param json          the JSON string to validate
      * @param defaultJson   the default value to use if {@code json} is {@code null} or not valid

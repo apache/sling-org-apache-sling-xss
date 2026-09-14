@@ -22,13 +22,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -37,7 +40,9 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.commons.text.translate.NumericEntityUnescaper;
+import org.apache.commons.text.translate.AggregateTranslator;
+import org.apache.commons.text.translate.CharSequenceTranslator;
+import org.apache.commons.text.translate.LookupTranslator;
 import org.apache.sling.api.resource.LoginException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -170,11 +175,123 @@ public class XSSFilterImpl implements XSSFilter {
             AntiSamyActions.REMOVE_ATTRIBUTE_ON_INVALID,
             null);
 
-    /*
-     NumericEntityEscaper is deprecated starting with version 3.6 of commons-lang3, however the indicated replacement comes from
-     commons-text, which is not an OSGi bundle
-    */
-    private static final NumericEntityUnescaper UNICODE_UNESCAPER = new NumericEntityUnescaper();
+    /**
+     * Unescapes HTML character references in a single left-to-right pass, the way a browser does when
+     * reading an attribute value: numeric references ({@code &#dd;} / {@code &#xhh;}, terminating
+     * semicolon optional, e.g. {@code "&#106avascript:alert(1)"} decodes to {@code "javascript:alert(1)"})
+     * plus named references, both the HTML 4 set known to {@link StringEscapeUtils#unescapeHtml4(String)}
+     * and the HTML5-only names that resolve to ASCII characters (e.g. {@code &Tab;}, {@code &NewLine;},
+     * {@code &colon;}). commons-text's {@code NumericEntityUnescaper} cannot be used for the numeric part:
+     * it requires the semicolon by default, and its semiColonOptional mode mis-parses decimal references
+     * followed by a hex-letter character (it reads "&#106a" as the decimal number "106a" and gives up).
+     *
+     * <p>Numeric and named decoding are combined into a single {@link AggregateTranslator} - and applied to
+     * the URL exactly once - rather than run as two sequential passes: a two-pass approach would let a
+     * character produced by the first pass be mistaken for the start of a new reference by the second pass.
+     * For example {@code "&#38;Tab;"} is, per the HTML5 spec, decoded once to the literal text
+     * {@code "&Tab;"} (a harmless ampersand followed by literal text); a browser does not re-scan that
+     * output and would never turn it into a tab character, so this implementation must not either.
+     */
+    static final CharSequenceTranslator NUMERIC_ENTITY_UNESCAPER = new Html5NumericEntityUnescaper();
+
+    static final CharSequenceTranslator UNICODE_UNESCAPER = new AggregateTranslator(
+            NUMERIC_ENTITY_UNESCAPER, StringEscapeUtils.UNESCAPE_HTML4, new LookupTranslator(html5AsciiEntities()));
+
+    private static Map<CharSequence, CharSequence> html5AsciiEntities() {
+        Map<CharSequence, CharSequence> entities = new HashMap<>();
+        entities.put("&Tab;", "\t");
+        entities.put("&NewLine;", "\n");
+        entities.put("&excl;", "!");
+        entities.put("&num;", "#");
+        entities.put("&dollar;", "$");
+        entities.put("&percnt;", "%");
+        entities.put("&apos;", "'");
+        entities.put("&lpar;", "(");
+        entities.put("&rpar;", ")");
+        entities.put("&ast;", "*");
+        entities.put("&midast;", "*");
+        entities.put("&plus;", "+");
+        entities.put("&comma;", ",");
+        entities.put("&period;", ".");
+        entities.put("&sol;", "/");
+        entities.put("&colon;", ":");
+        entities.put("&semi;", ";");
+        entities.put("&equals;", "=");
+        entities.put("&quest;", "?");
+        entities.put("&commat;", "@");
+        entities.put("&lsqb;", "[");
+        entities.put("&lbrack;", "[");
+        entities.put("&bsol;", "\\");
+        entities.put("&rsqb;", "]");
+        entities.put("&rbrack;", "]");
+        entities.put("&Hat;", "^");
+        entities.put("&lowbar;", "_");
+        entities.put("&UnderBar;", "_");
+        entities.put("&grave;", "`");
+        entities.put("&DiacriticalGrave;", "`");
+        entities.put("&lcub;", "{");
+        entities.put("&lbrace;", "{");
+        entities.put("&verbar;", "|");
+        entities.put("&vert;", "|");
+        entities.put("&VerticalLine;", "|");
+        entities.put("&rcub;", "}");
+        entities.put("&rbrace;", "}");
+        return Collections.unmodifiableMap(entities);
+    }
+
+    /**
+     * Decodes numeric character references ({@code &#dd;} / {@code &#xhh;}) the way the HTML5
+     * specification requires for attribute values: the terminating semicolon is optional and a
+     * decimal reference ends at the first non-decimal-digit character (so {@code &#106avascript}
+     * decodes to {@code javascript}).
+     */
+    private static final class Html5NumericEntityUnescaper extends CharSequenceTranslator {
+
+        @Override
+        public int translate(CharSequence input, int index, Writer writer) throws IOException {
+            int seqEnd = input.length();
+            if (input.charAt(index) != '&' || index >= seqEnd - 2 || input.charAt(index + 1) != '#') {
+                return 0;
+            }
+            int start = index + 2;
+            boolean isHex = false;
+            char firstChar = input.charAt(start);
+            if (firstChar == 'x' || firstChar == 'X') {
+                start++;
+                isHex = true;
+                if (start == seqEnd) {
+                    return 0;
+                }
+            }
+            int end = start;
+            while (end < seqEnd && isEntityDigit(input.charAt(end), isHex)) {
+                end++;
+            }
+            if (end == start) {
+                return 0;
+            }
+            int entityValue;
+            try {
+                entityValue = Integer.parseInt(input.subSequence(start, end).toString(), isHex ? 16 : 10);
+            } catch (NumberFormatException nfe) {
+                // value too large to represent: decode to the replacement character, like browsers do
+                entityValue = 0xFFFD;
+            }
+            if (entityValue > Character.MAX_CODE_POINT) {
+                entityValue = 0xFFFD;
+            }
+            writer.write(new String(Character.toChars(entityValue)));
+            boolean semiNext = end != seqEnd && input.charAt(end) == ';';
+            return (semiNext ? end + 1 : end) - index;
+        }
+
+        private static boolean isEntityDigit(char ch, boolean isHex) {
+            if (ch >= '0' && ch <= '9') {
+                return true;
+            }
+            return isHex && (ch >= 'a' && ch <= 'f' || ch >= 'A' && ch <= 'F');
+        }
+    }
 
     // Default href configuration copied from the config.xml supplied with AntiSamy
     static final Attribute DEFAULT_HREF_ATTRIBUTE = new Attribute(
@@ -245,14 +362,13 @@ public class XSSFilterImpl implements XSSFilter {
                 reportInvalidUrl(url);
                 return false;
             }
-            String unicodeUnescapedUrl = UNICODE_UNESCAPER.translate(decodedURL);
-            String urlToValidate;
-            if (unicodeUnescapedUrl.equals(decodedURL)) {
-                urlToValidate = url;
-            } else {
-                urlToValidate = unicodeUnescapedUrl;
-            }
-            urlToValidate = StringEscapeUtils.unescapeHtml4(urlToValidate);
+            String numericUnescapedUrl = NUMERIC_ENTITY_UNESCAPER.translate(decodedURL);
+            // Decode numeric and named character references in a single pass over whichever base string is
+            // chosen below: chaining two separate translate() calls would let a character produced by the
+            // first pass (e.g. the '&' decoded from "&#38;") be mistaken by the second pass for the start of
+            // a new reference, which a browser never does (see UNICODE_UNESCAPER's javadoc).
+            String baseUrl = numericUnescapedUrl.equals(decodedURL) ? url : decodedURL;
+            String urlToValidate = UNICODE_UNESCAPER.translate(baseUrl);
             return runHrefValidation(urlToValidate);
         } catch (Exception e) {
             logger.warn("Unable to validate url.", e);

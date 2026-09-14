@@ -18,6 +18,7 @@
  */
 package org.apache.sling.xss.impl;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import org.apache.sling.xss.impl.status.XSSStatusService;
 import org.apache.sling.xss.impl.xml.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -48,6 +50,7 @@ import org.osgi.framework.ServiceReference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -226,6 +229,39 @@ public class XSSAPIImplTest {
         if (result == null || !result.equals(expected)) {
             fail("Validating style token '" + source + "', expecting '" + expected + "', but got '" + result + "'");
         }
+    }
+
+    @Test
+    public void testGetValidStyleTokenBacktrackingComplexity() {
+        // an unterminated function token used to trigger exponential backtracking in the FUNCTION
+        // production of CSS_TOKEN (~45 digits were enough to pin a CPU core practically forever);
+        // validation cost must stay linear in the input length
+        StringBuilder pathological = new StringBuilder("z(").append("1".repeat(100));
+        String token = pathological.toString();
+        assertTimeoutPreemptively(
+                Duration.ofSeconds(5), () -> assertEquals(RUBBISH, xssAPI.getValidStyleToken(token, RUBBISH)));
+    }
+
+    static String[] dataForStyleTokenBacktrackingComplexity() {
+        return new String[] {
+            // digit run seasoned with '.' and a trailing exponent marker: stresses NUMBER's internal
+            // split points between its integer, fractional and exponent parts
+            "z(" + "1".repeat(50) + "." + "1".repeat(50) + "e",
+            // identifier filler: stresses the NUMBER/IDENTIFIER alternation inside FUNCTION's loop
+            "z(" + "a".repeat(100),
+            // whitespace/comma filler: stresses the outer [\s,]*+ possessive class
+            "z(" + " ,".repeat(100)
+        };
+    }
+
+    @ParameterizedTest
+    @MethodSource("dataForStyleTokenBacktrackingComplexity")
+    public void testGetValidStyleTokenBacktrackingComplexityOtherFillerShapes(String token) {
+        // same linear-cost requirement as testGetValidStyleTokenBacktrackingComplexity, but for other
+        // filler shapes (not just a plain digit run), to guard against a partial regression that
+        // only hardens one alternative
+        assertTimeoutPreemptively(
+                Duration.ofSeconds(5), () -> assertEquals(RUBBISH, xssAPI.getValidStyleToken(token, RUBBISH)));
     }
 
     @ParameterizedTest
@@ -450,6 +486,15 @@ public class XSSAPIImplTest {
                 "java&#38;Tab;script:void(document.body.dataset.executed=1)",
                 "java&#38;Tab;script:void(document.body.dataset.executed=1)"
             },
+
+            // HTML5-only named character references and semicolon-less numeric references are
+            // decoded by browsers before URL parsing and must not smuggle a javascript: scheme
+            {"java&Tab;script:alert(1)", ""},
+            {"java&NewLine;script:alert(1)", ""},
+            {"javascript&colon;alert(1)", ""},
+            {"java&Tab;script&colon;alert(1)", ""},
+            {"&#106avascript:alert(1)", ""},
+            {"&#106;avascript:alert(1)", ""},
             {"http://localhost:4502", "http://localhost:4502"},
             {"http://localhost:4502/test", "http://localhost:4502/test"},
             {"http://localhost:4502/jcr:content/test", "http://localhost:4502/jcr:content/test"},
@@ -659,8 +704,31 @@ public class XSSAPIImplTest {
             // valid strings
             {"'literal string'", "'literal string'"},
             {"\"literal string\"", "\"literal string\""},
-            {"'it\\'s here'", "'it\\'s here'"},
-            {"\"it\\\"s here\"", "\"it\\\"s here\""},
+
+            // strings must not contain quote characters, not even backslash-escaped ones: HTML
+            // parsing ignores CSS escaping, so a stray quote of the other kind breaks out of the
+            // style attribute the token is emitted into
+            {"'it\\'s here'", RUBBISH},
+            {"\"it\\\"s here\"", RUBBISH},
+            {"'\" onmouseover=\"alert(document.cookie) '", RUBBISH},
+            {"\"' onmouseover='alert(document.cookie) \"", RUBBISH},
+
+            // strings must not contain markup that could end a surrounding <style> element
+            {"'</style><script>alert(1)</script>'", RUBBISH},
+            {"\"</style><script>alert(1)</script>\"", RUBBISH},
+
+            // the javascript: guard must tolerate arbitrary whitespace
+            {"'javascript  :alert(1)'", RUBBISH},
+
+            // a backslash is excluded from the string content entirely, independent of whether it is
+            // adjacent to a quote character - e.g. a CSS hex escape like \22 is no longer accepted
+            {"'\\22 '", RUBBISH},
+            {"'back\\slash'", RUBBISH},
+
+            // HTML entities inside a string are harmless and must still be accepted: <style> raw text
+            // is never entity-decoded, so "&quot;" stays literal text and cannot break out of a
+            // surrounding attribute the way a raw quote character would
+            {"'&quot; onmouseover=alert(1)'", "'&quot; onmouseover=alert(1)'"},
 
             // invalid strings
             {"\"bad string", RUBBISH},
@@ -669,6 +737,23 @@ public class XSSAPIImplTest {
 
             // valid parenthesis
             {"rgb(255, 255, 255)", "rgb(255, 255, 255)"},
+            {"translate(10px, 20px)", "translate(10px, 20px)"},
+            {"rgba(0,0,0,.5)", "rgba(0,0,0,.5)"},
+
+            // NUMBER/IDENTIFIER handoff boundaries that any rewrite must still accept: an
+            // exponent marker with no following digits falls back to being consumed as part of the
+            // identifier/unit instead of the (failed) exponent group, and a trailing dot with no
+            // following digit is still a valid fractional NUMBER
+            {"2e2em", "2e2em"},
+            {"2epx", "2epx"},
+            {"5e-x", "5e-x"},
+            {"5.em", "5.em"},
+
+            // degenerate tokens that the old NUMBER (which could match the empty string) used to
+            // accept as a bare sign or a lone dot; NUMBER must require at least one digit now
+            {"+", RUBBISH},
+            {"-", RUBBISH},
+            {".", RUBBISH},
 
             // invalid parenthesis
             {"rgb(255, 255, 255", RUBBISH},
@@ -677,6 +762,11 @@ public class XSSAPIImplTest {
             // valid tokens
             {"url(http://example.com/test.png)", "url(http://example.com/test.png)"},
             {"url('image/test.png')", "url('image/test.png')"},
+
+            // the URL production reuses STRING, so the same quote/markup breakout protection must
+            // apply through url(...) as well
+            {"url('</style><script>alert(1)</script>')", RUBBISH},
+            {"url('\" onmouseover=\"alert(document.cookie) ')", RUBBISH},
 
             // invalid tokens
             {"color: red", RUBBISH}
@@ -713,7 +803,28 @@ public class XSSAPIImplTest {
             // Source            Expected Result
             {null, RUBBISH},
             {"blah */ hack", RUBBISH},
-            {"Valid comment", "Valid comment"}
+            // sequences that end the surrounding <script>/<style> raw-text element or shift the
+            // script-data tokenizer state must not survive validation
+            {"</script><script>alert(document.domain)//", RUBBISH},
+            {"blah </ScRiPt ><img src=x onerror=alert(1)>", RUBBISH},
+            {"</style><script>alert(1)</script>", RUBBISH},
+            {"blah </StYlE >", RUBBISH},
+            {"<!-- enters script-data-escaped state", RUBBISH},
+            {"leaves the escaped state -->", RUBBISH},
+            // a newline or tab before the tag-name-close is still a closing tag to the HTML tokenizer
+            {"blah </script\nafter", RUBBISH},
+            {"blah </style\tafter", RUBBISH},
+            {"Valid comment", "Valid comment"},
+            {"Valid /* nested comment start", "Valid /* nested comment start"},
+            // sequences that must NOT be blocked: a backslash-escaped slash is inert at the HTML
+            // tokenizer level (only a literal "</" ends the raw-text element), a bare opening tag
+            // cannot end or nest inside the raw-text element it is already inside of, and a
+            // near-miss that is one character short of an actual breakout token is not a breakout
+            {"contains <\\/script escaped slash", "contains <\\/script escaped slash"},
+            {"a bare <script> tag is not a closing tag", "a bare <script> tag is not a closing tag"},
+            {"a bare <style> tag is not a closing tag", "a bare <style> tag is not a closing tag"},
+            {"almost </scrip but not quite", "almost </scrip but not quite"},
+            {"almost <!- but not quite", "almost <!- but not quite"}
         };
     }
 
@@ -734,7 +845,28 @@ public class XSSAPIImplTest {
             {"[]", "[]"},
             {"[1,2]", "[1,2]"},
             {"[1", RUBBISH_JSON},
-            {"[{\"test\": \"test\"}]", "[{\"test\":\"test\"}]"}
+            {"[{\"test\": \"test\"}]", "[{\"test\":\"test\"}]"},
+            // values that could break out of an inline <script> element must be escaped
+            // (semantics-preserving JSON escapes)
+            {
+                "{\"a\":\"</script><script>alert(1)</script>\"}",
+                "{\"a\":\"\\u003C/script>\\u003Cscript>alert(1)\\u003C/script>\"}"
+            },
+            {"[\"</script>\"]", "[\"\\u003C/script>\"]"},
+            {"{\"a\":\"x\u2028y\u2029z\"}", "{\"a\":\"x\\u2028y\\u2029z\"}"},
+
+            // a pre-escaped '<' in the input is decoded by the JSON parser to a literal '<' and must
+            // be re-escaped on the way out, not passed through as-is
+            {"{\"a\":\"\\u003Cscript\\u003E\"}", "{\"a\":\"\\u003Cscript>\"}"},
+
+            // object keys go through the same serialized output and must be escaped too, not just
+            // string values
+            {"{\"<script>x</script>\": \"v\"}", "{\"\\u003Cscript>x\\u003C/script>\":\"v\"}"},
+
+            // '<!--' is neutralized once its '<' is escaped; a lone '-->' with no preceding '<!--'
+            // contains no '<' and is left untouched
+            {"{\"a\":\"<!-- comment\"}", "{\"a\":\"\\u003C!-- comment\"}"},
+            {"[\"-->\",\"safe\"]", "[\"-->\",\"safe\"]"}
         };
     }
 
