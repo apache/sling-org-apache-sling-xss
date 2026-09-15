@@ -45,6 +45,7 @@
 
     <properties>
         <sling.java.version>11</sling.java.version>
+        <slf4j.version>1.7.25</slf4j.version>
         <project.build.outputTimestamp>1770296655</project.build.outputTimestamp>
     </properties>
 
