@@ -249,6 +249,8 @@ public class XSSAPIImplTest {
             "z(" + "1".repeat(50) + "." + "1".repeat(50) + "e",
             // identifier filler: stresses the NUMBER/IDENTIFIER alternation inside FUNCTION's loop
             "z(" + "a".repeat(100),
+            // custom-property identifier without a closing parenthesis
+            "var(--" + "a".repeat(100),
             // whitespace/comma filler: stresses the outer [\s,]*+ possessive class
             "z(" + " ,".repeat(100)
         };
@@ -746,6 +748,18 @@ public class XSSAPIImplTest {
             // usual CSS stuff
             {"background-color", "background-color"},
             {"-moz-box-sizing", "-moz-box-sizing"},
+            {"--theme-color", "--theme-color"},
+            {"--", "--"},
+            {"--1", "--1"},
+            {"---theme", "---theme"},
+            {"auto", "auto"},
+            {"_theme", "_theme"},
+            {"-webkit-box", "-webkit-box"},
+            {"12px", "12px"},
+            {"-12px", "-12px"},
+            {".5em", ".5em"},
+            {"50%", "50%"},
+            {"1foo", "1foo"},
             {".42%", ".42%"},
             {"#fff", "#fff"},
             {"right", "right"},
@@ -788,6 +802,10 @@ public class XSSAPIImplTest {
             {"rgb(255, 255, 255)", "rgb(255, 255, 255)"},
             {"translate(10px, 20px)", "translate(10px, 20px)"},
             {"rgba(0,0,0,.5)", "rgba(0,0,0,.5)"},
+            {"var(--theme-color)", "var(--theme-color)"},
+            {"var(--1)", "var(--1)"},
+            {"var(--theme-color, blue)", "var(--theme-color, blue)"},
+            {"var( --theme-color , red )", "var( --theme-color , red )"},
 
             // NUMBER/IDENTIFIER handoff boundaries that any rewrite must still accept: an
             // exponent marker with no following digits falls back to being consumed as part of the
@@ -803,10 +821,18 @@ public class XSSAPIImplTest {
             {"+", RUBBISH},
             {"-", RUBBISH},
             {".", RUBBISH},
+            {"-.", RUBBISH},
+            {"+.", RUBBISH},
+            {"f(-)", RUBBISH},
+            {"f(+)", RUBBISH},
+            {"f(.)", RUBBISH},
 
             // invalid parenthesis
             {"rgb(255, 255, 255", RUBBISH},
             {"255, 255, 255)", RUBBISH},
+            {"var(--theme-color", RUBBISH},
+            {"var(--theme-color);color:red", RUBBISH},
+            {"var(--theme-color)</style><script>alert(1)</script>", RUBBISH},
 
             // valid tokens
             {"url(http://example.com/test.png)", "url(http://example.com/test.png)"},
