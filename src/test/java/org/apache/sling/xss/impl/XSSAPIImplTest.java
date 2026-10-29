@@ -817,6 +817,15 @@ public class XSSAPIImplTest {
             {"url('</style><script>alert(1)</script>')", RUBBISH},
             {"url('\" onmouseover=\"alert(document.cookie) ')", RUBBISH},
 
+            // Avoid parentheses in the script: otherwise URL_UNQUOTED rejects the payload for an
+            // unrelated reason. HTML recognizes the closing style tag regardless of CSS quoting
+            // or tag case.
+            {"url(</style><script>window.__slingProbe=1</script>)", RUBBISH},
+            {"url(</StYlE><script>window.__slingProbe=1</script>)", RUBBISH},
+            {"url('</style><script>window.__slingProbe=1</script>')", RUBBISH},
+            {"url(\"</style><script>window.__slingProbe=1</script>\")", RUBBISH},
+            {"url(</style><script>window.__slingProbe=1</script>)", RUBBISH},
+
             // invalid tokens
             {"color: red", RUBBISH}
         };
