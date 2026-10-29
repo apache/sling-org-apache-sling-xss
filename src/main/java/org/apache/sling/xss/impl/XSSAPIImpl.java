@@ -283,7 +283,7 @@ public class XSSAPIImpl implements XSSAPI {
      * Exclude markup characters here as well: HTML parsing recognizes {@code </style>} even
      * inside an unquoted CSS URL.
      */
-    private static final String URL_UNQUOTED = "[^\"^'^\\(^\\)^<>[" + NON_ASCII + "]]*";
+    private static final String URL_UNQUOTED = "[^\"'()<>^" + NON_ASCII + "]*";
     /** http://www.w3.org/TR/css-syntax-3/#url-token-diagram */
     private static final String URL = "url\\((?:(?:" + URL_UNQUOTED + ")|(?:" + STRING + "))\\)";
     /** composite regular expression for style token validation */
