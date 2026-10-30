@@ -625,7 +625,11 @@ public class XSSAPIImplTest {
             {"junk", "123"},
             {"100.5", "123"},
             {"", "123"},
-            {"null", "123"}
+            {"null", "123"},
+            // Encoded numeric inputs must not be decoded and should return default
+            {"%31%30%30", "123"},
+            {"&#49;00", "123"},
+            {"\\x31\\x30\\x30", "123"}
         };
     }
 
@@ -646,7 +650,11 @@ public class XSSAPIImplTest {
             {"junk", "123"},
             {"100.5", "123"},
             {"", "123"},
-            {"null", "123"}
+            {"null", "123"},
+            // Encoded numeric inputs must not be decoded and should return default
+            {"%31%30%30", "123"},
+            {"&#49;00", "123"},
+            {"\\x31\\x30\\x30", "123"}
         };
     }
 
@@ -664,7 +672,15 @@ public class XSSAPIImplTest {
             {"-Infinity", "123"},
             {"junk", "123"},
             {"", "123"},
-            {"null", "123"}
+            {"null", "123"},
+            // Encoded numeric inputs must not be decoded and should return default
+            {"%31%30%30", "123"},
+            {"&#49;00", "123"},
+            {"\\x31\\x30\\x30", "123"},
+            // Characterize accepted Double.parseDouble syntax
+            {"0x1.0p3", "8.0"},
+            {"1d", "1.0"},
+            {"1f", "1.0"}
         };
     }
 
@@ -689,7 +705,11 @@ public class XSSAPIImplTest {
             {"\"auto\"", "\"auto\""},
             {"'auto'", "\"auto\""},
             {"auto", "\"auto\""},
-            {"autox", "123"}
+            {"autox", "123"},
+            // Encoded numeric inputs must not be decoded and should return default
+            {"%31%30%30", "123"},
+            {"&#49;00", "123"},
+            {"\\x31\\x30\\x30", "123"}
         };
     }
 
