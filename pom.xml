@@ -77,35 +77,7 @@
             <version>1.2.3</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.owasp.esapi</groupId>
-            <artifactId>esapi</artifactId>
-            <version>2.6.2.0</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-lang</groupId>
-                    <artifactId>commons-lang</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-collections</groupId>
-                    <artifactId>commons-collections</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.owasp.antisamy</groupId>
-                    <artifactId>antisamy</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-                <exclusion>
-                    <!-- see SLING-13113 -->
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.xmlgraphics</groupId>
             <artifactId>batik-css</artifactId>
@@ -283,49 +255,12 @@
     <!-- B U I L D                                                               -->
     <!-- ======================================================================= -->
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <!-- Extend RAT configuration from parent pom -->
-                    <groupId>org.apache.rat</groupId>
-                    <artifactId>apache-rat-plugin</artifactId>
-                    <configuration>
-                        <excludes combine.children="append">
-                            <exclude>src/main/resources/ESAPI.properties</exclude>
-                            <exclude>src/main/resources/validation.properties</exclude>
-                        </excludes>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-
         <plugins>
             <plugin>
                 <groupId>org.apache.sling</groupId>
                 <artifactId>sling-maven-plugin</artifactId>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>unpack</id>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <phase>prepare-package</phase>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/dependencies-classes</outputDirectory>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.owasp.esapi</groupId>
-                                    <artifactId>esapi</artifactId>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>

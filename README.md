@@ -21,7 +21,7 @@ See the JavaDoc for the complete API surface.
 - Uses OSGi R7 Declarative Services.
 - Uses OWASP Java Encoder and a custom Jackson-based AntiSamy XML policy parser.
 - Uses `owasp-java-html-sanitizer` for HTML sanitization.
-- Embeds ESAPI, Batik CSS, and HTML sanitizer packages as private bundle packages to avoid OSGi import conflicts.
+- Embeds Batik CSS and HTML sanitizer packages as private bundle packages to avoid OSGi import conflicts.
 - Includes optional invalid-href metrics integration via Sling Commons Metrics.
 - Keeps Sling metrics package imports optional at runtime.
 - Web console rendering escapes request-derived values (for example `consoleRoot`) before interpolation to prevent XSS in the plugin UI.
@@ -80,8 +80,6 @@ src/
       org/apache/sling/xss/impl/webconsole/ # Web console plugin
       org/owasp/html/                # Sanitizer extensions
     resources/
-      ESAPI.properties
-      validation.properties
       SLING-INF/
       webconsole/
   test/
