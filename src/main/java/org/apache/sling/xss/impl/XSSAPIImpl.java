@@ -40,8 +40,6 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.owasp.encoder.Encode;
-import org.owasp.esapi.ESAPI;
-import org.owasp.esapi.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
@@ -56,8 +54,6 @@ public class XSSAPIImpl implements XSSAPI {
 
     @Reference
     private XSSFilter xssFilter;
-
-    private final Validator validator = ESAPI.validator();
 
     private static final Pattern PATTERN_AUTO_DIMENSION = Pattern.compile("['\"]?auto['\"]?");
 
@@ -111,7 +107,10 @@ public class XSSAPIImpl implements XSSAPI {
     public Integer getValidInteger(String integer, int defaultValue) {
         if (integer != null && integer.length() > 0) {
             try {
-                return validator.getValidInteger("XSS", integer, -2000000000, 2000000000, false);
+                int i = Integer.parseInt(integer.trim());
+                if (i >= -2000000000 && i <= 2000000000) {
+                    return i;
+                }
             } catch (Exception e) {
                 LOGGER.warn("Unable to get a valid integer from the input.", e);
                 LOGGER.debug("Integer input: {}", integer);
@@ -129,10 +128,10 @@ public class XSSAPIImpl implements XSSAPI {
     public Long getValidLong(String source, long defaultValue) {
         if (source != null && source.length() > 0) {
             try {
-                LongValidationRule ivr =
-                        new LongValidationRule("number", ESAPI.encoder(), -9000000000000000000L, 9000000000000000000L);
-                ivr.setAllowNull(false);
-                return ivr.getValid("XSS", source);
+                long l = Long.parseLong(source.trim());
+                if (l >= -9000000000000000000L && l <= 9000000000000000000L) {
+                    return l;
+                }
             } catch (Exception e) {
                 LOGGER.warn("Unable to get a valid long from the input.", e);
                 LOGGER.debug("Long input: {}", source);
@@ -150,7 +149,10 @@ public class XSSAPIImpl implements XSSAPI {
     public Double getValidDouble(String source, double defaultValue) {
         if (source != null && source.length() > 0) {
             try {
-                return validator.getValidDouble("XSS", source, 0d, Double.MAX_VALUE, false);
+                double d = Double.parseDouble(source.trim());
+                if (d >= 0d && d <= Double.MAX_VALUE && !Double.isNaN(d) && !Double.isInfinite(d)) {
+                    return d;
+                }
             } catch (Exception e) {
                 LOGGER.warn("Unable to get a valid double from the input.", e);
                 LOGGER.debug("Double input: {}", source);
@@ -172,9 +174,10 @@ public class XSSAPIImpl implements XSSAPI {
             }
 
             try {
-                return validator
-                        .getValidInteger("XSS", dimension, -10000, 10000, false)
-                        .toString();
+                int val = Integer.parseInt(dimension.trim());
+                if (val >= -10000 && val <= 10000) {
+                    return Integer.toString(val);
+                }
             } catch (Exception e) {
                 LOGGER.warn("Unable to get a valid dimension from the input.", e);
                 LOGGER.debug("Dimension input: {}", dimension);

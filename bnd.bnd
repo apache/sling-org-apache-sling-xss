@@ -21,8 +21,6 @@ Import-Package: !bsh, \
                 !org.apache.tools.ant.taskdefs, \
                 !org.apache.xml.resolver.*, \
                 !org.apache.xmlgraphics.java2d.color, \
-                !org.owasp.esapi.*, \
-                !org.owasp.validator.*, \
                 !org.xml.sax, \
                 !org.xml.sax.*, \
                 !javax.mail.internet, \
@@ -34,9 +32,5 @@ Import-Package: !bsh, \
 Private-Package: org.apache.sling.xss.impl, \
                  org.apache.batik.*, \
                  org.w3c.css.sac, \
-                 org.apache.commons.beanutils.*, \
-                 org.apache.commons.configuration.*, \
-                 org.owasp.esapi.*;-split-package:=merge-first, \
-                 org.owasp.validator.*, \
                  org.owasp.shim;-split-package:=merge-first, \
                  org.owasp.html.*;-split-package:=merge-first

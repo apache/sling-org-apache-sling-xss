@@ -1,6 +1,6 @@
 # Project Overview
 
-OSGi bundle providing XSS protection for Apache Sling. Exposes `XSSAPI` and `XSSFilter` services backed by OWASP AntiSamy (via a custom XML policy parser), OWASP Java Encoder, and `owasp-java-html-sanitizer`. The bundle embeds ESAPI, Batik CSS, and HTML sanitizer packages as private bundle packages (see `bnd.bnd`) to avoid OSGi import conflicts. It also provides optional invalid-href metrics integration via Sling Commons Metrics. Requires Java 11+ (and is CI-tested with newer JDKs, including Java 25).
+OSGi bundle providing XSS protection for Apache Sling. Exposes `XSSAPI` and `XSSFilter` services backed by OWASP AntiSamy (via a custom XML policy parser), OWASP Java Encoder, and `owasp-java-html-sanitizer`. The bundle embeds Batik CSS and HTML sanitizer packages as private bundle packages (see `bnd.bnd`) to avoid OSGi import conflicts. It also provides optional invalid-href metrics integration via Sling Commons Metrics. Requires Java 11+ (and is CI-tested with newer JDKs, including Java 25).
 
 # Core Commands
 
@@ -54,8 +54,6 @@ src/
       org/apache/sling/xss/impl/webconsole/ # Felix web console plugin
       org/owasp/html/                # DynamicAttributesSanitizerPolicy (extends owasp sanitizer)
     resources/
-      ESAPI.properties               # ESAPI config (excluded from RAT)
-      validation.properties          # ESAPI validation rules (excluded from RAT)
       SLING-INF/                     # Sling resource definitions
       webconsole/                    # Web console static assets
   test/
@@ -72,7 +70,7 @@ pom.xml
 - Do **not** use Felix SCR annotations (`org.apache.felix.scr.annotations`).
 - All impl classes are in `org.apache.sling.xss.impl` and must stay in the `Private-Package` declared in `bnd.bnd`.
 - Public API (`org.apache.sling.xss`) is versioned via `@Version` in `package-info.java`; increment according to OSGi semantic versioning when changing interfaces.
-- ESAPI, Batik, and owasp-html-sanitizer are embedded via `bnd.bnd` private packages — do not add OSGi `Import-Package` for them.
+- Batik and owasp-html-sanitizer are embedded via `bnd.bnd` private packages — do not add OSGi `Import-Package` for them.
 - Invalid href metrics are emitted via `XSSMetricsService` and `org.apache.sling.commons.metrics` when a `MetricsService` is available (optional dynamic DS reference).
 - In the web console plugin, always HTML-escape request-derived values (for example `consoleRoot`) before interpolating into markup (`StringEscapeUtils.escapeHtml4`).
 - Keep optional metrics wiring optional at runtime (`resolution:=optional` in `bnd.bnd` for Sling metrics packages).
@@ -98,11 +96,9 @@ pom.xml
 
 # Gotchas
 
-- ESAPI classes are embedded (unpacked from the ESAPI jar during `prepare-package`). Changes to the ESAPI version may require updating `bnd.bnd` private-package exclusions.
-- `commons-logging`, `commons-collections`, `commons-lang`, and `xml-apis` are explicitly excluded from ESAPI/Batik transitive deps to avoid OSGi conflicts — do not re-introduce them.
+- `commons-logging` and `xml-apis-ext` are explicitly excluded from `batik-css` transitive deps in `pom.xml` to avoid OSGi conflicts — do not re-introduce them.
 - The runtime intentionally avoids Log4j 1.x; keep transitive logging dependencies constrained to SLF4J-compatible paths.
 - The `sling-org-apache-sling-xss` artifact itself is excluded from `sling-mock.junit5` in test scope to prevent stale OSGi metadata from older releases interfering with tests.
-- `ESAPI.properties` and `validation.properties` lack Apache license headers by design; they are RAT-excluded in `pom.xml`.
 - `AntiSamyPolicyAdapter` intentionally uses `sun.misc.Unsafe` plus a Java 22+ fallback path to clear html-sanitizer attribute guards across JDK versions; avoid refactoring this blindly.
 - OSGi baseline comparison runs against the last released artifact. A binary-incompatible change without a version bump will fail `mvn verify -Pbaseline`.
 
