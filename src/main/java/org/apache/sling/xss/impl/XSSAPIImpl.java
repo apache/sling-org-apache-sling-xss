@@ -247,7 +247,7 @@ public class XSSAPIImpl implements XSSAPI {
     /** http://www.w3.org/TR/css-syntax-3/#hex-digit-diagram */
     private static final String HEX_DIGITS = "#[0-9a-f]*";
     /** http://www.w3.org/TR/css-syntax-3/#ident-token-diagram */
-    private static final String IDENTIFIER = "-?[a-z_" + NON_ASCII + "][\\w_\\-" + NON_ASCII + "]*";
+    private static final String IDENTIFIER = "(?:--|-?[a-z_" + NON_ASCII + "])[\\w_\\-" + NON_ASCII + "]*";
     /**
      * http://www.w3.org/TR/css-syntax-3/#string-token-diagram
      * <p>
