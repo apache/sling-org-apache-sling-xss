@@ -749,6 +749,7 @@ public class XSSAPIImplTest {
             {"background-color", "background-color"},
             {"-moz-box-sizing", "-moz-box-sizing"},
             {"--theme-color", "--theme-color"},
+            // "--" is a valid CSS identifier token, but reserved as a custom-property name.
             {"--", "--"},
             {"--1", "--1"},
             {"---theme", "---theme"},
